@@ -1,0 +1,33 @@
+body {
+  padding-top: 75px;
+}
+
+div.page-wrapper{
+  display: flex;
+  justify-content:  space-between;
+}
+
+div.sidebar{
+  width: 15%;
+  padding-right: 2%;
+}
+
+div.content-container {
+  width: 85%;
+  padding-right: 1%;
+}
+
+
+.table-borderless > tbody > tr > td,
+.table-borderless > tbody > tr > th,
+.table-borderless > tfoot > tr > td,
+.table-borderless > tfoot > tr > th,
+.table-borderless > thead > tr > td,
+.table-borderless > thead > tr > th {
+    border: none;
+}
+
+
+
+
+

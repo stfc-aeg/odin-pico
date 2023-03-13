@@ -1,2 +1,2 @@
-# odin-gpib
-Python package based on odin-control to manage GPIB enabled devices
+# odin-pico
+Python package based on odin-control to manage a picoscope 5444D

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>ODIN-Picoscope</title>
+
+    <!-- Bootstrap -->
+    <link href="js/bootstrap-3.3.6-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/odin-server.css" rel="stylesheet">
+    <link href="css/custom_select.css" rel="stylesheet">
+
+  </head>
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+        <div class="navbar-brand">ODIN-Server | Picoscope</div>
+        <p class="navbar-text" >Detected and loaded device: &nbsp;<span id=" ">&nbsp;</span></p>
+        </div>
+      </div>
+    </nav>
+    <div class = "container-fluid">
+    <div class ="page-wrapper">
+    <!-- -->
+      <div class = "sidebar">
+        <div class = "panel panel-info">
+          <div class = "panel-heading">Picoscope Status</div>
+              <div class="panel-body">
+            <table class = "table table-borderless">
+              <thead>
+                <tr>
+                  <th>Connection: </th>
+                  <th><span id="status_con_attempt"></span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>Test 3</th>
+                  <th>Test 4</th>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    
+      <div class="content-container">
+        <div class = "row">
+        <div id = "setup-1" class="panel panel-default">
+          <div class="panel-heading">Picoscope Connection</div>
+          <div class="panel-body">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Select a Bit Mode to open the Picoscope with</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr> 
+                  <th>
+                    <select id = "bit-mode-dropdown" onchange="set_resolution()">
+                        <option value="" selected disabled hidden> </option>
+                        <option value = "PS5000A_DR_12BIT">12 Bit Mode</option>
+                        <option value = "PS5000A_DR_8BIT">8 Bit Mode</option> 
+                      </select>
+                </th>
+                <th>
+                  <button class="btn btn-default" id="connect_butt" onclick="connect_to_picoscope()" disabled>Open Picoscope</button>
+                </th>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class = "row">
+      <div id = "setup-2" class="panel panel-default">
+        <div class="panel-heading">Picoscope Setup</div>
+        <div class="panel-body">
+          <table class="table table-striped">
+            
+            <thead>
+              <tr>
+                <th>Timebase</th>
+                <th>Channels</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class ="default" id= "pico-setup-row">
+                <th>
+                  <form>
+                    <input id="time-base-input" type="text" oninput="commit_timebase('time-base-input')"/>
+                  </form>
+                </th>
+                <th>
+                  <form>
+                  <fieldset id ="channel-checkboxes">
+                  <input type="checkbox" id="channel-a-active" value="PS5000A_CHANNEL_A" oninput="commit_channel_active('channel-a-active','a')">
+                  <label for="channel-a"> Channel A</label><br>
+                  <input type="checkbox" id="channel-b-active" value="PS5000A_CHANNEL_B" oninput="commit_channel_active('channel-b-active','b')">
+                  <label for="channel-b"> Channel B</label><br>
+                  <input type="checkbox" id="channel-c-active" value="PS5000A_CHANNEL_C" oninput="commit_channel_active('channel-c-active','c')">
+                  <label for="channel-c"> Channel C</label><br>
+                  <input type="checkbox" id="channel-d-active" value="PS5000A_CHANNEL_D" oninput="commit_channel_active('channel-d-active','d')">
+                  <label for="channel-d"> Channel D</label><br>
+                </fieldset>
+                </form>
+                </th>
+                </tr>
+                <tr>
+                  <th>
+                    <button class="btn btn-default" id="commit_chan_active_butt" onclick="complete_channels_defined()"disabled>Commit Active Channels</button>
+                  </th>
+                  <th>  </th>
+                </tr>
+            </tbody>
+          </table>
+
+        </div>
+       
+      </div>
+      </div>
+
+      <div class = "row">
+        <div id = "setup-3" class="panel panel-default">
+          <div class="panel-heading">Channel Setup</div>
+          <div class="panel-body">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Channel: </th>
+                  <th>Channel Coupling</th>
+                  <th>Channel Range</th>
+                  <th>Offset</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                <tr class="default" id = 'channel-a-set'>
+                  <th>A</th>
+                  <th>
+                    <select id = "channel-a-coupl" onchange="commit_channel_coupling('channel-a-coupl','a')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_DC">DC</option>
+                      <option value = "PS5000A_AC">AC</option> 
+                    </select>
+                  </th>
+                  <th>
+                    <select id = "channel-a-range" onchange="commit_channel_range('channel-a-range','a')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_10MV">10 mV</option>
+                      <option value = "PS5000A_20MV">20 mV</option> 
+                      <option value = "PS5000A_50MV">50 mV</option>
+                      <option value = "PS5000A_100MV">100 mV</option>
+                      <option value = "PS5000A_200MV">200 mV</option>
+                      <option value = "PS5000A_500MV">500 mV</option>
+                      <option value = "PS5000A_1V">1 V</option>
+                      <option value = "PS5000A_2V">2 V</option> 
+                      <option value = "PS5000A_5V">5 V</option>
+                      <option value = "PS5000A_10V">10 V</option>
+                      <option value = "PS5000A_20V">20 V</option>
+                    </select>
+                  </th>
+                  <th>
+                    <form>
+                      <input id="channel-a-offset" type="text" oninput="commit_channel_offset('channel-a-offset','a')" disabled/>
+                    </form>
+                  </th>
+                </tr>
+
+                <tr class="default" id = 'channel-b-set'>
+                  <th>B</th>
+                  <th>
+                    <select id = "channel-b-coupl" onchange="commit_channel_coupling('channel-b-coupl','b')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_DC">DC</option>
+                      <option value = "PS5000A_AC">AC</option> 
+                    </select>
+                  </th>
+                  <th>
+                    <select id = "channel-b-range" onchange="commit_channel_range('channel-b-range','b')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_10MV">10 mV</option>
+                      <option value = "PS5000A_20MV">20 mV</option> 
+                      <option value = "PS5000A_50MV">50 mV</option>
+                      <option value = "PS5000A_100MV">100 mV</option>
+                      <option value = "PS5000A_200MV">200 mV</option>
+                      <option value = "PS5000A_500MV">500 mV</option>
+                      <option value = "PS5000A_1V">1 V</option>
+                      <option value = "PS5000A_2V">2 V</option> 
+                      <option value = "PS5000A_5V">5 V</option>
+                      <option value = "PS5000A_10V">10 V</option>
+                      <option value = "PS5000A_20V">20 V</option>
+                    </select>
+                  </th>
+                  <th>
+                    <form>
+                      <input id="channel-b-offset" type="text" oninput="commit_channel_offset('channel-b-offset','b')"disabled/>
+                    </form>
+                  </th>
+                </tr>
+
+                <tr class="default" id = 'channel-c-set'>
+                  <th>C</th>
+                  <th>
+                    <select id = "channel-c-coupl" onchange="commit_channel_coupling('channel-c-coupl','c')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_DC">DC</option>
+                      <option value = "PS5000A_AC">AC</option> 
+                    </select>
+                  </th>
+                  <th>
+                    <select id = "channel-c-range" onchange="commit_channel_range('channel-c-range','c')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_10MV">10 mV</option>
+                      <option value = "PS5000A_20MV">20 mV</option> 
+                      <option value = "PS5000A_50MV">50 mV</option>
+                      <option value = "PS5000A_100MV">100 mV</option>
+                      <option value = "PS5000A_200MV">200 mV</option>
+                      <option value = "PS5000A_500MV">500 mV</option>
+                      <option value = "PS5000A_1V">1 V</option>
+                      <option value = "PS5000A_2V">2 V</option> 
+                      <option value = "PS5000A_5V">5 V</option>
+                      <option value = "PS5000A_10V">10 V</option>
+                      <option value = "PS5000A_20V">20 V</option>
+                    </select>
+                  </th>
+                  <th>
+                    <form>
+                      <input id="channel-c-offset" type="text" oninput="commit_channel_offset('channel-c-offset','c')"disabled/>
+                    </form>
+                  </th>
+                </tr>
+
+                <tr class="default" id = 'channel-d-set'>
+                  <th>D</th>
+                  <th>
+                    <select id = "channel-d-coupl" onchange="commit_channel_coupling('channel-d-coupl','d')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_DC">DC</option>
+                      <option value = "PS5000A_AC">AC</option> 
+                    </select>
+                  </th>
+                  <th>
+                    <select id = "channel-d-range" onchange="commit_channel_range('channel-d-range','d')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_10MV">10 mV</option>
+                      <option value = "PS5000A_20MV">20 mV</option> 
+                      <option value = "PS5000A_50MV">50 mV</option>
+                      <option value = "PS5000A_100MV">100 mV</option>
+                      <option value = "PS5000A_200MV">200 mV</option>
+                      <option value = "PS5000A_500MV">500 mV</option>
+                      <option value = "PS5000A_1V">1 V</option>
+                      <option value = "PS5000A_2V">2 V</option> 
+                      <option value = "PS5000A_5V">5 V</option>
+                      <option value = "PS5000A_10V">10 V</option>
+                      <option value = "PS5000A_20V">20 V</option>
+                    </select>
+                  </th>
+                  <th>
+                    <form>
+                      <input id="channel-d-offset" type="text" oninput="commit_channel_offset('channel-d-offset','d')"disabled/>
+                    </form>
+                  </th>
+                </tr>
+                <tr>
+                  <th>
+                    <button class="btn btn-default" id="commit_chan_setting_butt" onclick="complete_channel_settings()"disabled>Commit Channel Settings</button>
+                  </th>
+                  <th>  </th>
+                  <th>  </th>
+                  <th>  </th>
+                </tr>
+
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+        </div>
+
+        <div class = "row">
+          <div id = "setup-4" class="panel panel-default">
+            <div class="panel-heading">Trigger Setup</div>
+            <div class="panel-body">
+              <table class="table table-striped">
+
+                <tr id="trigger-row1">
+                  <th>Enable:&nbsp;               
+                    <select id = "trigger-enable" onchange="commit_to_adapter('trigger-enable','settings/trigger/','active')" disabled >
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "true" >True</option>
+                      <option value = "false" >False</option>
+                    </select>
+                  </th>
+                  <th>Source:&nbsp;
+                    <select id = "trigger-source" onchange="commit_to_adapter('trigger-source','settings/trigger/','source')" disabled >
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_CHANNEL_A">Channel A</option> 
+                      <option value = "PS5000A_CHANNEL_B">Channel B</option>
+                      <option value = "PS5000A_CHANNEL_C">Channel C</option>
+                      <option value = "PS5000A_CHANNEL_D">Channel D</option>
+                    </select>
+                  </th>
+                  <th>Signal Direction:&nbsp;
+                    <select id = "trigger-direction" onchange="commit_to_adapter('trigger-direction','settings/trigger/','direction')" disabled>
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "PS5000A_ABOVE">Above</option> 
+                      <option value = "PS5000A_BELOW">Below</option>
+                      <option value = "PS5000A_RISING">Rising Edge</option>
+                      <option value = "PS5000A_FALLING">Falling Edge</option>
+                      <option value = "PS5000A_RISING_OR_FALLING">Rising or Falling Edge</option>
+                    </select>
+                  </th>
+                </tr>             
+                <tr id="trigger-row2">
+                  <th>
+                    <form>
+                      <label for="trigger-threshold">Threshold:</label>
+                      <input id="trigger-threshold" type="text" oninput="commit_int_adapter('trigger-threshold','settings/trigger/','threshold')" disabled/>
+                    </form>
+                  </th>
+                  <th>
+                    <form>
+                      <label for="trigger-delay">Delay:</label>
+                      <input id="trigger-delay" type="text" oninput="commit_int_adapter('trigger-delay','settings/trigger/','delay')" disabled/>
+                    </form>
+                  </th>
+                  <th>
+                    <form>
+                      <label for="trigger-auto">Trigger After:</label>
+                      <input id="trigger-auto" type="text" oninput="commit_int_adapter('trigger-auto','settings/trigger/','auto_trigger')" disabled/>
+                    </form>
+                  </th>
+                </tr>
+                <tr>
+                  <th>
+                    <button class="btn btn-default" id="trigger-commit-butt" onclick="complete_trigger_settings()"  disabled>Commit Trigger Settings</button>
+                  </th>
+                  <th>  </th>
+                  <th>  </th>
+                </tr>
+              </table>
+            
+            </div>
+           
+          </div>
+          </div>
+
+          <div class = "row">
+            <div id = "setup-5" class="panel panel-default">
+              <div class="panel-heading">Capture Setup</div>
+              <div class="panel-body">
+                <table class="table table-striped">            
+                  <tr id ="capture-row">
+                    <th>
+                      <form>
+                        <label for="capture-pretrig-samples">Pre-Trigger Samples:</label>
+                        <input id="capture-pretrig-samples" type="text" oninput="commit_int_adapter('capture-pretrig-samples','settings/capture/','pre_trig_samples')"disabled/>
+                      </form>
+                    </th>
+                    <th>
+                      <form>
+                        <label for="capture-posttrig-samples">Post-Trigger Samples:</label>
+                        <input id="capture-posttrig-samples" type="text" oninput="commit_int_adapter('capture-posttrig-samples','settings/capture/','post_trig_samples')"disabled/>
+                      </form>
+                    </th>
+                    <th>
+                      <form>
+                        <label for="capture-count">Number of captures:</label>
+                        <input id="capture-count" type="text" oninput="commit_int_adapter('capture-count','settings/capture/','n_captures')"disabled/>
+                      </form>
+                    </th>
+                  </tr>
+                  <tr>
+                    <th>
+                      <button class="btn btn-default" id="capture_butt" onclick="complete_capture_settings()"disabled>Commit Capture Settings</button>
+                    </th>
+                    <th>  </th>
+                    <th>  </th>
+                  </tr>
+                </table>
+              
+              </div>
+             
+            </div>
+            </div>
+
+      </div>
+
+
+
+    </div>
+    </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery-2.2.3.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+    <script src="js/odin_server.js"></script>
+  </body>
+</html>
+
+    
