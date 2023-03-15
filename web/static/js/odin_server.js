@@ -233,17 +233,6 @@ function disable_id(id,bool){
     document.getElementById(id).disabled = bool;
 }
 
-
-function set_channel_coupl(id,coupl){
-    console.log("Pass");
-}
-
-function set_resolution(){
-    var res = document.getElementById('bit-mode-dropdown').value;
-    console.log(res)
-    ajax_put('connection/','resolution',res)
-}
-
 function printinfo(id){
     console.log(document.getElementById(id).value)
 }
@@ -273,16 +262,7 @@ function complete_capture_settings(){
     ajax_put('status/','capture_settings_complete',value)
 }
 
-function verify_channel_settings(id, channel){
-    var isfloat = (verify_float(id))
-    var offset = (document.getElementById(id).value)
-    if (isfloat == 1){
-        ajax_put('settings/channels/'+channel+'/','verified',offset)
-    } else {
-        console.log("Input is not float")
-    }
-}
-// Trigger commits
+
 
 function commit_to_adapter(id,path,key){
     var value = document.getElementById(id).value
@@ -293,6 +273,17 @@ function commit_to_adapter(id,path,key){
 
 function commit_int_adapter(id,path,key){
     var input = parseInt(document.getElementById(id).value)
+    console.log("Input: ",input,typeof(input))
+    if (isNaN(input)){
+        console.log("Invalid")
+    } else {
+        console.log("Valid")
+        ajax_put(path,key,input)
+    }
+}
+
+function commit_float_adapter(id,path,key){
+    var input = parseFloat(document.getElementById(id).value)
     console.log(input)
     if (isNaN(input)){
         console.log("Invalid")
@@ -300,6 +291,11 @@ function commit_int_adapter(id,path,key){
         console.log("Valid")
         ajax_put(path,key,input)
     }
+}
+
+function commit_checked_adapter(id,path,key){
+    var checked = document.getElementById(id).checked
+    ajax_put(path,key,checked)
 }
 
 function commit_timebase(id){
@@ -313,36 +309,6 @@ function commit_timebase(id){
     }
     //var input_box = (document.getElementById(id));
 }
-
-function commit_channel_active(id, channel){
-    var checked = document.getElementById(id).checked
-    ajax_put('settings/channels/'+channel+'/','active',checked)
-}
-
-function commit_channel_coupling(id, channel){
-    var coupling = document.getElementById(id).value
-    ajax_put('settings/channels/'+channel+'/','coupling',coupling)
-}
-
-function commit_channel_range(id, channel){
-    var range = document.getElementById(id).value
-    ajax_put('settings/channels/'+channel+'/','range',range)    
-}
-
-function commit_channel_offset(id, channel){
-    var offset = parseFloat(document.getElementById(id).value)
-    console.log(offset)
-    if (isNaN(offset)){
-        console.log("Invalid")
-    } else {
-        console.log("Valid")
-        ajax_put('settings/channels/'+channel+'/','offset',offset)
-    }
-
-
-    //ajax_put('settings/channels/'+channel+'/','offset',offset)
-}
-
 
 function verify_int(id){
     var input_box = (document.getElementById(id));

@@ -15,6 +15,7 @@ from picosdk.ps5000a import ps5000a as ps
 from picosdk.functions import adc2mV, assert_pico_ok, mV2adc
 
 from odin_pico.pico_connect_functions import PicoFunctions
+from odin_pico.pico_dict import PsDictUtil 
 
 class P5444D():
     executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -22,54 +23,23 @@ class P5444D():
     def __init__(self,lock):
         self.handle = ctypes.c_int16(0)
         self.pico = PicoFunctions(np.int16(self.handle))
+        self.dict_util = PsDictUtil()
         self.lock = lock
 
-        self.resolution = None
+        self.resolution = 0
         self.timebase = 0
         self.connection_attempted = -1
 
         self.channel_names = ['a', 'b', 'c', 'd']
-
         self.channels = {}
+        i = 0
         for name in self.channel_names:
-            self.channels[name] = {
-                "name": name,
-                "active": False,
-                "verified": False,
-                "coupling": "PS5000A_DC",
-                "range": "PS5000A_10MV", 
-                "offset": 0.0
-            }
+            self.channels[name] = self.dict_util.set_channel_defaults(name,i)
+            i += 1
 
-        self.capture = {
-            "pre_trig_samples": 0,
-            "post_trig_samples": 0,
-            "n_captures": 0
-        }
-
-        self.trigger = {
-            "active": False,
-            "source": "PS5000A_CHANNEL_A",
-            "threshold": 50,
-            "direction": "PS5000A_RISING",
-            "delay": 0,
-            "auto_trigger_ms": 0
-        }
-
-        # status codes for the different components of the picoscope setup
-        self.status = {
-            "openunit": -1,
-            "pico_setup_verify": -1,
-            "pico_setup_complete": -1,
-            "channel_setup_verify": -1,
-            "channel_setup_complete": -1,
-            "channel_trigger_verify": -1,
-            "channel_trigger_complete": -1,
-            "capture_settings_verify": -1,
-            "capture_settings_complete": -1,
-            "stop": -1,
-            "close": -1
-        }
+        self.trigger = self.dict_util.set_trigger_defaults()
+        self.capture = self.dict_util.set_capture_defaults()
+        self.status = self.dict_util.set_status_defaults()
 
         adapter_status = ParameterTree ({
             'openunit': (lambda: self.status["openunit"], None),
@@ -92,27 +62,28 @@ class P5444D():
         for channel in self.channel_names:
             self.chan_params[channel] = ParameterTree(
                 {
-                'active': (partial(self.get_channel_active, channel), partial(self.set_channel_active, channel)),
-                'verified': (partial(self.get_channel_verified, channel), None),
-                'coupling': (partial(self.get_channel_coupling, channel), partial(self.set_channel_coupling, channel)),
-                'range': (partial(self.get_channel_range, channel), partial(self.set_channel_range, channel)),
-                'offset': (partial(self.get_channel_offset, channel), partial(self.set_channel_offset, channel))
+                'channel_id': (partial(self.get_channel_value, channel, "channel_id"), None),
+                'active': (partial(self.get_channel_value, channel, "active"), partial(self.set_channel_value, channel, "active")),
+                'verified': (partial(self.get_channel_value, channel,"verified"), None),
+                'coupling': (partial(self.get_channel_value, channel, "coupling"), partial(self.set_channel_value, channel, "coupling")),
+                'range': (partial(self.get_channel_value, channel, "range"), partial(self.set_channel_value, channel, "range")),
+                'offset': (partial(self.get_channel_value, channel, "offset"), partial(self.set_channel_value, channel, "offset"))
                 }
             )
 
         pico_trigger = ParameterTree ({
-            'active': (lambda: self.trigger["active"], self.set_trigger_active),
-            'auto_trigger': (lambda: self.trigger["auto_trigger_ms"], self.set_trigger_auto),
-            'direction': (lambda: self.trigger["direction"],self.set_trigger_direction),
-            'delay': (lambda: self.trigger["delay"], self.set_trigger_delay),
-            'source': (lambda: self.trigger["source"], self.set_trigger_source),
-            'threshold': (lambda: self.trigger["threshold"], self.set_trigger_threshold)
+            'active': (lambda: self.trigger["active"], partial(self.set_trigger_value, "active")),
+            'auto_trigger': (lambda: self.trigger["auto_trigger_ms"], partial(self.set_trigger_value, "auto_trigger_ms")),
+            'direction': (lambda: self.trigger["direction"], partial(self.set_trigger_value, "direction")),
+            'delay': (lambda: self.trigger["delay"], partial(self.set_trigger_value, "delay")),
+            'source': (lambda: self.trigger["source"], partial(self.set_trigger_value, "source")),
+            'threshold': (lambda: self.trigger["threshold"], partial(self.set_trigger_value, "threshold"))
         })
 
         pico_capture = ParameterTree ({
-            'pre_trig_samples': (lambda: self.capture["pre_trig_samples"], self.set_pre_trig_samples),
-            'post_trig_samples': (lambda: self.capture["post_trig_samples"], self.set_post_trig_samples),
-            'n_captures': (lambda: self.capture["n_captures"], self.set_n_captures)
+            'pre_trig_samples': (lambda: self.capture["pre_trig_samples"], partial(self.set_capture_value, "pre_trig_samples")),
+            'post_trig_samples': (lambda: self.capture["post_trig_samples"], partial(self.set_capture_value, "post_trig_samples")),
+            'n_captures': (lambda: self.capture["n_captures"], partial(self.set_capture_value, "n_captures"))
         })
 
         pico_settings = ParameterTree ({
@@ -128,81 +99,51 @@ class P5444D():
             'settings': pico_settings
         })
 
-    # Return functions for channel parameters to avoid late binding issues
-    def get_channel_active(self, channel):
-        return self.channels[channel]["active"]
-    
-    def get_channel_verified(self, channel):
-        return self.channels[channel]["verified"]
-        
-    def get_channel_coupling(self, channel):
-        return self.channels[channel]["coupling"]
+    # Return function for channel parameters to avoid late binding issues
+    def get_channel_value(self,channel,value):
+        return self.channels[channel][value]
 
-    def get_channel_range(self, channel):
-        return self.channels[channel]["range"]
-
-    def get_channel_offset(self, channel):
-        return self.channels[channel]["offset"]
-
-    # Setter functions for all ParameterTree attributes 
-    def set_pre_trig_samples(self, samples):
-        self.capture["pre_trig_samples"] = samples
-        self.verify_capture(1)
-    
-    def set_post_trig_samples(self, samples):
-        self.capture["post_trig_samples"] = samples
-        self.verify_capture(1)
-
-    def set_n_captures(self, samples):
-        self.capture["n_captures"] = samples
-        self.verify_capture(1)
-
-    def set_trigger_active(self, active):
-        self.trigger["active"] = active
-        self.verify_trigger(1)
-
-    def set_trigger_auto(self, auto):
-        self.trigger["auto_trigger_ms"] = auto
-        self.verify_trigger(1)
-
-    def set_trigger_direction(self, direction):
-        self.trigger["direction"] = direction
-        self.verify_trigger(1)
-
-    def set_trigger_delay(self, delay):
-        self.trigger["delay"] = delay
-        self.verify_trigger(1)
-    
-    def set_trigger_source(self, source):
-        self.trigger["source"] = source
-        self.verify_trigger(1)
-
-    def set_trigger_threshold(self, threshold):
-        self.trigger["threshold"] = threshold
-        self.verify_trigger(1)
-
+    # Various generic setting funtions for values
     def set_resolution(self, resolution):
+        print(type(resolution))
         self.resolution = resolution
 
     def set_timebase(self, timebase):
         self.timebase = timebase
         self.verify_channels_defined(1)
 
-    def set_channel_active(self, channel, active):
-        self.channels[channel]["active"] = active
-        self.verify_channels_defined(1)
+    def set_capture_value(self,key,value):
+        self.capture[key] = value
+        self.verify_capture(1)
 
-    def set_channel_coupling(self, channel, coupling):
-        self.channels[channel]["coupling"] = coupling
-        self.verify_channel_settings(channel)
+    def set_trigger_value(self,key,value):
+        if ((key != "source") and (key != "direction")):
+            self.trigger[key] = value
+            self.verify_trigger(1)
+        if (key == "source"):
+            if self.dict_util.ps_channels(value):
+                self.trigger[key] = value
+                self.verify_trigger(1)
+        if (key == "direction"):
+            if self.dict_util.ps_direction(value):
+                self.trigger[key] = value
+                self.verify_trigger(1)
 
-    def set_channel_range(self, channel, range):
-        self.channels[channel]["range"] = range
-        self.verify_channel_settings(channel)
-
-    def set_channel_offset(self, channel, offset):
-        self.channels[channel]["offset"] = offset
-        self.verify_channel_settings(channel)
+    def set_channel_value(self, channel, key, value):
+        if (key == "coupling"):
+            if self.dict_util.ps_coupling(value):
+                self.channels[channel][key] = value
+                self.verify_channel_settings(channel)
+        elif (key == "range"):
+            if self.dict_util.ps_range(value):
+                self.channels[channel][key] = value
+                self.verify_channel_settings(channel)
+        elif (key == "active"):
+            self.channels[channel]["active"] = value
+            self.verify_channels_defined(1)
+        else:
+            self.channels[channel][key] = value
+            self.verify_channel_settings(channel)
     
     # Validation functions for various settings
     def verify_channels_defined(self, ver_atp):
@@ -214,7 +155,7 @@ class P5444D():
                 channel_count += 1
 
         timebase = self.timebase
-        if self.resolution == "PS5000A_DR_12BIT":
+        if self.resolution == 1:
             if (timebase < 1):
                 self.status["pico_setup_verify"] = -1
             elif (timebase == 1 and channel_count >0 and channel_count <2):
@@ -226,7 +167,7 @@ class P5444D():
             else:
                 self.status["pico_setup_verify"] = -1
 
-        if self.resolution == "PS5000A_DR_8BIT":
+        if self.resolution == 0:
             if (timebase < 0):
                 self.status["pico_setup_verify"] = -1
             elif (timebase == 0 and channel_count >0 and channel_count <2):
@@ -250,7 +191,6 @@ class P5444D():
             self.status["pico_setup_complete"] = 0
         else:
             self.status["pico_setup_complete"] = -1
-
 
     def verify_channel_settings(self, channel):
         pico_range = ps.PS5000A_RANGE[self.channels[channel]["range"]]
@@ -292,11 +232,12 @@ class P5444D():
 
     
     def verify_trigger(self, ver_atp):
-        ps_channels = {"PS5000A_CHANNEL_A":'a',"PS5000A_CHANNEL_B":'b',"PS5000A_CHANNEL_C":'c',"PS5000A_CHANNEL_D":'d'}
+        ps_channels = {0:'a',1:'b',2:'c',3:'d'}
         ps_ranges = {"PS5000A_10MV":10,"PS5000A_20MV":20,"PS5000A_50MV":50,"PS5000A_100MV":100,"PS5000A_200MV":200,"PS5000A_500MV":500,
                      "PS5000A_1V":1000,"PS5000A_2V":2000,"PS5000A_5V":5000,"PS5000A_10V":10000,"PS5000A_20V":20000}
         
         max_threshold = ps_ranges[self.channels[ps_channels[self.trigger["source"]]]["range"]]
+        #max_threshold = get_range_values_mv([self.channels[ps_channels[self.trigger["source"]]]["range"]])
         
         source_verify = False
         threshold_verify = False
@@ -357,13 +298,13 @@ class P5444D():
             self.status["capture_settings_verify"] = -1
             print("Setting False")
 
-
-
     def complete_capture_settings(self, ver_atp):
         if (self.status["capture_settings_verify"] == 0):
             self.status["capture_settings_complete"] = 0
         else:
             self.status["capture_settings_complete"] = -1
+        print("running capture command")
+        self.run_capture()
 
 
 
@@ -371,9 +312,28 @@ class P5444D():
     def commit_resolution(self, con_atp):
         if self.status["openunit"] == -1:
             self.connection_attempted = con_atp
-            res = ps.PS5000A_DEVICE_RESOLUTION[self.resolution]
-            print("Attempting connection with res: ",res)
-            self.status["openunit"] = self.pico.open_unit(res)
+            #res = ps.PS5000A_DEVICE_RESOLUTION[self.resolution]
+            print("Attempting connection with res: ",self.resolution)
+            self.status["openunit"] = self.pico.open_unit(self.resolution)
+    
+    @run_on_executor
+    def run_capture(self):
+        # Set channels up
+        for channel in self.channels:
+            chan = self.channels[channel]
+            self.pico.set_channel("channel_"+(str(chan["channel_id"])),chan["channel_id"],chan["active"],
+                                  chan["coupling"],chan["range"],chan["offset"])
+        
+        # Set trigger 
+        trig = self.trigger
+        ps_channels = {0:'a',1:'b',2:'c',3:'d'}
+        range = self.channels[ps_channels[self.trigger["source"]]]["range"]
+        self.pico.set_simple_trigger(trig["source"],range,trig["threshold"])
+
+        # Run Block command
+        cap = self.capture
+        self.pico.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
+
 
     def update_poll(self):
         pass
