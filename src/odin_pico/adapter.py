@@ -13,7 +13,7 @@ from tornado.escape import json_decode
 from odin.adapters.adapter import ApiAdapter, ApiAdapterResponse, request_types, response_types
 from odin.adapters.parameter_tree import ParameterTree, ParameterTreeError
 
-from odin_pico.pico_5444d import P5444D
+from odin_pico.pico_controller import PicoController
 
 class PicoAdapter(ApiAdapter):
 
@@ -88,11 +88,11 @@ class PicoManager():
 
         self.lock = threading.Lock()
 
-        self.pico_device = P5444D(self.lock)
+        self.pico_instance = PicoController(self.lock,0)
 
         self.param_tree = ParameterTree({
             'test': (lambda: "test_string", None),
-            'device': self.pico_device.pico_param_tree
+            'device': self.pico_instance.pico_param_tree
         })  
  
         """ Setting inital values for variables"""
@@ -122,7 +122,7 @@ class PicoManager():
 
         logging.debug("Cleanup function called!")
         self.stop_background_task()
-        self.pico_device.cleanup()
+        self.pico_instance.cleanup()
         
     def start_background_task(self):
         """ Changes the value of the enable variable to True and calls the 
@@ -139,7 +139,7 @@ class PicoManager():
     def background_task(self):
 
         while self.background_task_enable:
-            self.pico_device.update_poll()                    
+            self.pico_instance.update_poll()                    
 
             #Controls the speed of the background task calls
             time.sleep(1)

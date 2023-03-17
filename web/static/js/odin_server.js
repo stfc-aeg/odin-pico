@@ -22,7 +22,7 @@ function run_sync(){
 function sync_with_adapter(){
     return function(response){
         if (page_not_loaded == true){
-            $("#bit-mode-dropdown").val(response.device.connection.resolution)
+            $("#bit-mode-dropdown").val(response.device.settings.resolution)
             $("#time-base-input").val(response.device.settings.timebase)
 
             document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)
@@ -63,169 +63,56 @@ function sync_with_adapter(){
             $("#capture-count").val(response.device.settings.capture.n_captures)
             page_not_loaded = false;
         }      
-
-        if (response.device.connection.resolution && ((response.device.connection.connect) == -1)){
-            disable_id("connect_butt",false)
-            //document.getElementById("connect_butt").disabled = false;
-        }
-        if (response.device.status.openunit == 0){
-            //Disable 1st setup panel
-            $("#status_con_attempt").html("True");
-            disable_setup_1(true);
-            document.getElementById("setup-1").className ="panel panel-success" 
- 
-            // Enable 2nd setup panel
-            disable_setup_2(false); 
-            document.getElementById("setup-2").className ="panel panel-danger"
-
-        } else {
-            $("#status_con_attempt").html("False");
-            disable_id("bit-mode-dropdown",false);
-            document.getElementById("setup-1").className ="panel panel-danger"
-
-            disable_setup_2(true);
-            document.getElementById("setup-2").className ="panel panel-default"
-        }
-        if (response.device.status.pico_setup_verify == 0 && response.device.status.openunit == 0){
+        if (response.device.status.pico_setup_verify == 0){
             document.getElementById("pico-setup-row").className="success"
-            disable_id("commit_chan_active_butt",false);  
-        }
-        if (response.device.status.pico_setup_verify == -1 && response.device.status.openunit == 0){
+        }else{
             document.getElementById("pico-setup-row").className="danger"
-            disable_id("commit_chan_active_butt",true);
         }
-        if (response.device.status.pico_setup_complete == 0){
-            disable_setup_2(true);
-            document.getElementById("setup-2").className ="panel panel-success"
 
             // Syncing channel setup panels
-            if (document.getElementById("channel-a-active").checked){
-                disable_setup_3_chan("a",false);
-                if (response.device.settings.channels.a.verified == true){
-                    document.getElementById("channel-a-set").className ="success"
-                    } else{
-                        document.getElementById("channel-a-set").className ="danger"
-                    }
-            }
-            if (document.getElementById("channel-b-active").checked){
-                disable_setup_3_chan("b",false);
-                if (response.device.settings.channels.b.verified == true){
-                    document.getElementById("channel-b-set").className ="success"
-                    } else{
-                        document.getElementById("channel-b-set").className ="danger";
-                    }
-            }
-            if (document.getElementById("channel-c-active").checked){
-                disable_setup_3_chan("c",false);
-                if (response.device.settings.channels.c.verified == true){
-                    document.getElementById("channel-c-set").className ="success";
-                    } else{
-                        document.getElementById("channel-c-set").className ="danger";
-                    }
-            }
-            if (document.getElementById("channel-d-active").checked){
-                disable_setup_3_chan("d",false);
-                if (response.device.settings.channels.d.verified == true){
-                document.getElementById("channel-d-set").className ="success";
+            if (response.device.settings.channels.a.verified == true){
+                document.getElementById("channel-a-set").className ="success"
                 } else{
-                    document.getElementById("channel-d-set").className ="danger";
+                    document.getElementById("channel-a-set").className ="danger"
                 }
-            }
-            if (response.device.status.channel_setup_verify == 0){
-                disable_id("commit_chan_setting_butt",false);
-            } else {
-                disable_id("commit_chan_setting_butt",true);
+            
+
+            if (response.device.settings.channels.b.verified == true){
+                document.getElementById("channel-b-set").className ="success"
+                } else{
+                    document.getElementById("channel-b-set").className ="danger";
+                }
+            
+
+            if (response.device.settings.channels.c.verified == true){
+                document.getElementById("channel-c-set").className ="success";
+                } else{
+                    document.getElementById("channel-c-set").className ="danger";
+                }
+
+            if (response.device.settings.channels.d.verified == true){
+            document.getElementById("channel-d-set").className ="success";
+            } else{
+                document.getElementById("channel-d-set").className ="danger";
             }
 
-            if (response.device.status.channel_setup_complete == 0 && response.device.status.pico_setup_complete == 0){
-                document.getElementById("setup-3").className="panel panel-success"
-                disable_setup_3(true);
-            }
-            if (response.device.status.channel_setup_complete == -1 && response.device.status.pico_setup_complete == 0){
-                document.getElementById("setup-3").className="panel panel-danger"
-            }
 
-            } else {
-                disable_setup_3(true);
-            }
-
-            if (response.device.status.channel_setup_complete == 0 && response.device.status.channel_trigger_complete == -1){
-                disable_setup_4(false);
-                document.getElementById("setup-4").className="panel panel-danger"
-                if (response.device.status.channel_trigger_verify == 0){
-                    document.getElementById("trigger-row1").className ="success";
-                    document.getElementById("trigger-row2").className ="success";
-                    disable_id("trigger-commit-butt",false);
-
-                    } else{
-                        document.getElementById("trigger-row1").className ="danger";
-                        document.getElementById("trigger-row2").className ="danger";
-                        disable_id("trigger-commit-butt",true);
-                    }
-            }
-            if (response.device.status.channel_setup_complete == 0 && response.device.status.channel_trigger_complete == 0){
-                disable_setup_4(true);
+            if (response.device.status.channel_trigger_verify == 0){
                 document.getElementById("trigger-row1").className ="success";
                 document.getElementById("trigger-row2").className ="success";
-                document.getElementById("setup-4").className="panel panel-success"
-                disable_setup_5(false);
-                document.getElementById("setup-5").className="panel panel-danger"
-                if (response.device.status.capture_settings_verify == 0){
-                document.getElementById("capture-row").className ="success";
-                disable_id("capture_butt",false)
-                } else {
-                    document.getElementById("capture-row").className ="danger";
-                    disable_id("capture_butt",true)
+
+                } else{
+                    document.getElementById("trigger-row1").className ="danger";
+                    document.getElementById("trigger-row2").className ="danger";
                 }
+
+
+            if (response.device.status.capture_settings_verify == 0){
+            document.getElementById("capture-row").className ="success";
+            } else {
+                document.getElementById("capture-row").className ="danger";
+
             }
-
-            if (response.device.status.capture_settings_complete == 0){
-                disable_setup_5(true);
-                document.getElementById("setup-5").className="panel panel-success"
-
-            }
-    }
-}
-
-function disable_setup_1(bool){
-    id_list = ["bit-mode-dropdown","connect_butt"]
-    for (let x in id_list){
-        document.getElementById(id_list[x]).disabled = bool;
-    }
-}
-
-function disable_setup_2(bool){
-    id_list = ["time-base-input","channel-checkboxes","commit_chan_active_butt"]
-    for (let x in id_list){
-        document.getElementById(id_list[x]).disabled = bool;
-    }
-}
-
-function disable_setup_3(bool){
-    disable_setup_3_chan("a",bool);
-    disable_setup_3_chan("b",bool);
-    disable_setup_3_chan("c",bool);
-    disable_setup_3_chan("d",bool);
-    disable_id("commit_chan_setting_butt",bool);
-}
-function disable_setup_3_chan(chan, bool){
-    id_list = ['channel-'+chan+'-coupl','channel-'+chan+'-range','channel-'+chan+'-offset']
-    for (let x in id_list){
-        document.getElementById(id_list[x]).disabled = bool;
-    }
-}
-
-function disable_setup_4(bool){
-    id_list = ["trigger-enable","trigger-source","trigger-direction","trigger-threshold","trigger-delay","trigger-auto","trigger-commit-butt"]
-    for (let x in id_list){
-        document.getElementById(id_list[x]).disabled = bool;
-    }
-}
-
-function disable_setup_5(bool){
-    id_list = ["capture-pretrig-samples","capture-posttrig-samples","capture-count","capture_butt"]
-    for (let x in id_list){
-        document.getElementById(id_list[x]).disabled = bool;
     }
 }
 
@@ -233,34 +120,11 @@ function disable_id(id,bool){
     document.getElementById(id).disabled = bool;
 }
 
-function printinfo(id){
-    console.log(document.getElementById(id).value)
+function run_pico_command(){
+    var value = 0
+    ajax_put('commands/','run_capture',value)
 }
 
-function connect_to_picoscope(){
-    var value = 0
-    ajax_put('connection/','connect',value)
-}
-
-function complete_channels_defined(){
-    var value = 0
-    ajax_put('status/','pico_setup_complete',value)
-}
-
-function complete_channel_settings(){
-    var value = 0
-    ajax_put('status/','channel_setup_complete',value)
-}
-
-function complete_trigger_settings(){
-    var value = 0
-    ajax_put('status/','channel_trigger_complete',value)
-}
-
-function complete_capture_settings(){
-    var value = 0
-    ajax_put('status/','capture_settings_complete',value)
-}
 
 
 

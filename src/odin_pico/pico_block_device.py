@@ -6,47 +6,68 @@ import h5py
 from picosdk.ps5000a import ps5000a as ps
 from picosdk.functions import adc2mV, assert_pico_ok, mV2adc
 
-class PicoFunctions():
+class PicoBlockDevice():
     def __init__(self, handle):
         self.handle = ctypes.c_int16(handle)
         self.max_adc = ctypes.c_int16()
-
-
-        # Variables below probably to be removed as functions class changed
-        self.status = {}
-        
+        self.max_samples = ctypes.c_int32()
         self.active_channels = []
         self.channel_buffers = []
-
-        self.max_samples = ctypes.c_int32()
-
-        #self.res = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"]
-        #print(self.res)
-        self.max_adc = ctypes.c_int16()
-
-        self.timebase = None
-
-        self.time_interval_actual = ctypes.c_float()
-        self.returnedMaxSamples = ctypes.c_int32()
-
+        self.status = {}
         self.overflow = ctypes.c_int16()
-
         self.ready = ctypes.c_int16(0)
         self.check = ctypes.c_int16(0)
 
-        #self.Times = (ctypes.c_int64*self.n_segments)()
-        #self.TimeUnits = ctypes.c_char()
+        # Initalise set of dictionaries that obtain their keys from using the PicoSDK built in make_enum function
+        # To return valid keys for the picoscope values
+        self.ps_resolution = {ps.PS5000A_DEVICE_RESOLUTION[val] : val for val in [
+            "PS5000A_DR_8BIT",
+            "PS5000A_DR_12BIT"
+        ]}
 
-        self.start_time = None
-        self.end_time = None
+        self.ps_coupling = {ps.PS5000A_COUPLING[val] : val for val in [
+            "PS5000A_AC",
+            "PS5000A_DC"
+        ]}
 
-        self.TriggerInfo = None
+        self.ps_channel = {ps.PS5000A_CHANNEL[val] : val for val in [
+            "PS5000A_CHANNEL_A",
+            "PS5000A_CHANNEL_B",
+            "PS5000A_CHANNEL_C",
+            "PS5000A_CHANNEL_D",
+        ]}
 
-        #self.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(self.handle), None, self.res)
+        self.ps_direction = {ps.PS5000A_THRESHOLD_DIRECTION[val] : val for val in [
+            "PS5000A_ABOVE",
+            "PS5000A_BELOW",
+            "PS5000A_RISING",
+            "PS5000A_FALLING",
+            "PS5000A_RISING_OR_FALLING"
+        ]}
 
+        self.ps_range = {ps.PS5000A_RANGE[val] : val for val in [
+            "PS5000A_10MV",
+            "PS5000A_20MV",
+            "PS5000A_50MV",
+            "PS5000A_100MV",
+            "PS5000A_200MV",
+            "PS5000A_500MV",
+            "PS5000A_1V",
+            "PS5000A_2V",
+            "PS5000A_5V",
+            "PS5000A_10V",
+            "PS5000A_20V",
+        ]}
 
-        # self.status["MemorySegments"] = ps.ps5000aMemorySegments(self.handle, self.n_segments, ctypes.byref(self.cmaxSamples))
-        # self.status["SetNoOfCaptures"] = ps.ps5000aSetNoOfCaptures(self.handle, self.n_captures)
+        self.trigger_dicts = {
+            "source":self.ps_channel,
+            "direction":self.ps_direction
+        }
+
+        self.channel_dicts = {
+            "coupling":self.ps_coupling,
+            "range":self.ps_range
+        }
     
     def open_unit(self,res):
         self.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(self.handle), None, res)
@@ -94,21 +115,12 @@ class PicoFunctions():
         self.generate_buffers(captures,self.max_samples)
         self.status["MemorySegments"] = ps.ps5000aMemorySegments(self.handle, captures, ctypes.byref(self.max_samples))
         self.status["SetNoOfCaptures"] = ps.ps5000aSetNoOfCaptures(self.handle, captures)
-        #self.status["GetTimebase"] = ps.ps5000aGetTimebase2(self.handle, timebase, self.max_samples, ctypes.byref(self.time_interval_actual), ctypes.byref(self.returnedMaxSamples), 0)
         self.status["runblock"] = ps.ps5000aRunBlock(self.handle, pre_trig_samples, post_trig_samples, timebase, None, 0, None, None)
         while self.ready.value == self.check.value:
             self.status["isReady"] = ps.ps5000aIsReady(self.handle, ctypes.byref(self.ready))
         self.status["GetValuesBulk"] = ps.ps5000aGetValuesBulk(self.handle, ctypes.byref(self.max_samples), 0, (captures-1), 0, 0, ctypes.byref(self.overflow))
         print("finsihed capture")
         self.write_to_file()
-
-    # def run_block(self):
-    #     self.status["GetTimebase"] = ps.ps5000aGetTimebase2(self.handle, self.timebase, self.maxsamples, ctypes.byref(self.time_interval_actual), ctypes.byref(self.returnedMaxSamples), 0)
-    #     self.status["runblock"] = ps.ps5000aRunBlock(self.handle, self.preTriggerSamples, self.postTriggerSamples, self.timebase, None, 0, None, None)
-    #     while self.ready.value == self.check.value:
-    #         self.status["isReady"] = ps.ps5000aIsReady(self.handle, ctypes.byref(self.ready))
-    #     self.status["GetValuesBulk"] = ps.ps5000aGetValuesBulk(self.handle, ctypes.byref(self.cmaxSamples), 0, (self.n_segments-1), 0, 0, ctypes.byref(self.overflow))
-    #     self.end_time = time.time()
 
     def stop_scope(self):
         self.status["stop"] = ps.ps5000aStop(self.handle)
@@ -132,7 +144,7 @@ class PicoFunctions():
         # - maxsamples (can probably be gotten from the length of the dataset once reading the file and doesnt need to be saved)
         
         metadata = {
-            #'time_interval_actual': self.time_interval_actual,
+
             #'max_adc': self.max_adc,
             'active_channels': self.active_channels[:],
             #'channel_ranges': self.channel_ranges[:]
@@ -145,3 +157,20 @@ class PicoFunctions():
 
             for c,b in zip(self.active_channels,self.channel_buffers):
                 f.create_dataset(('adc_counts_'+str(c)), data = b)
+
+        self.stop_scope()
+
+    def stop_scope(self):
+        self.status["stop"] = ps.ps5000aStop(self.handle)
+        self.status["close"] = ps.ps5000aCloseUnit(self.handle)
+# pbd = PicoBlockDevice(0)
+
+# key = "direction"
+# value = 3
+
+# print(key in pbd.trigger_dicts)
+
+# if key in pbd.trigger_dicts:
+#     if value in pbd.trigger_dicts[key]:
+#         print(pbd.trigger_dicts[key][value])
+
