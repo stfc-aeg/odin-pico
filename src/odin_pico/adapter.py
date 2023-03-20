@@ -75,7 +75,6 @@ class PicoAdapter(ApiAdapter):
 
         self.picomanager.cleanup()    
 
-
 class PicoManagerError(Exception):
     pass
 
@@ -92,7 +91,8 @@ class PicoManager():
 
         self.param_tree = ParameterTree({
             'test': (lambda: "test_string", None),
-            'device': self.pico_instance.pico_param_tree
+            'device': self.pico_instance.pico_param_tree,
+            'streaming_data': self.pico_instance.pico_streaming_data
         })  
  
         """ Setting inital values for variables"""

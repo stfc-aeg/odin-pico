@@ -18,13 +18,15 @@ from odin_pico.pico_block_device import PicoBlockDevice
 from odin_pico.pico_util import PicoUtil 
 
 class PicoController():
-    executor = futures.ThreadPoolExecutor(max_workers=1)
+    executor = futures.ThreadPoolExecutor(max_workers=2)
 
     def __init__(self,lock,handle):
-        self.handle = ctypes.c_int16(handle)
-        self.pico_block_device = PicoBlockDevice(np.int16(self.handle))
+        self.handle = handle
+        self.pico_block_device = PicoBlockDevice(self.handle)
         self.pico_util = PicoUtil()
         self.lock = lock
+
+        self.streaming_buffer = None
 
         self.resolution = 0
         self.timebase = 0
@@ -95,6 +97,10 @@ class PicoController():
             'settings': pico_settings
         })
 
+        self.pico_streaming_data = ParameterTree ({
+            'recent_data_array' : self.streaming_buffer
+        })
+
         self.verify_chain()
 
     # Return function for channel parameters to avoid late binding issues
@@ -121,7 +127,6 @@ class PicoController():
         else:
             self.trigger[key] = value
         self.verify_chain()
-        # call verify chain
 
     def set_channel_value(self, channel, key, value):
         if key in self.pico_block_device.channel_dicts:
@@ -142,29 +147,48 @@ class PicoController():
         self.status["capture_settings_verify"] = self.pico_util.verify_capture(self.capture)
     
     @run_on_executor
-    def run_capture(self):
-        # Set channels up
-        if self.status["openunit"] == -1:
-            self.status["openunit"] = self.pico_block_device.open_unit(self.resolution)
-        for channel in self.channels:
-            chan = self.channels[channel]
-            self.pico_block_device.set_channel("channel_"+(str(chan["channel_id"])),chan["channel_id"],chan["active"],
-                                  chan["coupling"],chan["range"],chan["offset"])
-        
-        # Set trigger 
-        trig = self.trigger
-        ps_channels = {0:'a',1:'b',2:'c',3:'d'}
-        range = self.channels[ps_channels[trig["source"]]]["range"]
-        self.pico_block_device.set_simple_trigger(trig["source"],range,trig["threshold"])
+    def run_capture(self,ignore):
+        capture_instance = PicoBlockDevice(self.handle)
+        s = self.status
+        error_count = 0
+        close = None
+        status_list = [s["pico_setup_verify"],s["channel_setup_verify"],s["channel_trigger_verify"],s["capture_settings_verify"]]
+        for status in status_list:
+            if status != 0:
+                error_count += 1
 
-        # Run Block command
-        cap = self.capture
-        self.pico_block_device.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
+        if ((error_count == 0) and (s["openunit"]  == -1)):
+            logging.debug("Settings verified, running capture")
+            # Set channels up
+            if self.status["openunit"] == -1:
+                self.status["openunit"] = capture_instance.open_unit(self.resolution)
+            for channel in self.channels:
+                chan = self.channels[channel]
+                capture_instance.set_channel("channel_"+(str(chan["channel_id"])),chan["channel_id"],chan["active"],
+                                    chan["coupling"],chan["range"],chan["offset"])
+            
+            # Set trigger 
+            trig = self.trigger
+            ps_channels = {0:'a',1:'b',2:'c',3:'d'}
+            range = self.channels[ps_channels[trig["source"]]]["range"]
+            capture_instance.set_simple_trigger(trig["source"],range,trig["threshold"])
+
+            # Run Block command
+            cap = self.capture
+
+            capture_instance.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
+            close = capture_instance.stop_scope()
+            print(f'Close return status: {close}')
+        else:
+            logging.debug(f'{error_count} settings have issues, not running capture')
+        
+        if close == 0:
+            self.status["openunit"] = -1
+        logging.debug(f'Close status = {close} | openunit = {self.status["openunit"]}')
 
     def update_poll(self):
         pass
 
     def cleanup(self):
         logging.debug("Stoping picoscope services and closing device")
-        self.stop_status = ps.ps5000aStop(self.handle)
-        self.close_status = ps.ps5000aCloseUnit(self.handle)
+        self.pico_block_device.stop_scope()

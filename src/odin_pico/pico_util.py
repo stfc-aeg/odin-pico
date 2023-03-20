@@ -138,26 +138,19 @@ class PicoUtil():
         
     def verify_trigger(self,channels,trigger):
         source_channel_info = channels[self.ps_channels[trigger["source"]]]
-
         if not(source_channel_info["active"]):
-            #print(f'Active?: {source_channel_info["active"]} notActive: {not(source_channel_info["active"])} returning -1 from Active ')
             return -1 
         if (trigger["threshold"] > self.get_range_value_mv(source_channel_info["range"])):
-            #print("returning -1 from Threshold " )
             return -1
         if not(trigger["delay"] >= 0 and trigger["delay"] <= 4294967295):
-            #print("returning -1 from Delay " )
             return -1
         if not(trigger["auto_trigger_ms"] >= 0 and trigger["auto_trigger_ms"] <= 32767):
-            #print("returning -1 from Auto_trigger " )
             return -1
         return 0 
     
     def verify_capture(self, capture):
         total_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
-        print(f'Total samples: {total_samples}')
         if (total_samples < 1):
-            print(f'Returning -1 in ')
             return -1
         if (capture["n_captures"] <= 0):
             return -1

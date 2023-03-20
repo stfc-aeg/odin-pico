@@ -1,4 +1,6 @@
 import ctypes
+from datetime import datetime
+import logging
 import time
 import numpy as np
 import h5py
@@ -17,6 +19,7 @@ class PicoBlockDevice():
         self.overflow = ctypes.c_int16()
         self.ready = ctypes.c_int16(0)
         self.check = ctypes.c_int16(0)
+        self.current_filename = "'/tmp/data.hdf5"
 
         # Initalise set of dictionaries that obtain their keys from using the PicoSDK built in make_enum function
         # To return valid keys for the picoscope values
@@ -72,67 +75,69 @@ class PicoBlockDevice():
     def open_unit(self,res):
         self.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(self.handle), None, res)
         self.status["maximumValue"] = ps.ps5000aMaximumValue(self.handle, ctypes.byref(self.max_adc))
-        print("open unit from functions.py: ",self.status["openunit"])
         return self.status["openunit"]
     
     def set_channel(self,status_string, channel, en, coupling, range, offset):
-        ### Change adapter to store 1/0 instead of true false
+        ### Change adapter to store 1/0 instead of true false ?
         enable = None
         if en == True:
             enable = 1
         if en == False:
             enable = 0
 
-        #ps_channel = ps.PS5000A_CHANNEL[channel]
-        ps_coupling = ps.PS5000A_COUPLING[coupling]
-        ps_range = ps.PS5000A_RANGE[range]
-
-        self.status[status_string] = ps.ps5000aSetChannel(self.handle, channel, enable, ps_coupling, ps_range, offset)
-        print(self.status[status_string])
+        self.status[status_string] = ps.ps5000aSetChannel(self.handle, channel, enable, coupling, range, offset)
+        print(f'Set channel status of {status_string} = {self.status[status_string]}, values to : {self.handle, channel, enable, coupling, range, offset} ')
 
         if enable == 1:
             self.active_channels.append(channel)
 
     def set_simple_trigger(self, source, range, threshold_mv,):
-        threshold = int(mV2adc(threshold_mv,(ps.PS5000A_RANGE[range]),self.max_adc))
+        threshold = int(mV2adc(threshold_mv,range,self.max_adc))
         self.status["trigger"] = ps.ps5000aSetSimpleTrigger(self.handle, 1, source, threshold, 2, 0, 1000)
-        print("trigger_status :",self.status["trigger"])
 
-    def generate_buffers(self,captures,max_samples):
+    def generate_buffers(self,captures):
         for i in range(len(self.active_channels)):
-            self.channel_buffers.append(np.empty((captures,np.int32(max_samples)),dtype=np.int16))
+            self.channel_buffers.append(np.zeros(shape=(captures,np.int32(self.max_samples)),dtype=np.int16))
 
         for c,b in zip(self.active_channels,self.channel_buffers):
-            print(f'Channel {c}')
             for i in range(len(b)):
                 buffer = b[i]
-                self.status[f"SetDataBuffer_{c}_{i}"] = ps.ps5000aSetDataBuffer(self.handle, c, buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), max_samples, i, 0)
-        print(len(self.channel_buffers))
+                self.status[f"SetDataBuffer_{c}_{i}"] = ps.ps5000aSetDataBuffer(self.handle, c, buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), self.max_samples, i, 0)
+
+        # Attempt at fixing status code 13
+
+        # print(f'Active channels:{self.active_channels} | Number of captures:{captures} | total Samples per capture:{max_samples} ')
+
+        # for chan in range(len(self.active_channels)):
+        #     self.channel_buffers.append(np.empty((captures,np.int32(max_samples)),dtype=np.int16))
+        #     print(f'Generated buffer holding np.array for {chan} : {self.channel_buffers[chan]}')
+
+        #     for buff in range(len(self.channel_buffers)):
+        #         cur_buff = self.channel_buffers[buff]
+        #         self.status[f'set_data_buffer_{chan}_{buff}'] = ps.ps5000aSetDataBuffer(self.handle, chan, cur_buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), max_samples, buff, 0)
+
 
     def run_block(self,timebase,pre_trig_samples,post_trig_samples,captures):
+        self.current_filename = (('/tmp/')+(str(datetime.now())).replace(' ','_')+'.hdf5')
         self.max_samples = ctypes.c_int32(pre_trig_samples + post_trig_samples)
+        samples_per_seg = ctypes.c_int32(0)
         self.overflow = (ctypes.c_int16 * captures)()
-        self.generate_buffers(captures,self.max_samples)
-        self.status["MemorySegments"] = ps.ps5000aMemorySegments(self.handle, captures, ctypes.byref(self.max_samples))
+
+        self.status["MemorySegments"] = ps.ps5000aMemorySegments(self.handle, captures, ctypes.byref(samples_per_seg))
         self.status["SetNoOfCaptures"] = ps.ps5000aSetNoOfCaptures(self.handle, captures)
+        self.generate_buffers(captures)
         self.status["runblock"] = ps.ps5000aRunBlock(self.handle, pre_trig_samples, post_trig_samples, timebase, None, 0, None, None)
+
         while self.ready.value == self.check.value:
             self.status["isReady"] = ps.ps5000aIsReady(self.handle, ctypes.byref(self.ready))
         self.status["GetValuesBulk"] = ps.ps5000aGetValuesBulk(self.handle, ctypes.byref(self.max_samples), 0, (captures-1), 0, 0, ctypes.byref(self.overflow))
-        print("finsihed capture")
+
         self.write_to_file()
 
     def stop_scope(self):
         self.status["stop"] = ps.ps5000aStop(self.handle)
         self.status["close"] = ps.ps5000aCloseUnit(self.handle)
-
-    def run_capture(self):
-        pass
-        # self.start_time = time.time()
-        # self.generate_buffers()
-        # self.run_block()
-        # self.stop_scope()
-
+        return self.status["close"]
 
     def write_to_file(self):
 
@@ -150,27 +155,20 @@ class PicoBlockDevice():
             #'channel_ranges': self.channel_ranges[:]
         }
 
-        with h5py.File('/tmp/data.hdf5','w') as f:
+        with h5py.File(self.current_filename,'w') as f:
             metadata_group = f.create_group('metadata')
             for key, value in metadata.items():
                 metadata_group.attrs[key] = value
 
             for c,b in zip(self.active_channels,self.channel_buffers):
-                f.create_dataset(('adc_counts_'+str(c)), data = b)
 
-        self.stop_scope()
+                f.create_dataset(('adc_counts_'+str(c)), data = b)
+                print(f'Creating dataset: adc_counts_{str(c)} with data : {b}')
+
+        logging.debug(f'File writing complete')
 
     def stop_scope(self):
         self.status["stop"] = ps.ps5000aStop(self.handle)
         self.status["close"] = ps.ps5000aCloseUnit(self.handle)
-# pbd = PicoBlockDevice(0)
-
-# key = "direction"
-# value = 3
-
-# print(key in pbd.trigger_dicts)
-
-# if key in pbd.trigger_dicts:
-#     if value in pbd.trigger_dicts[key]:
-#         print(pbd.trigger_dicts[key][value])
+        return self.status["close"]
 
