@@ -15,18 +15,24 @@ from picosdk.ps5000a import ps5000a as ps
 from picosdk.functions import adc2mV, assert_pico_ok, mV2adc
 
 from odin_pico.pico_block_device import PicoBlockDevice
+from odin_pico.pico_liveview_device import PicoLiveView
 from odin_pico.pico_util import PicoUtil 
 
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
     def __init__(self,lock,handle):
+        self.live_capture_running = False
+
         self.handle = handle
         self.pico_block_device = PicoBlockDevice(self.handle)
         self.pico_util = PicoUtil()
         self.lock = lock
 
-        self.streaming_buffer = None
+        self.streaming_buffer = []
+        self.streaming_buffer.append(np.zeros(10000,dtype='int16'))
+        self.test_view = PicoLiveView(self.handle,self.streaming_buffer,10000)
+
 
         self.resolution = 0
         self.timebase = 0
@@ -98,10 +104,18 @@ class PicoController():
         })
 
         self.pico_streaming_data = ParameterTree ({
-            'recent_data_array' : self.streaming_buffer
+            'recent_data_array' : (self.get_streaming_values, None)
         })
 
         self.verify_chain()
+
+        self.test_view.initalise_parameters()
+        
+
+
+
+    def get_streaming_values(self):
+        return (self.streaming_buffer[0][::10]).tolist()
 
     # Return function for channel parameters to avoid late binding issues
     def get_channel_value(self,channel,value):
@@ -158,27 +172,24 @@ class PicoController():
                 error_count += 1
 
         if ((error_count == 0) and (s["openunit"]  == -1)):
-            logging.debug("Settings verified, running capture")
-            # Set channels up
-            if self.status["openunit"] == -1:
-                self.status["openunit"] = capture_instance.open_unit(self.resolution)
-            for channel in self.channels:
-                chan = self.channels[channel]
-                capture_instance.set_channel("channel_"+(str(chan["channel_id"])),chan["channel_id"],chan["active"],
-                                    chan["coupling"],chan["range"],chan["offset"])
-            
-            # Set trigger 
-            trig = self.trigger
-            ps_channels = {0:'a',1:'b',2:'c',3:'d'}
-            range = self.channels[ps_channels[trig["source"]]]["range"]
-            capture_instance.set_simple_trigger(trig["source"],range,trig["threshold"])
+            with self.lock:
+                logging.debug("Settings verified, running capture")
+                if self.status["openunit"] == -1:
+                    self.status["openunit"] = capture_instance.open_unit(self.resolution)
+                for channel in self.channels:
+                    chan = self.channels[channel]
+                    capture_instance.set_channel("channel_"+(str(chan["channel_id"])),chan["channel_id"],chan["active"],
+                                        chan["coupling"],chan["range"],chan["offset"])
 
-            # Run Block command
-            cap = self.capture
+                trig = self.trigger
+                ps_channels = {0:'a',1:'b',2:'c',3:'d'}
+                range = self.channels[ps_channels[trig["source"]]]["range"]
+                capture_instance.set_simple_trigger(trig["source"],range,trig["threshold"]) #Make trigger take direction/delay/auto_trigger
 
-            capture_instance.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
-            close = capture_instance.stop_scope()
-            print(f'Close return status: {close}')
+                cap = self.capture
+                capture_instance.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
+                close = capture_instance.stop_scope()
+                print(f'Close return status: {close}')
         else:
             logging.debug(f'{error_count} settings have issues, not running capture')
         
@@ -186,7 +197,19 @@ class PicoController():
             self.status["openunit"] = -1
         logging.debug(f'Close status = {close} | openunit = {self.status["openunit"]}')
 
+    def start_live_view(self):
+        self.live_capture_running = True
+
+    def stop_live_view(self):
+        pass
+
     def update_poll(self):
+        self.test_view.run_block()
+        logging.debug(f'')
+        # if self.live_capture_running:
+        #     with self.lock:
+
+        logging.debug(f'Current data in liveview : {self.streaming_buffer[0]} of length: {len(self.streaming_buffer[0])}')
         pass
 
     def cleanup(self):

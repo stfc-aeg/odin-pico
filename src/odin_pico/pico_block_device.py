@@ -19,7 +19,7 @@ class PicoBlockDevice():
         self.overflow = ctypes.c_int16()
         self.ready = ctypes.c_int16(0)
         self.check = ctypes.c_int16(0)
-        self.current_filename = "'/tmp/data.hdf5"
+        self.current_filename = "/tmp/data.hdf5"
 
         # Initalise set of dictionaries that obtain their keys from using the PicoSDK built in make_enum function
         # To return valid keys for the picoscope values
@@ -91,7 +91,7 @@ class PicoBlockDevice():
         if enable == 1:
             self.active_channels.append(channel)
 
-    def set_simple_trigger(self, source, range, threshold_mv,):
+    def set_simple_trigger(self, source, range, threshold_mv):
         threshold = int(mV2adc(threshold_mv,range,self.max_adc))
         self.status["trigger"] = ps.ps5000aSetSimpleTrigger(self.handle, 1, source, threshold, 2, 0, 1000)
 
@@ -133,11 +133,6 @@ class PicoBlockDevice():
         self.status["GetValuesBulk"] = ps.ps5000aGetValuesBulk(self.handle, ctypes.byref(self.max_samples), 0, (captures-1), 0, 0, ctypes.byref(self.overflow))
 
         self.write_to_file()
-
-    def stop_scope(self):
-        self.status["stop"] = ps.ps5000aStop(self.handle)
-        self.status["close"] = ps.ps5000aCloseUnit(self.handle)
-        return self.status["close"]
 
     def write_to_file(self):
 

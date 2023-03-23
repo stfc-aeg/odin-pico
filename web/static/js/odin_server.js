@@ -1,9 +1,16 @@
 api_version = '0.1';
 page_not_loaded = true;
+data_array = new Int16Array()
+var canvas = document.getElementById("canvas"), c = canvas.getContext("2d");
+canvas.width = "1510";
+canvas.height = "500";
+
+
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
+    generate_canvas();
 });
 
 //gets the most up to date api version
@@ -14,14 +21,47 @@ function update_api_version() {
     });
 }
 
+function generate_canvas(){
+    let pixelRatio, sizeOnScreen, segmentWidth;
+
+    c.fillStyle = "#181818";
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.strokeStyle = "#33ee55";
+    c.beginPath();
+    c.moveTo(0, canvas.height / 2);
+    c.lineTo(canvas.width, canvas.height / 2);
+    c.stroke();
+
+}
+
+const draw = () => {
+    
+    segmentWidth = canvas.width / (data_array.length);
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.beginPath();
+    c.moveTo(0, 0);
+    for (let i = 1; i < (data_array.length); i += 1) {
+        let x = i * segmentWidth;
+        let v = data_array[i] / 65335
+        let y = 250 - ((v * canvas.height) / 2) ;
+        c.lineTo(x , y);
+        //console.log(x,y)
+    }
+
+    c.lineTo(canvas.width, canvas.height / 2);
+    c.stroke();
+    requestAnimationFrame(draw);
+}
+
 function run_sync(){
-    $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
+    $.getJSON('/api/' + api_version + '/pico/', sync_with_adapter());
     setTimeout(run_sync, 500);
 }
 
 function sync_with_adapter(){
     return function(response){
         if (page_not_loaded == true){
+            
             $("#bit-mode-dropdown").val(response.device.settings.resolution)
             $("#time-base-input").val(response.device.settings.timebase)
 
@@ -62,7 +102,17 @@ function sync_with_adapter(){
             $("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)
             $("#capture-count").val(response.device.settings.capture.n_captures)
             page_not_loaded = false;
-        }      
+        }  
+         
+        
+        
+        data_array = response.streaming_data.recent_data_array
+        draw();
+
+        //console.log(data_array.length)
+
+
+
         if (response.device.status.pico_setup_verify == 0){
             document.getElementById("pico-setup-row").className="success"
         }else{
