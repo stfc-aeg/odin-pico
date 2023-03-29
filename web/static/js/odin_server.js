@@ -39,7 +39,7 @@ const draw = () => {
     segmentWidth = canvas.width / (data_array.length);
     c.fillRect(0, 0, canvas.width, canvas.height);
     c.beginPath();
-    c.moveTo(0, 0);
+    c.moveTo(0, 250);
     for (let i = 1; i < (data_array.length); i += 1) {
         let x = i * segmentWidth;
         let v = data_array[i] / 65335
@@ -50,7 +50,7 @@ const draw = () => {
 
     c.lineTo(canvas.width, canvas.height / 2);
     c.stroke();
-    requestAnimationFrame(draw);
+    //requestAnimationFrame(draw);
 }
 
 function run_sync(){
@@ -69,6 +69,7 @@ function sync_with_adapter(){
             document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)
             document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)
             document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)
+            document.getElementById("liveview-toggle").checked=(response.device.status.live_view_enabled)
 
             $("#channel-a-coupl").val(response.device.settings.channels.a.coupling)
             $("#channel-b-coupl").val(response.device.settings.channels.b.coupling)
@@ -109,7 +110,7 @@ function sync_with_adapter(){
         data_array = response.streaming_data.recent_data_array
         draw();
 
-        //console.log(data_array.length)
+        console.log(data_array.length)
 
 
 

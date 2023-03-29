@@ -22,7 +22,8 @@ class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
     def __init__(self,lock,handle):
-        self.live_capture_running = False
+        self.live_capture_setup = False
+        self.live_capture_enable = False
 
         self.handle = handle
         self.pico_block_device = PicoBlockDevice(self.handle)
@@ -30,8 +31,8 @@ class PicoController():
         self.lock = lock
 
         self.streaming_buffer = []
-        self.streaming_buffer.append(np.zeros(10000,dtype='int16'))
-        self.test_view = PicoLiveView(self.handle,self.streaming_buffer,10000)
+        self.streaming_buffer.append(np.zeros(800000,dtype='int16'))
+        self.test_view = PicoLiveView(self.handle,self.streaming_buffer,800000)
 
 
         self.resolution = 0
@@ -55,10 +56,13 @@ class PicoController():
             'channel_setup_verify': (lambda: self.status["channel_setup_verify"], None),
             'channel_trigger_verify': (lambda: self.status["channel_trigger_verify"], None),
             'capture_settings_verify': (lambda: self.status["capture_settings_verify"], None),
+            'live_view_enabled': (lambda: self.live_capture_enable, None),
+            'live_view_setup': (lambda: self.live_capture_setup, None)
         })
 
         pico_commands = ParameterTree ({
-            'run_capture': (lambda: self.connection_attempted, self.run_capture)
+            'run_capture': (lambda: self.connection_attempted, self.run_capture),
+            'enable_liveview': (lambda : self.live_capture_enable, self.set_enable_live_capture)
         })
 
         self.chan_params = {}
@@ -108,14 +112,10 @@ class PicoController():
         })
 
         self.verify_chain()
-
-        self.test_view.initalise_parameters()
-        
-
-
+        #self.test_view.initalise_parameters()
 
     def get_streaming_values(self):
-        return (self.streaming_buffer[0][::10]).tolist()
+        return (self.streaming_buffer[0][::1]).tolist()
 
     # Return function for channel parameters to avoid late binding issues
     def get_channel_value(self,channel,value):
@@ -129,6 +129,9 @@ class PicoController():
     def set_timebase(self, timebase):
         self.timebase = timebase
         self.verify_chain()
+
+    def set_enable_live_capture(self, enable):
+        self.live_capture_enable = enable
 
     def set_capture_value(self,key,value):
         self.capture[key] = value
@@ -162,56 +165,79 @@ class PicoController():
     
     @run_on_executor
     def run_capture(self,ignore):
-        capture_instance = PicoBlockDevice(self.handle)
-        s = self.status
-        error_count = 0
-        close = None
-        status_list = [s["pico_setup_verify"],s["channel_setup_verify"],s["channel_trigger_verify"],s["capture_settings_verify"]]
-        for status in status_list:
-            if status != 0:
-                error_count += 1
+        if self.live_capture_enable == False:
+            capture_instance = PicoBlockDevice(self.handle)
+            s = self.status
+            error_count = 0
+            close = None
+            status_list = [s["pico_setup_verify"],s["channel_setup_verify"],s["channel_trigger_verify"],s["capture_settings_verify"]]
+            for status in status_list:
+                if status != 0:
+                    error_count += 1
 
-        if ((error_count == 0) and (s["openunit"]  == -1)):
-            with self.lock:
-                logging.debug("Settings verified, running capture")
-                if self.status["openunit"] == -1:
-                    self.status["openunit"] = capture_instance.open_unit(self.resolution)
-                for channel in self.channels:
-                    chan = self.channels[channel]
-                    capture_instance.set_channel("channel_"+(str(chan["channel_id"])),chan["channel_id"],chan["active"],
-                                        chan["coupling"],chan["range"],chan["offset"])
+            if ((error_count == 0) and (s["openunit"]  == -1)):
+                with self.lock:
+                    logging.debug("Settings verified, running capture")
+                    if self.status["openunit"] == -1:
+                        self.status["openunit"] = capture_instance.open_unit(self.resolution)
+                    for channel in self.channels:
+                        chan = self.channels[channel]
+                        capture_instance.set_channel("channel_"+(str(chan["channel_id"])),chan["channel_id"],chan["active"],
+                                            chan["coupling"],chan["range"],chan["offset"])
 
-                trig = self.trigger
-                ps_channels = {0:'a',1:'b',2:'c',3:'d'}
-                range = self.channels[ps_channels[trig["source"]]]["range"]
-                capture_instance.set_simple_trigger(trig["source"],range,trig["threshold"]) #Make trigger take direction/delay/auto_trigger
-
-                cap = self.capture
-                capture_instance.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
-                close = capture_instance.stop_scope()
-                print(f'Close return status: {close}')
+                    trig = self.trigger
+                    ps_channels = {0:'a',1:'b',2:'c',3:'d'}
+                    range = self.channels[ps_channels[trig["source"]]]["range"]
+                    capture_instance.set_simple_trigger(trig["source"],range,trig["threshold"],trig["direction"],trig["delay"],trig["auto_trigger_ms"]) 
+                    
+                    cap = self.capture
+                    capture_instance.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
+                    close = capture_instance.stop_scope()
+                    print(f'Close return status: {close}')
+            else:
+                logging.debug(f'{error_count} settings have issues, not running capture')
+            
+            if close == 0:
+                self.status["openunit"] = -1
+            logging.debug(f'Close status = {close} | openunit = {self.status["openunit"]}')
         else:
-            logging.debug(f'{error_count} settings have issues, not running capture')
-        
-        if close == 0:
-            self.status["openunit"] = -1
-        logging.debug(f'Close status = {close} | openunit = {self.status["openunit"]}')
+            logging.debug(f'Live_capture is currently active, cannot connect to Pico')
 
-    def start_live_view(self):
-        self.live_capture_running = True
+    def live_view(self):
+        if self.live_capture_enable == True:
+            print(f'Live capture is enabled')
+            if ((self.live_capture_setup == False) and (self.status["openunit"] == -1)):
+                print(f'Live capture is not setup, and pico is not connected to')
+                self.live_capture_setup = self.test_view.initalise_parameters()
+            
+            if ((self.live_capture_setup == True) and (self.status["openunit"] == -1)):
+                print(f'Live capture is setup, running capture')
+                self.test_view.run_block()
 
-    def stop_live_view(self):
-        pass
+                #logging.debug(f'Current data in liveview : {self.streaming_buffer[0]} of length: {len(self.streaming_buffer[0])}')
+
+        if self.live_capture_enable == False:
+            print(f'Live capture is not enabled')
+            if self.live_capture_setup == True:
+                print(f'Pico was connected, stopping services')
+                close = self.test_view.stop_scope()
+                if close == 0:
+                    self.live_capture_setup = False
+
+
+        #if self.live_capture_setup ==
+
 
     def update_poll(self):
-        self.test_view.run_block()
+        self.live_view()
+        #self.test_view.run_block()
         logging.debug(f'')
         # if self.live_capture_running:
         #     with self.lock:
-
-        logging.debug(f'Current data in liveview : {self.streaming_buffer[0]} of length: {len(self.streaming_buffer[0])}')
-        pass
+        
+        
 
     def cleanup(self):
         logging.debug("Stoping picoscope services and closing device")
         self.pico_block_device.stop_scope()
+    

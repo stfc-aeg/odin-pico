@@ -374,8 +374,24 @@
                 </div>
 
                 <div role="tabpanel" class="tab-pane fade" id="two">
-                  <button class="btn btn-default" id="run_capture_butt" onclick="commit_int_adapter('capture-posttrig-samples','commands/','run_capture')" >Run Capture</button>
+                  <div class ="row">
+                    <div class="col-sm-6">
+                      <div>
+                        <label class = "switch-label" for = "liveview-toggle">
+                        <p>Enable Live-View</p>
+                        </label>
+                        <label class = "switch">                        
+                        <input class type="checkbox" onclick="commit_checked_adapter('liveview-toggle','commands/','enable_liveview')" id="liveview-toggle">
+                        <span class="slider"> </span>
+                        </label>                           
+                      </div>
+                    </div>
+                    <div class="col-sm-6">
+                      <button class="btn btn-default" id="run_capture_butt" onclick="commit_int_adapter('capture-posttrig-samples','commands/','run_capture')" >Run Capture</button>
+                    </div>
                   </div>
+
+                </div>
 
                   <div role="tabpanel" class="tab-pane fade" id="three">
                     <canvas id="canvas"></canvas>

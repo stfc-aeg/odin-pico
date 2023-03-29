@@ -11,7 +11,7 @@ from picosdk.functions import adc2mV, assert_pico_ok, mV2adc
 class PicoLiveView():
     def __init__(self, handle, buffer,buffer_size):
         self.resolution = 1
-        self.timebase = 50
+        self.timebase = 1
 
         self.handle = ctypes.c_int16(handle)
         self.max_adc = ctypes.c_int16()
@@ -24,7 +24,7 @@ class PicoLiveView():
         self.overflow = ctypes.c_int16()
         self.ready = ctypes.c_int16(0)
         self.check = ctypes.c_int16(0)
-        self.overflow = None
+        #self.overflow = None
 
         self.samples_per_seg = ctypes.c_int32(0)
     
@@ -65,25 +65,24 @@ class PicoLiveView():
         #self.status["set_trigger"] = self.set_simple_trigger(0,9,0,2,0,10)
         self.status["set_captures"] = self.set_captures(1)
         self.status["set_buffer"] = self.set_buffer(0,self.buffer,0)
+        return True
 
     def run_block(self):
-        print("running capture :)")
-        print(self.status)
+        #print("running capture :)")
+        #print(self.status)
         self.status["runblock"] = ps.ps5000aRunBlock(self.handle, 0, self.samples, self.timebase, None, 0, None, None)
 
-        print(f'Self.ready = {self.ready.value}')
+        #print(f'Self.ready = {self.ready.value}')
         while self.ready.value == self.check.value:
             self.status["isReady"] = ps.ps5000aIsReady(self.handle, ctypes.byref(self.ready))
-        print(f'Self.ready = {self.ready.value}')
-        #time.sleep(10)
-
+        #print(f'Self.ready = {self.ready.value}')
 
         self.status["GetValuesBulk"] = ps.ps5000aGetValuesBulk(self.handle, ctypes.byref(self.max_samples), 0, 0, 0, 0, ctypes.byref(self.overflow))
         self.ready = ctypes.c_int16(0)
 
-        print(f'Buffer contents {self.buffer}')
+        #print(f'Buffer contents {self.buffer}')
 
-        print("ran capture :)")
+        #print("ran capture :)")
         
 
     def stop_scope(self):

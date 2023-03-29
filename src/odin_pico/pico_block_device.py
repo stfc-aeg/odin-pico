@@ -91,9 +91,9 @@ class PicoBlockDevice():
         if enable == 1:
             self.active_channels.append(channel)
 
-    def set_simple_trigger(self, source, range, threshold_mv):
+    def set_simple_trigger(self, source, range, threshold_mv, direction, delay, auto_trigger):
         threshold = int(mV2adc(threshold_mv,range,self.max_adc))
-        self.status["trigger"] = ps.ps5000aSetSimpleTrigger(self.handle, 1, source, threshold, 2, 0, 1000)
+        self.status["trigger"] = ps.ps5000aSetSimpleTrigger(self.handle, 1, source, threshold, direction, delay, auto_trigger)
 
     def generate_buffers(self,captures):
         for i in range(len(self.active_channels)):
