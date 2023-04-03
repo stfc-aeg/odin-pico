@@ -37,7 +37,7 @@ class PicoBlockDevice():
             "PS5000A_CHANNEL_A",
             "PS5000A_CHANNEL_B",
             "PS5000A_CHANNEL_C",
-            "PS5000A_CHANNEL_D",
+            "PS5000A_CHANNEL_D"
         ]}
 
         self.ps_direction = {ps.PS5000A_THRESHOLD_DIRECTION[val] : val for val in [
@@ -59,7 +59,7 @@ class PicoBlockDevice():
             "PS5000A_2V",
             "PS5000A_5V",
             "PS5000A_10V",
-            "PS5000A_20V",
+            "PS5000A_20V"
         ]}
 
         self.trigger_dicts = {

@@ -115,7 +115,7 @@ class PicoController():
         #self.test_view.initalise_parameters()
 
     def get_streaming_values(self):
-        return (self.streaming_buffer[0][::1]).tolist()
+        return (self.streaming_buffer[0][::10]).tolist()
 
     # Return function for channel parameters to avoid late binding issues
     def get_channel_value(self,channel,value):
@@ -189,7 +189,7 @@ class PicoController():
                     ps_channels = {0:'a',1:'b',2:'c',3:'d'}
                     range = self.channels[ps_channels[trig["source"]]]["range"]
                     capture_instance.set_simple_trigger(trig["source"],range,trig["threshold"],trig["direction"],trig["delay"],trig["auto_trigger_ms"]) 
-                    
+
                     cap = self.capture
                     capture_instance.run_block(self.timebase,cap["pre_trig_samples"],cap["post_trig_samples"],cap["n_captures"])
                     close = capture_instance.stop_scope()
