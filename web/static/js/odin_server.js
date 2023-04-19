@@ -1,16 +1,9 @@
 api_version = '0.1';
 page_not_loaded = true;
-data_array = new Int16Array()
-var canvas = document.getElementById("canvas"), c = canvas.getContext("2d");
-canvas.width = "1510";
-canvas.height = "500";
-
-
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
-    generate_canvas();
 });
 
 //gets the most up to date api version
@@ -21,55 +14,21 @@ function update_api_version() {
     });
 }
 
-function generate_canvas(){
-    let pixelRatio, sizeOnScreen, segmentWidth;
-
-    c.fillStyle = "#181818";
-    c.fillRect(0, 0, canvas.width, canvas.height);
-    c.strokeStyle = "#33ee55";
-    c.beginPath();
-    c.moveTo(0, canvas.height / 2);
-    c.lineTo(canvas.width, canvas.height / 2);
-    c.stroke();
-
-}
-
-const draw = () => {
-    
-    segmentWidth = canvas.width / (data_array.length);
-    c.fillRect(0, 0, canvas.width, canvas.height);
-    c.beginPath();
-    c.moveTo(0, 250);
-    for (let i = 1; i < (data_array.length); i += 1) {
-        let x = i * segmentWidth;
-        let v = data_array[i] / 65335
-        let y = 250 - ((v * canvas.height) / 2) ;
-        c.lineTo(x , y);
-        //console.log(x,y)
-    }
-
-    c.lineTo(canvas.width, canvas.height / 2);
-    c.stroke();
-    //requestAnimationFrame(draw);
-}
-
 function run_sync(){
-    $.getJSON('/api/' + api_version + '/pico/', sync_with_adapter());
+    $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
     setTimeout(run_sync, 500);
 }
 
 function sync_with_adapter(){
     return function(response){
         if (page_not_loaded == true){
-            
-            $("#bit-mode-dropdown").val(response.device.settings.resolution)
-            $("#time-base-input").val(response.device.settings.timebase)
+            $("#bit-mode-dropdown").val(response.device.settings.mode.resolution)
+            $("#time-base-input").val(response.device.settings.mode.timebase)
 
             document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)
             document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)
             document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)
             document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)
-            document.getElementById("liveview-toggle").checked=(response.device.status.live_view_enabled)
 
             $("#channel-a-coupl").val(response.device.settings.channels.a.coupling)
             $("#channel-b-coupl").val(response.device.settings.channels.b.coupling)
@@ -103,17 +62,7 @@ function sync_with_adapter(){
             $("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)
             $("#capture-count").val(response.device.settings.capture.n_captures)
             page_not_loaded = false;
-        }  
-         
-        
-        
-        data_array = response.streaming_data.recent_data_array
-        draw();
-
-        console.log(data_array.length)
-
-
-
+        }      
         if (response.device.status.pico_setup_verify == 0){
             document.getElementById("pico-setup-row").className="success"
         }else{
@@ -211,18 +160,6 @@ function commit_float_adapter(id,path,key){
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
     ajax_put(path,key,checked)
-}
-
-function commit_timebase(id){
-    var input_box = (document.getElementById(id))
-    if (verify_int(id) === 1){
-        console.log("Input good")
-        ajax_put('settings/','timebase',parseInt(input_box.value))
-    } else{
-        ajax_put('settings/','timebase',null)
-        console.log("Input bad >:[")
-    }
-    //var input_box = (document.getElementById(id));
 }
 
 function verify_int(id){

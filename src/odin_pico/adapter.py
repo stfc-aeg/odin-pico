@@ -87,12 +87,11 @@ class PicoManager():
 
         self.lock = threading.Lock()
 
-        self.pico_instance = PicoController(self.lock,0)
+        self.pico_instance = PicoController(self.lock)
 
         self.param_tree = ParameterTree({
             'test': (lambda: "test_string", None),
-            'device': self.pico_instance.pico_param_tree,
-            'streaming_data': self.pico_instance.pico_streaming_data
+            'device': self.pico_instance.pico_param_tree
         })  
  
         """ Setting inital values for variables"""

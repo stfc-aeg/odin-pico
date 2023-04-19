@@ -17,8 +17,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
-        <div class="navbar-brand">ODIN-Server | Picoscope</div>
-        <p class="navbar-text" >Detected and loaded device: &nbsp;<span id=" ">&nbsp;</span></p>
+        <div class="navbar-brand">ODIN-Server | Picoscope</div> 
         </div>
       </div>
     </nav>
@@ -85,7 +84,7 @@
                             <tr class ="default" id= "pico-setup-row">
                               <th>
                                 <form>
-                                  <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings','resolution')">
+                                  <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
                                     <option value="" selected disable hidden> </option>
                                     <option value = "0">8 Bit Mode</option>
                                     <option value = "1">12 Bit Mode</option>
@@ -94,7 +93,7 @@
                               </th>
                               <th>
                                 <form>
-                                  <input id="time-base-input" type="text" oninput="commit_timebase('time-base-input')"/>
+                                  <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
                                 </form>
                               </th>
                               <th>

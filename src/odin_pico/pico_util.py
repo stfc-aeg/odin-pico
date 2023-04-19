@@ -4,8 +4,13 @@ import numpy as np
 
 
 class PicoUtil():
-
     def __init__(self):
+        ######
+        # Revisit to see if channels_names, channel_names_dict and ps_channels can be replaced with just ps_channels
+        self.channel_names = ['a', 'b', 'c', 'd']
+        self.channel_names_dict = {0:'a',1:'b',2:'c',3:'d'}
+        ######
+
         self.range_offsets = {
             0 : 0.25,
             1 : 0.25,
@@ -19,7 +24,59 @@ class PicoUtil():
             9 : 20,
             10 : 20
         }
-        self.ps_channels = {0:'a',1:'b',2:'c',3:'d'}
+
+        self.ps_resolution = {ps.PS5000A_DEVICE_RESOLUTION[val] : val for val in [
+            "PS5000A_DR_8BIT",
+            "PS5000A_DR_12BIT"
+        ]}
+
+        self.ps_coupling = {ps.PS5000A_COUPLING[val] : val for val in [
+            "PS5000A_AC",
+            "PS5000A_DC"
+        ]}
+
+        self.ps_channel = {ps.PS5000A_CHANNEL[val] : val for val in [
+            "PS5000A_CHANNEL_A",
+            "PS5000A_CHANNEL_B",
+            "PS5000A_CHANNEL_C",
+            "PS5000A_CHANNEL_D"
+        ]}
+
+        self.ps_direction = {ps.PS5000A_THRESHOLD_DIRECTION[val] : val for val in [
+            "PS5000A_ABOVE",
+            "PS5000A_BELOW",
+            "PS5000A_RISING",
+            "PS5000A_FALLING",
+            "PS5000A_RISING_OR_FALLING"
+        ]}
+
+        self.ps_range = {ps.PS5000A_RANGE[val] : val for val in [
+            "PS5000A_10MV",
+            "PS5000A_20MV",
+            "PS5000A_50MV",
+            "PS5000A_100MV",
+            "PS5000A_200MV",
+            "PS5000A_500MV",
+            "PS5000A_1V",
+            "PS5000A_2V",
+            "PS5000A_5V",
+            "PS5000A_10V",
+            "PS5000A_20V"
+        ]}
+
+        self.trigger_dicts = {
+            "source":self.ps_channel,
+            "direction":self.ps_direction
+        }
+
+        self.channel_dicts = {
+            "coupling":self.ps_coupling,
+            "range":self.ps_range
+        }
+        
+        self.mode_dicts = {
+            "resolution":self.ps_resolution
+        }
         
     def get_range_value_mv(self,key):
         range_values = {
@@ -38,6 +95,13 @@ class PicoUtil():
         if key in range_values:
             return range_values[key]
     
+    def set_mode_defaults(self):
+        mode = {
+            "handle" : ctypes.c_int16(0),
+            "resolution" : 0,
+            "timebase" : 0,
+        }
+        return mode
         
     def set_trigger_defaults(self):
         trigger = {
@@ -52,7 +116,11 @@ class PicoUtil():
 
     def set_status_defaults(self):
         status = {
-            "openunit": -1,
+            "open_unit": -1,
+            "stop": -1,
+            "close": -1,
+            "block_check": ctypes.c_int16(0),
+            "block_ready": ctypes.c_int16(0),
             "pico_setup_verify": -1,
             "pico_setup_complete": -1,
             "channel_setup_verify": -1,
@@ -61,8 +129,6 @@ class PicoUtil():
             "channel_trigger_complete": -1,
             "capture_settings_verify": -1,
             "capture_settings_complete": -1,
-            "stop": -1,
-            "close": -1
         }
         return status
     
@@ -85,33 +151,42 @@ class PicoUtil():
             "n_captures": 0
         }
         return capture
+
+    def set_meta_data_defaults(self):
+        meta_data = {
+            "max_adc": ctypes.c_int16(),
+            "max_samples": ctypes.c_int32(),
+            "total_cap_samples": ctypes.c_int32(),
+            "samples_per_seg": ctypes.c_int32(0)
+        }
+        return meta_data
     
-    def verify_channels_defined(self, channels, timebase, resolution):
+    def verify_channels_defined(self, channels, mode):
         channel_count = 0
         for chan in channels:
             if channels[chan]["active"] == True:
                 channel_count += 1
 
-        if resolution == 1:
-            if (timebase < 1):
+        if mode["resolution"] == 1:
+            if (mode["timebase"] < 1):
                 return -1
-            elif (timebase == 1 and channel_count >0 and channel_count <2):
+            elif (mode["timebase"] == 1 and channel_count >0 and channel_count <2):
                 return 0
-            elif (timebase == 2 and channel_count >0 and channel_count <3):
+            elif (mode["timebase"] == 2 and channel_count >0 and channel_count <3):
                 return 0
-            elif (timebase >= 3 and channel_count >0 and channel_count <=4):
+            elif (mode["timebase"] >= 3 and channel_count >0 and channel_count <=4):
                 return 0
             else:
                 return -1
             
-        if resolution == 0:
-            if (timebase < 0):
+        if mode["resolution"] == 0:
+            if (mode["timebase"] < 0):
                 return -1
-            elif (timebase == 0 and channel_count >0 and channel_count <2):
+            elif (mode["timebase"] == 0 and channel_count >0 and channel_count <2):
                 return 0 
-            elif (timebase == 1 and channel_count >0 and channel_count <3):
+            elif (mode["timebase"] == 1 and channel_count >0 and channel_count <3):
                 return 0
-            elif (timebase >= 2 and channel_count >0 and channel_count <=4):
+            elif (mode["timebase"] >= 2 and channel_count >0 and channel_count <=4):
                 return 0
             else:
                 return -1
@@ -137,7 +212,7 @@ class PicoUtil():
             return -1
         
     def verify_trigger(self,channels,trigger):
-        source_channel_info = channels[self.ps_channels[trigger["source"]]]
+        source_channel_info = channels[self.channel_names_dict[trigger["source"]]]
         if not(source_channel_info["active"]):
             return -1 
         if (trigger["threshold"] > self.get_range_value_mv(source_channel_info["range"])):
