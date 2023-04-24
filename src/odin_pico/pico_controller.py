@@ -16,6 +16,7 @@ from odin_pico.pico_config import DeviceConfig
 from odin_pico.pico_status import Status
 from odin_pico.pico_device import PicoDevice
 from odin_pico.buffer_manager import BufferManager
+from odin_pico.file_writer import FileWriter
 
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
@@ -27,6 +28,7 @@ class PicoController():
         self.dev_conf = DeviceConfig()
         self.pico_status = Status()
         self.buffer_manager = BufferManager(self.dev_conf)
+        self.file_writer = FileWriter(self.dev_conf,self.buffer_manager)
 
         self.pico = PicoDevice(self.dev_conf,self.pico_status,self.buffer_manager)
 
@@ -164,7 +166,7 @@ class PicoController():
         self.pico.set_trigger()
         self.pico.assign_buffers()
         self.pico.run_block()
-        self.buffer_manager.write()
+        self.file_writer.writeHDF5()
         self.pico.stop_scope()
 
     def update_poll(self):
