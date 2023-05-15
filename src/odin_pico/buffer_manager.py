@@ -12,9 +12,16 @@ class BufferManager():
         self.overflow = None
         self.active_channels = []
         self.channel_arrays = []
+        self.lv_active_channels = []
+        self.lv_channel_arrays = []
 
-    def generate_arrays(self):
-        self.overflow = (ctypes.c_int16 * self.dev_conf.capture["n_captures"])()
+    def generate_arrays(self, *args):
+        if args:
+            n_captures = args[0]
+        else:
+            n_captures = self.dev_conf.capture["n_captures"]
+
+        self.overflow = (ctypes.c_int16 * n_captures)()
         self.clear_arrays()
         for chan in self.dev_conf.channels:
             if (self.dev_conf.channels[chan]["active"] == True):
@@ -22,10 +29,9 @@ class BufferManager():
         
         samples=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
         for i in range(len(self.active_channels)):
-            self.channel_arrays.append(np.zeros(shape=(self.dev_conf.capture["n_captures"],samples), dtype=np.int16))
+            self.channel_arrays.append(np.zeros(shape=(n_captures,samples), dtype=np.int16))
 
     def plot(self):
-
         for c,b in zip(self.active_channels,self.channel_arrays):
             print(f'Channel {c}')
             for i in range(len(b)):
@@ -52,17 +58,17 @@ class BufferManager():
             for c,b in zip(self.active_channels,self.channel_arrays):
 
                 f.create_dataset(('adc_counts_'+str(c)), data = b)
-                print(f'Creating dataset: adc_counts_{str(c)} with data : {b}')              
+                print(f'Creating dataset: adc_counts_{str(c)} with data : {b}')
+
+    def save_lv_data(self):
+        self.lv_active_channels = self.active_channels
+        self.lv_channel_arrays = self.channel_arrays
 
     def clear_arrays(self):
-        print(f'Before pop:\nself.active_channels : {self.active_channels}\nself.channel_arrays : {self.channel_arrays} lengths: {(len(self.active_channels)),(len(self.channel_arrays))}')
         while (len(self.active_channels)) > 0:
             self.active_channels.pop()
         while (len(self.channel_arrays)) > 0:
             self.channel_arrays.pop()
-        print(f'After pop:\nself.active_channels : {self.active_channels}\nself.channel_arrays : {self.channel_arrays} lengths: {(len(self.active_channels)),(len(self.channel_arrays))}')
-
-
 
 
 

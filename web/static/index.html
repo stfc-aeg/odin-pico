@@ -32,13 +32,17 @@
               <thead>
                 <tr>
                   <th>Connection: </th>
-                  <th><span id="status_con_attempt"></span></th>
+                  <th><span id="connection_status"></span></th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <th>Test 3</th>
-                  <th>Test 4</th>
+                  <th>Capture Type:</th>
+                  <th><span id="cap_type_status">True</span></th>
+                </tr>
+                <tr>
+                  <th>Settings valid:</th>
+                  <th><span id="settings_status"></span></th>
                 </tr>
               </tbody>
             </table>
@@ -386,13 +390,20 @@
                       </div>
                     </div>
                     <div class="col-sm-6">
-                      <button class="btn btn-default" id="run_capture_butt" onclick="commit_int_adapter('capture-posttrig-samples','commands/','run_capture')" >Run Capture</button>
+                      <button class="btn btn-default" id="run_capture_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Run Capture</button>
                     </div>
                   </div>
 
                 </div>
 
                   <div role="tabpanel" class="tab-pane fade" id="three">
+                    <select id = "lv-source" onchange="commit_int_adapter('lv-source','live_view','preview_channel')"   >
+                      <option value="" selected disabled hidden> </option>
+                      <option value = "0" >Channel A</option> 
+                      <option value = "1" >Channel B</option>
+                      <option value = "2" >Channel C</option>
+                      <option value = "3" >Channel D</option>
+                    </select>
                     <canvas id="canvas"></canvas>
                   </div>
                 </div>

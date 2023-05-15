@@ -1,19 +1,15 @@
-""" Adapter for Odin Control to interface with a picoscope 5444D"""
+""" Top level Adapter for Odin Control to interface with a picoscope 5444D"""
 
-from concurrent.futures import thread
-
-import time
 import logging
 import threading
-from concurrent import futures
 
-from tornado.concurrent import run_on_executor
 from tornado.escape import json_decode
 
 from odin.adapters.adapter import ApiAdapter, ApiAdapterResponse, request_types, response_types
-from odin.adapters.parameter_tree import ParameterTree, ParameterTreeError
+from odin.adapters.parameter_tree import ParameterTreeError
 
-from odin_pico.pico_controller import PicoController
+from odin_pico.pico_controller import PicoController 
+from odin_pico.pico_controller import PicoControllerError
 
 class PicoAdapter(ApiAdapter):
 
@@ -21,13 +17,14 @@ class PicoAdapter(ApiAdapter):
 
         super(PicoAdapter, self).__init__(**kwargs)
 
-        background_task_enable = True#bool(self.options.get('background_task_enable'))
-        self.picomanager = PicoManager(background_task_enable)
+        self.lock = threading.Lock()
+        update_loop = True #bool(self.options.get('update_loop'))
+        self.pico_controller = PicoController(self.lock, update_loop)
 
     @response_types('application/json', default='application/json')
     def get(self, path, request):
         try:
-            response = self.picomanager.get(path)
+            response = self.pico_controller.get(path)
             status_code = 200
         except ParameterTreeError as e:
             response = {'error' : str(e)}
@@ -47,10 +44,10 @@ class PicoAdapter(ApiAdapter):
         try:
             data = json_decode(request.body)
             logging.debug(data)
-            self.picomanager.set(path, data)
-            response = self.picomanager.get(path)
+            self.pico_controller.set(path, data)
+            response = self.pico_controller.get(path)
             status_code = 200
-        except PicoManagerError as e:
+        except PicoControllerError as e:
             response = {'error': str(e)}
             status_code = 400
         except (TypeError, ValueError) as e:
@@ -73,73 +70,7 @@ class PicoAdapter(ApiAdapter):
     def cleanup(self):
         """Clean up adapter state at shutdown."""
 
-        self.picomanager.cleanup()    
+        self.pico_controller.cleanup()      
 
-class PicoManagerError(Exception):
-    pass
-
-class PicoManager():
-
-    executor = futures.ThreadPoolExecutor(max_workers=1)
-
-    def __init__(self, background_task_enable):
-        logging.debug("Created PicoAdapter and PicoManager successfuly")
-
-        self.lock = threading.Lock()
-
-        self.pico_instance = PicoController(self.lock)
-
-        self.param_tree = ParameterTree({
-            'test': (lambda: "test_string", None),
-            'device': self.pico_instance.pico_param_tree
-        })  
- 
-        """ Setting inital values for variables"""
-
-        self.background_task_enable = background_task_enable
-        
-        if self.background_task_enable:
-            self.start_background_task()
-
-        ####    END OF INIT    ####    
-
-    def get(self, path):
-        """Get the parameter tree. """ 
-
-        return self.param_tree.get(path)
-
-    def set(self, path, data):
-        """Set parameters in the parameter tree. """
-
-        try:
-            self.param_tree.set(path, data)
-        except ParameterTreeError as e:
-            raise PicoManagerError(e)
-
-    def cleanup(self):
-        """Clean up the Adapter instance. """
-
-        logging.debug("Cleanup function called!")
-        self.stop_background_task()
-        self.pico_instance.cleanup()
-        
-    def start_background_task(self):
-        """ Changes the value of the enable variable to True and calls the 
-        background task function """
-        self.background_task_enable = True
-        self.background_task()
-
-    def stop_background_task(self):
-        """ Disables the background task by altering its control variable """
-
-        self.background_task_enable = False
-
-    @run_on_executor
-    def background_task(self):
-
-        while self.background_task_enable:
-            self.pico_instance.update_poll()                    
-
-            #Controls the speed of the background task calls
-            time.sleep(1)
+    
                 

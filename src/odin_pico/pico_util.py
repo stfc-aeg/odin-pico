@@ -100,8 +100,17 @@ class PicoUtil():
             "handle" : ctypes.c_int16(0),
             "resolution" : 0,
             "timebase" : 0,
+            
         }
         return mode
+    
+    def set_flag_defaults(self):
+        flag = {
+            "verify_all": False,
+            "res_changed": False,
+            "user_capture": False
+        }
+        return flag
         
     def set_trigger_defaults(self):
         trigger = {
@@ -113,6 +122,21 @@ class PicoUtil():
             "auto_trigger_ms": 0
         }
         return trigger
+    
+    def set_ps_defaults(self):
+        status = {
+            "open_unit": -1,
+            "stop": -1,
+            "close": -1
+        }
+        return status
+
+    def set_rbs_defaults(self):
+        status = {
+            "block_check": ctypes.c_int16(0),
+            "block_ready": ctypes.c_int16(0)
+        }
+        return status       
 
     def set_status_defaults(self):
         status = {
@@ -154,7 +178,7 @@ class PicoUtil():
 
     def set_meta_data_defaults(self):
         meta_data = {
-            "max_adc": ctypes.c_int16(),
+            "max_adc": ctypes.c_uint16(),
             "max_samples": ctypes.c_int32(),
             "total_cap_samples": ctypes.c_int32(),
             "samples_per_seg": ctypes.c_int32(0)

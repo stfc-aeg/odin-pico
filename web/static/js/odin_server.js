@@ -1,9 +1,15 @@
 api_version = '0.1';
 page_not_loaded = true;
+data_array = new Int16Array()
+var canvas = document.getElementById("canvas"), c = canvas.getContext("2d");
+canvas.width = "1510";
+canvas.height = "500";
+
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
+    generate_canvas();
 });
 
 //gets the most up to date api version
@@ -12,6 +18,38 @@ function update_api_version() {
         $('#api-version').html(response.api);
         api_version = response.api;
     });
+}
+
+function generate_canvas(){
+    let pixelRatio, sizeOnScreen, segmentWidth;
+
+    c.fillStyle = "#181818";
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.strokeStyle = "#33ee55";
+    c.beginPath();
+    c.moveTo(0, canvas.height / 2);
+    c.lineTo(canvas.width, canvas.height / 2);
+    c.stroke();
+
+}
+
+const draw = () => {
+    
+    segmentWidth = canvas.width / (data_array.length);
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.beginPath();
+    c.moveTo(0, 250);
+    for (let i = 1; i < (data_array.length); i += 1) {
+        let x = i * segmentWidth;
+        let v = data_array[i] / 65335
+        let y = 250 - ((v * canvas.height) / 2) ;
+        c.lineTo(x , y);
+        //console.log(x,y)
+    }
+
+    c.lineTo(canvas.width, canvas.height / 2);
+    c.stroke();
+    //requestAnimationFrame(draw);
 }
 
 function run_sync(){
@@ -62,7 +100,12 @@ function sync_with_adapter(){
             $("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)
             $("#capture-count").val(response.device.settings.capture.n_captures)
             page_not_loaded = false;
-        }      
+        }
+         
+        data_array = response.device.live_view.lv_data
+        draw();
+        console.log(data_array.length)
+
         if (response.device.status.pico_setup_verify == 0){
             document.getElementById("pico-setup-row").className="success"
         }else{
@@ -113,6 +156,24 @@ function sync_with_adapter(){
                 document.getElementById("capture-row").className ="danger";
 
             }
+
+            if (response.device.status.open_unit == 0){
+                document.getElementById("connection_status").textContent = "True"
+            } else {
+                document.getElementById("connection_status").textContent = "False"
+            }
+
+            if (response.device.commands.run_user_capture == true){
+                document.getElementById("cap_type_status").textContent = "User"
+            } else {
+                document.getElementById("cap_type_status").textContent = "LiveView"
+            }
+
+            if (response.device.status.settings_verified == true){
+                document.getElementById("settings_status").textContent = "True"
+            } else {
+                document.getElementById("settings_status").textContent = "False"
+            }
     }
 }
 
@@ -125,14 +186,16 @@ function run_pico_command(){
     ajax_put('commands/','run_capture',value)
 }
 
-
-
+function commit_true_adapter(path,key){
+    ajax_put(path,key,true)
+}
 
 function commit_to_adapter(id,path,key){
     var value = document.getElementById(id).value
     if (value == "true"){ value = true}
     if (value == "false"){ value = false}
-    ajax_put(path,key,value)
+    console.log(path,key,value)
+    //ajax_put(path,key,value)
 }
 
 function commit_int_adapter(id,path,key){
