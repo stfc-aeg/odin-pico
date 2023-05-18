@@ -54,7 +54,7 @@ const draw = () => {
 
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
-    setTimeout(run_sync, 500);
+    setTimeout(run_sync, 200);
 }
 
 function sync_with_adapter(){
@@ -195,7 +195,7 @@ function commit_to_adapter(id,path,key){
     if (value == "true"){ value = true}
     if (value == "false"){ value = false}
     console.log(path,key,value)
-    //ajax_put(path,key,value)
+    ajax_put(path,key,value)
 }
 
 function commit_int_adapter(id,path,key){

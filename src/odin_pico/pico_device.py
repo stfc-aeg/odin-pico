@@ -24,12 +24,12 @@ class PicoDevice():
         self.buffer_manager = buffer_manager
 
     def open_unit(self):
-        try:
-            self.pico_status.status["open_unit"] = ps.ps5000aOpenUnit(ctypes.byref(self.dev_conf.mode["handle"]), None, self.dev_conf.mode["resolution"])
+        logging.debug(f'Trying to open Device')
+        self.pico_status.status["open_unit"] = ps.ps5000aOpenUnit(ctypes.byref(self.dev_conf.mode["handle"]), None, self.dev_conf.mode["resolution"])
+        if self.pico_status.status["open_unit"] == 0:
             self.pico_status.status["maximumValue"] = ps.ps5000aMaximumValue(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_adc"]))
-        except:
-            self.pico_status.status["open_unit"] = -1  
-
+        logging.debug(f'open_unit value:{self.pico_status.status["open_unit"]} /nopen_unit() finished')
+              
     def assign_buffers(self, *args):
         if self.ping_scope():
             if args:
@@ -52,7 +52,6 @@ class PicoDevice():
         if self.ping_scope():
             threshold = int(mV2adc(self.dev_conf.trigger["threshold"], (self.dev_conf.channels[self.util.channel_names_dict[self.dev_conf.trigger["source"]]]["range"])
                                 ,self.dev_conf.meta_data["max_adc"]))
-            logging.debug(f'Max_adc is:{(self.dev_conf.meta_data["max_adc"]).value}')
             self.pico_status.status["trigger"] = ps.ps5000aSetSimpleTrigger(self.dev_conf.mode["handle"], self.dev_conf.trigger["active"], self.dev_conf.trigger["source"], threshold, 
                                                                             self.dev_conf.trigger["direction"], self.dev_conf.trigger["delay"], self.dev_conf.trigger["auto_trigger_ms"])
         
@@ -63,22 +62,21 @@ class PicoDevice():
                     enable = 1
                 else:
                     enable = 0
-                
-                # c = self.dev_conf.channels[chan]
-                # self.pico_status.status = ps.ps5000aSetChannel(self.dev_conf.mode["handle"], c["channel_id"], enable, c["coupling"], c["range"], c["offset"])
-                # c = self.dev_conf.channels[chan]
+
                 self.pico_status.status["set_channels"] = ps.ps5000aSetChannel(self.dev_conf.mode["handle"], self.dev_conf.channels[chan]["channel_id"], enable, 
                                                             self.dev_conf.channels[chan]["coupling"], self.dev_conf.channels[chan]["range"], self.dev_conf.channels[chan]["offset"])
     
     def run_setup(self, *args):
         if self.pico_status.status["open_unit"] != 0:
             self.open_unit()
-        self.set_channels()
-        self.set_trigger()
-        if args:
-            self.assign_buffers(args[0])
-        else:
-            self.assign_buffers()
+        if self.pico_status.status["open_unit"] == 0:
+            self.set_channels()
+            self.set_trigger()
+            if args:
+                self.assign_buffers(args[0])
+            else:
+                self.assign_buffers()
+            return True
 
     def run_block(self, *args):
         if args:
@@ -97,23 +95,17 @@ class PicoDevice():
                 self.pico_status.status["is_ready"] =  ps.ps5000aIsReady(self.dev_conf.mode["handle"], ctypes.byref(self.pico_status.status["block_ready"]))
             self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
                                                                             (n_captures-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
-            
+      
     def ping_scope(self):
-        return True
-        if ps.ps5000aPingUnit(self.dev_conf.mode["handle"]) == 0:
+        if (ps.ps5000aPingUnit(self.dev_conf.mode["handle"])) == 0:
             return True
         else:
             self.pico_status.status["open_unit"] = -1
-            return False     
-
+            return False
+    
     def stop_scope(self):
         if self.ping_scope():
             self.pico_status.status["stop"] = ps.ps5000aStop(self.dev_conf.mode["handle"])
             self.pico_status.status["close"] = ps.ps5000aCloseUnit(self.dev_conf.mode["handle"])
             if self.pico_status.status["stop"] == 0:
                 self.pico_status.status["open_unit"] = -1
-
-
-
-
-
