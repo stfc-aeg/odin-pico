@@ -372,10 +372,42 @@
                           </div>
                           </div>
                           </div>
+                          <div class = "row">
+                            <div class="col-sm-12">
+                            <div id = "setup-6" class="panel panel-default">
+                              <div class="panel-heading">Capture Controls</div>
+                              <div class="panel-body">
+                                <table class="table table-striped">            
+                                  <tr id ="capture-row">
+                                    <th>
+                                      <form>
+                                        <label for="capture-file-path">File path (starts from root / Directory): </label>
+                                        <input id="capture-file-path" type="text" oninput="" />
+                                      </form>
+                                    </th>
+                                    <th>
+                                      <form>
+                                        <label for="capture-file-name">File Name: </label>
+                                        <input id="capture-file-name" type="text" oninput="" />
+                                      </form>
+                                    </th>
+                                    <th>
+                                        <label for="save_cap_butt">Record scope traces (and PHA if enabled) to file: </label>
+                                        <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
+                                    </th>
+                                  </tr>
+                                  <tr>
+                                </table>
+                              
+                              </div>
+                             
+                            </div>
+                            </div>
+                            </div>
               
                     <!-- </div> -->
                 </div>
-
+                
                 <div role="tabpanel" class="tab-pane fade" id="two">
                   <div class ="row">
                     <div class="col-sm-6">
@@ -390,7 +422,7 @@
                       </div>
                     </div>
                     <div class="col-sm-6">
-                      <button class="btn btn-default" id="run_capture_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Run Capture</button>
+                      
                     </div>
                   </div>
 
