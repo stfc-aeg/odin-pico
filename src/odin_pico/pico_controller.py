@@ -233,6 +233,7 @@ class PicoController():
 
     @run_on_executor
     def update_loop(self):
+        """ """
         
         while self.update_loop_active:
             self.run_capture()
