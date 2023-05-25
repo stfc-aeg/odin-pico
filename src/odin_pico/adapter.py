@@ -19,7 +19,8 @@ class PicoAdapter(ApiAdapter):
 
         self.lock = threading.Lock()
         update_loop = True #bool(self.options.get('update_loop'))
-        self.pico_controller = PicoController(self.lock, update_loop)
+        path = '/tmp/pico_captures/' #self.options.get
+        self.pico_controller = PicoController(self.lock, update_loop, path)
 
     @response_types('application/json', default='application/json')
     def get(self, path, request):
@@ -70,7 +71,4 @@ class PicoAdapter(ApiAdapter):
     def cleanup(self):
         """Clean up adapter state at shutdown."""
 
-        self.pico_controller.cleanup()      
-
-    
-                
+        self.pico_controller.cleanup()

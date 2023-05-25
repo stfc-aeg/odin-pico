@@ -16,14 +16,14 @@ from odin_pico.file_writer import FileWriter
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
-    def __init__(self,lock,loop):
+    def __init__(self,lock,loop,path):
         # Threading lock and control variables
         self.lock = lock
         self.update_loop_active = loop
         self.lv_captures = 1
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
-        self.dev_conf = DeviceConfig()
+        self.dev_conf = DeviceConfig(path)
         self.pico_status = Status()
         self.buffer_manager = BufferManager(self.dev_conf)
         self.file_writer = FileWriter(self.dev_conf,self.buffer_manager) 
@@ -73,11 +73,20 @@ class PicoController():
             'timebase': (lambda: self.get_mode_value("timebase"), partial(self.set_mode_value, "timebase"))
         })
 
+        pico_file = ParameterTree ({
+            'folder_name': (lambda: self.get_value(self.dev_conf,'file','folder_name'), partial(self.set_file_value,'folder_name')),
+            'file_name': (lambda: self.get_file_value("file_name"), partial(self.set_file_value,'file_name')),
+            'file_path': (lambda: self.get_value(self.dev_conf,'file','file_path'), None),
+            'curr_file_name': (lambda: self.get_value(self.dev_conf,'file','curr_file_name'), None),
+            'last_write_success': (lambda: self.get_value(self.dev_conf,'file','last_write_success'), None)
+        })
+
         pico_settings = ParameterTree ({
             'mode': pico_mode,
             'channels':{name: channel for (name, channel) in self.chan_params.items()},
             'trigger': pico_trigger,
-            'capture': pico_capture
+            'capture': pico_capture,
+            'file': pico_file,
         })
 
         live_view = ParameterTree ({
@@ -133,7 +142,10 @@ class PicoController():
             return value
         except:
             return None
-        
+
+    def get_file_value(self, value):
+        return self.dev_conf.file[value]    
+    
     def get_channel_value(self, channel, value):
         return self.dev_conf.channels[channel][value]
     
@@ -151,8 +163,6 @@ class PicoController():
 
     def get_flag_value(self,value):
         return self.pico_status.flag[value]
-    
-
     
     def set_dev_conf_value(self,path,value):
         setattr(self.dev_conf,path,value)
@@ -180,7 +190,10 @@ class PicoController():
         if key == "resolution":
             logging.debug(f'resolution change detected, setting flag')
             self.pico_status.flag["res_changed"] = True
-            
+
+    def set_file_value(self,key,value):
+        self.dev_conf.file[key] = value
+
     def set_capture_value(self,key,value):
         self.dev_conf.capture[key] = value
 

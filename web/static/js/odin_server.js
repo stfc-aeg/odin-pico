@@ -1,15 +1,20 @@
 api_version = '0.1';
 page_not_loaded = true;
 data_array = new Int16Array()
-var canvas = document.getElementById("canvas"), c = canvas.getContext("2d");
+var canvas = document.getElementById("canvas-lv"), c = canvas.getContext("2d");
+var canvas_pha = document.getElementById("canvas-pha"), c2 = canvas_pha.getContext("2d");
 canvas.width = "1510";
-canvas.height = "500";
+canvas.height = "350";
+
+canvas_pha.width = "1510";
+canvas_pha.height = "350";
 
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
     generate_canvas();
+    generate_canvas_pha();
 });
 
 //gets the most up to date api version
@@ -38,11 +43,11 @@ const draw = () => {
     segmentWidth = canvas.width / (data_array.length);
     c.fillRect(0, 0, canvas.width, canvas.height);
     c.beginPath();
-    c.moveTo(0, 250);
+    c.moveTo(0, (175));
     for (let i = 1; i < (data_array.length); i += 1) {
         let x = i * segmentWidth;
         let v = data_array[i] / 65335
-        let y = 250 - ((v * canvas.height) / 2) ;
+        let y = 175 - ((v * canvas.height) / 2) ;
         c.lineTo(x , y);
         //console.log(x,y)
     }
@@ -52,9 +57,41 @@ const draw = () => {
     //requestAnimationFrame(draw);
 }
 
+function generate_canvas_pha(){
+    let pixelRatio, sizeOnScreen, segmentWidth;
+
+    c2.fillStyle = "#181818";
+    c2.fillRect(0, 0, canvas_pha.width, canvas_pha.height);
+    c2.strokeStyle = "#33ee55";
+    c2.beginPath();
+    c2.moveTo(0, canvas_pha.height / 2);
+    c2.lineTo(canvas_pha.width, canvas_pha.height / 2);
+    c2.stroke();
+
+}
+
+const draw_pha = () => {
+    
+    segmentWidth = canvas_pha.width / (data_array.length);
+    c2.fillRect(0, 0, canvas_pha.width, canvas_pha.height);
+    c2.beginPath();
+    c2.moveTo(0, 175);
+    for (let i = 1; i < (data_array.length); i += 1) {
+        let x = i * segmentWidth;
+        let v = data_array[i] / 65335
+        let y = 175 - ((v * canvas_pha.height) / 2) ;
+        c2.lineTo(x , y);
+        //console.log(x,y)
+    }
+
+    c2.lineTo(canvas_pha.width, canvas_pha.height / 2);
+    c2.stroke();
+    //requestAnimationFrame(draw);
+}
+
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
-    setTimeout(run_sync, 200);
+    setTimeout(run_sync, 100);
 }
 
 function sync_with_adapter(){
@@ -99,12 +136,27 @@ function sync_with_adapter(){
             $("#capture-pretrig-samples").val(response.device.settings.capture.pre_trig_samples)
             $("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)
             $("#capture-count").val(response.device.settings.capture.n_captures)
+
+            $("#capture-folder-name").val(response.device.settings.file.folder_name)
+            $("#capture-file-name").val(response.device.settings.file.file_name)
             page_not_loaded = false;
         }
          
         data_array = response.device.live_view.lv_data
         draw();
+        draw_pha();
         console.log(data_array.length)
+
+        //$("#file-name-span").val(response.device.settings.file.curr_file_name)
+        //$("#file-write-succ-span").val(response.device.settings.file.last_write_success)
+
+        document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
+        if (response.device.settings.file.last_write_success == true){
+            document.getElementById("file-write-succ-span").textContent = "True"
+        } else {
+            document.getElementById("file-write-succ-span").textContent = "False"
+        }
+
 
         if (response.device.status.pico_setup_verify == 0){
             document.getElementById("pico-setup-row").className="success"
@@ -207,6 +259,11 @@ function commit_int_adapter(id,path,key){
         console.log("Valid")
         ajax_put(path,key,input)
     }
+}
+
+function commit_str_adapter(id,path,key){
+    var input = document.getElementById(id).value
+    ajax_put(path,key,input)
 }
 
 function commit_float_adapter(id,path,key){

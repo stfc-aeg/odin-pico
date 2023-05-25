@@ -14,7 +14,7 @@ from odin_pico.buffer_manager import BufferManager
 from odin_pico.pico_util import PicoUtil
 
 class PicoDevice():
-    def __init__(self, dev_conf=DeviceConfig(), pico_status=Status(), buffer_manager=BufferManager()):
+    def __init__(self, dev_conf=DeviceConfig(None), pico_status=Status(), buffer_manager=BufferManager()):
 
         # def __init__(self, dev_conf=None,pico_status=None,buffer_manager=None):
         #   self.dev_conf = dev_conf if dev_conf is not None else DeviceConfig()
@@ -31,7 +31,7 @@ class PicoDevice():
         logging.debug(f'open_unit value:{self.pico_status.status["open_unit"]} /nopen_unit() finished')
               
     def assign_buffers(self, *args):
-        if self.ping_scope():
+        if True:#self.ping_scope():
             if args:
                 n_captures = args[0]
                 self.buffer_manager.generate_arrays(n_captures)
@@ -49,14 +49,14 @@ class PicoDevice():
                     self.pico_status.status[f'SetDataBuffer_{c}_{i}'] =  ps.ps5000aSetDataBuffer(self.dev_conf.mode["handle"], c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), samples, i, 0)
     
     def set_trigger(self):
-        if self.ping_scope():
+        if True:#self.ping_scope():
             threshold = int(mV2adc(self.dev_conf.trigger["threshold"], (self.dev_conf.channels[self.util.channel_names_dict[self.dev_conf.trigger["source"]]]["range"])
                                 ,self.dev_conf.meta_data["max_adc"]))
             self.pico_status.status["trigger"] = ps.ps5000aSetSimpleTrigger(self.dev_conf.mode["handle"], self.dev_conf.trigger["active"], self.dev_conf.trigger["source"], threshold, 
                                                                             self.dev_conf.trigger["direction"], self.dev_conf.trigger["delay"], self.dev_conf.trigger["auto_trigger_ms"])
         
     def set_channels(self):
-        if self.ping_scope(): 
+        if True:#self.ping_scope():
             for chan in self.dev_conf.channels:
                 if (self.dev_conf.channels[chan]["active"] == True):
                     enable = 1
@@ -84,7 +84,7 @@ class PicoDevice():
         else:
             n_captures = self.dev_conf.capture["n_captures"]
         
-        if self.ping_scope():
+        if True:#self.ping_scope():
             self.pico_status.status["block_ready"] = ctypes.c_int16(0)
             self.dev_conf.meta_data["total_cap_samples"]=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
             self.dev_conf.meta_data["max_samples"] = ctypes.c_int32(self.dev_conf.meta_data["total_cap_samples"])
@@ -104,7 +104,7 @@ class PicoDevice():
             return False
     
     def stop_scope(self):
-        if self.ping_scope():
+        if True:#self.ping_scope():
             self.pico_status.status["stop"] = ps.ps5000aStop(self.dev_conf.mode["handle"])
             self.pico_status.status["close"] = ps.ps5000aCloseUnit(self.dev_conf.mode["handle"])
             if self.pico_status.status["stop"] == 0:

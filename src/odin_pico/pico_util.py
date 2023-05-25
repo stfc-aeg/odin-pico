@@ -185,6 +185,16 @@ class PicoUtil():
         }
         return meta_data
     
+    def set_file_defaults(self,path):
+        file = {
+            "file_name": '',
+            "folder_name": '',
+            "file_path": path,
+            "curr_file_name": '',
+            "last_write_success": False,
+        }
+        return file
+    
     def verify_channels_defined(self, channels, mode):
         channel_count = 0
         for chan in channels:
