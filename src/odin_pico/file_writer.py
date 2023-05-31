@@ -36,12 +36,12 @@ class FileWriter():
         self.dev_conf.file["curr_file_name"] = (self.dev_conf.file["file_path"] + self.dev_conf.file["folder_name"] + self.dev_conf.file["file_name"])
         logging.debug(f'Full file path: {self.dev_conf.file["curr_file_name"]}')
 
-    def writeHDF5(self):
+    def write_adc_HDF5(self):
         metadata = {
             'active_channels' : self.buffer_manager.active_channels[:]
         }        
         try:
-            with h5py.File((self.dev_conf.file["curr_file_name"]), 'w') as f:
+            with h5py.File((self.dev_conf.file["curr_file_name"]), 'a') as f:
                 metadata_group = f.create_group('metadata')
                 for key, value in metadata.items():
                     metadata_group.attrs[key] = value
@@ -56,3 +56,15 @@ class FileWriter():
 
         logging.debug(f'File writing finished successfully')
         self.dev_conf.file["last_write_success"] = True
+
+    def write_pha_HDF5(self):
+        try:
+            with h5py.File((self.dev_conf.file["curr_file_name"]), 'a') as f:
+                for c, p in zip(self.buffer_manager.active_channels, self.buffer_manager.pha_arrays):
+                # Create a dataset in the already existing file to contain the PHA data
+                    f.create_dataset(('pha_'+str(c)), data = p)
+        except Exception as e:
+            # Catch any exceptions
+            logging.debug(f'Expection caught:{e}')
+            return
+        

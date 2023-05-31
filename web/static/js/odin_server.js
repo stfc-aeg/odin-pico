@@ -1,6 +1,10 @@
 api_version = '0.1';
 page_not_loaded = true;
+
 data_array = new Int16Array()
+counts = new Int16Array()
+bin_edges = new Int16Array()
+
 var canvas = document.getElementById("canvas-lv"), c = canvas.getContext("2d");
 var canvas_pha = document.getElementById("canvas-pha"), c2 = canvas_pha.getContext("2d");
 canvas.width = "1510";
@@ -72,15 +76,21 @@ function generate_canvas_pha(){
 
 const draw_pha = () => {
     
-    segmentWidth = canvas_pha.width / (data_array.length);
     c2.fillRect(0, 0, canvas_pha.width, canvas_pha.height);
     c2.beginPath();
     c2.moveTo(0, 175);
-    for (let i = 1; i < (data_array.length); i += 1) {
-        let x = i * segmentWidth;
-        let v = data_array[i] / 65335
-        let y = 175 - ((v * canvas_pha.height) / 2) ;
+
+    for (let i = 1; i < (bin_edges.length); i += 1) {
+        let x = bin_edges[i];
+        let v = counts[i] / (canvas_pha.height);
+        let y = 350 - ((v * canvas_pha.height) / 2 );
         c2.lineTo(x , y);
+
+    // for (let i = 1; i < (bin_edges.length); i += 1) {
+    //     let x = bin_edges[i];
+    //     let v = counts[i] /65335
+    //     let y = 175 - ((v * canvas_pha.height) / 2) ;
+    //     c2.lineTo(x , y);
         //console.log(x,y)
     }
 
@@ -143,9 +153,19 @@ function sync_with_adapter(){
         }
          
         data_array = response.device.live_view.lv_data
+
+        try{
+            bin_edges = response.device.live_view.pha_data[0]
+            counts = response.device.live_view.pha_data[1]
+        } catch {
+            console.log("Oppsie")
+        }
+
         draw();
         draw_pha();
         console.log(data_array.length)
+
+        console.log(bin_edges,counts)
 
         //$("#file-name-span").val(response.device.settings.file.curr_file_name)
         //$("#file-write-succ-span").val(response.device.settings.file.last_write_success)

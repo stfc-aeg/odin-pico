@@ -227,19 +227,19 @@ class PicoController():
                 if self.pico_status.status["open_unit"] == 0:
                     self.pico.stop_scope()
                 self.pico_status.flag["res_changed"] = False
-
+            self.file_writer.init_file
             if self.pico_status.flag["user_capture"]:
                 if self.pico.run_setup():
                     self.pico.run_block()
-                    self.file_writer.writeHDF5()
-                    self.buffer_manager.save_lv_data()
+                    self.file_writer.write_adc_HDF5()
                     self.analysis.PHA()
+                    self.buffer_manager.save_lv_data()
                 self.pico_status.flag["user_capture"] = False
             else:
                 if self.pico.run_setup(self.lv_captures):
                     self.pico.run_block(self.lv_captures)
-                    self.buffer_manager.save_lv_data()
                     self.analysis.PHA()
+                    self.buffer_manager.save_lv_data()
       
     def lv_data(self):
         for c,b in zip(self.buffer_manager.lv_active_channels,self.buffer_manager.lv_channel_arrays):
@@ -248,7 +248,9 @@ class PicoController():
         return []
 
     def pha_data(self):
-        return (self.buffer_manager.last_pha.tolist())
+        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.pha_arrays):
+            if (c == self.dev_conf.preview_channel):
+                return b.tolist()
 
 ##### Adapter specific functions below #####
 

@@ -16,7 +16,7 @@ class BufferManager():
         
         self.lv_active_channels = []
         self.lv_channel_arrays = []
-        self.last_pha = np.empty(shape=(2,0))
+        self.lv_pha = []
 
     def generate_arrays(self, *args):
         if args:
@@ -34,44 +34,18 @@ class BufferManager():
         for i in range(len(self.active_channels)):
             self.channel_arrays.append(np.zeros(shape=(n_captures,samples), dtype=np.int16))
 
-    def plot(self):
-        for c,b in zip(self.active_channels,self.channel_arrays):
-            print(f'Channel {c}')
-            for i in range(len(b)):
-                print(b)
-                buffer = b[i]
-                plt.plot(buffer[:])
-                plt.show()  
-
-    def write(self):
-        current_filename = (('/tmp/')+(str(datetime.now())).replace(' ','_')+'.hdf5')
-
-        metadata = {
-
-            #'max_adc': self.max_adc,
-            'active_channels': self.active_channels[:]
-            #'channel_ranges': self.channel_ranges[:]
-        }
-
-        with h5py.File(current_filename,'w') as f:
-            metadata_group = f.create_group('metadata')
-            for key, value in metadata.items():
-                metadata_group.attrs[key] = value
-            
-            for c,b in zip(self.active_channels,self.channel_arrays):
-
-                f.create_dataset(('adc_counts_'+str(c)), data = b)
-                print(f'Creating dataset: adc_counts_{str(c)} with data : {b}')
-
     def save_lv_data(self):
         self.lv_active_channels = self.active_channels
         self.lv_channel_arrays = self.channel_arrays
+        self.lv_pha = self.pha_arrays
 
     def clear_arrays(self):
         while (len(self.active_channels)) > 0:
             self.active_channels.pop()
         while (len(self.channel_arrays)) > 0:
             self.channel_arrays.pop()
+        while (len(self.pha_arrays)) > 0:
+            self.pha_arrays.pop()
 
 
 

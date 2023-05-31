@@ -29,7 +29,7 @@ class PicoAnalysis():
                 # Find the peaks in each capture, using pre-determined bin_width for grouping peaks
                 peak_pos, properties = find_peaks(data, distance = self.bin_width)
                 for peak in peak_pos:
-                    # Get the value of each peak position and append it to the peak_values array
+                    # Get the value at each peak position and append it to the peak_values array
                     peak_values.append(data[peak])
                 print(f'Length of peak_values:{len(peak_values)}')
             # Calculate the number of bins required based on the bin_width
@@ -38,18 +38,6 @@ class PicoAnalysis():
             counts, bin_edge = np.histogram(peak_values, bins=num_bins)
             # Combine the bin_edge's and counts into one np.array
             self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
-            self.buffer_manager 
 
-            try:
-                with h5py.File((self.dev_conf.file["curr_file_name"]), 'r+') as f:
-                    # Create a dataset in the already existing file to contain the PHA data
-                    f.create_dataset(('pha_'+str(c)), data = pha_data)
-            except Exception as e:
-                # Catch any exceptions
-                logging.debug(f'Expection caught:{e}')
-                return
-            
-            self.buffer_manager.last_pha = pha_data
-    
             # Is prominence relevant?
             #prom = math.ceil(max_adc_count*0.1) # max_adc returned from picoSDK is 
