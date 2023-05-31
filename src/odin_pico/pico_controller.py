@@ -12,6 +12,7 @@ from odin_pico.pico_status import Status
 from odin_pico.pico_device import PicoDevice
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.file_writer import FileWriter
+from odin_pico.analysis import PicoAnalysis
 
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
@@ -27,6 +28,7 @@ class PicoController():
         self.pico_status = Status()
         self.buffer_manager = BufferManager(self.dev_conf)
         self.file_writer = FileWriter(self.dev_conf,self.buffer_manager) 
+        self.analysis = PicoAnalysis(self.dev_conf, self.buffer_manager)
         self.pico = PicoDevice(self.dev_conf,self.pico_status,self.buffer_manager)
         self.util = PicoUtil()
 
@@ -91,7 +93,8 @@ class PicoController():
 
         live_view = ParameterTree ({
             'preview_channel': (lambda: self.get_dev_conf_value('preview_channel'), partial(self.set_dev_conf_value,'preview_channel')),
-            'lv_data': (self.lv_data, None)
+            'lv_data': (self.lv_data, None),
+            'pha_data': (self.pha_data, None)
         })
 
         pico_commands = ParameterTree ({
@@ -230,17 +233,22 @@ class PicoController():
                     self.pico.run_block()
                     self.file_writer.writeHDF5()
                     self.buffer_manager.save_lv_data()
+                    self.analysis.PHA()
                 self.pico_status.flag["user_capture"] = False
             else:
                 if self.pico.run_setup(self.lv_captures):
                     self.pico.run_block(self.lv_captures)
                     self.buffer_manager.save_lv_data()
+                    self.analysis.PHA()
       
     def lv_data(self):
         for c,b in zip(self.buffer_manager.lv_active_channels,self.buffer_manager.lv_channel_arrays):
             if (c == self.dev_conf.preview_channel):
                 return b[-1][::10].tolist()
         return []
+
+    def pha_data(self):
+        return (self.buffer_manager.last_pha.tolist())
 
 ##### Adapter specific functions below #####
 

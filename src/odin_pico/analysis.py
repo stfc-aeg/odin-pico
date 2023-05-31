@@ -33,11 +33,12 @@ class PicoAnalysis():
                     peak_values.append(data[peak])
                 print(f'Length of peak_values:{len(peak_values)}')
             # Calculate the number of bins required based on the bin_width
-            num_bins = math.ceil(np.max((self.dev_conf.meta_data["max_adc"])/self.bin_width))
+            num_bins = math.ceil(np.max((self.dev_conf.meta_data["max_adc"].value)/self.bin_width))
             # Use np.histogram to calculate the counts for each bin, based on the peak_values data
             counts, bin_edge = np.histogram(peak_values, bins=num_bins)
             # Combine the bin_edge's and counts into one np.array
-            pha_data = np.vstack(bin_edge[:-1], counts)
+            self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
+            self.buffer_manager 
 
             try:
                 with h5py.File((self.dev_conf.file["curr_file_name"]), 'r+') as f:
@@ -48,7 +49,7 @@ class PicoAnalysis():
                 logging.debug(f'Expection caught:{e}')
                 return
             
-           # self.buffer_manager.last_pha = pha_data
+            self.buffer_manager.last_pha = pha_data
     
             # Is prominence relevant?
             #prom = math.ceil(max_adc_count*0.1) # max_adc returned from picoSDK is 

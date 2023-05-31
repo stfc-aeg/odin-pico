@@ -16,11 +16,7 @@ class FileWriter():
         if not (os.path.isdir(self.dev_conf.file["file_path"])):
             os.mkdir(self.dev_conf.file["file_path"])
 
-    def writeHDF5(self):
-        metadata = {
-            'active_channels' : self.buffer_manager.active_channels[:]
-        }
-
+    def init_file(self):
         logging.debug("Starting file writing")
         if (self.dev_conf.file["file_name"]) == "" or (os.path.isfile(self.dev_conf.file["file_path"] + self.dev_conf.file["folder_name"] + self.dev_conf.file["file_name"])):
             self.dev_conf.file["file_name"] = ((str(datetime.now())).replace(' ','_')+'.hdf5')
@@ -38,8 +34,12 @@ class FileWriter():
             self.dev_conf.file["file_name"] = self.dev_conf.file["file_name"] + ".hdf5"
 
         self.dev_conf.file["curr_file_name"] = (self.dev_conf.file["file_path"] + self.dev_conf.file["folder_name"] + self.dev_conf.file["file_name"])
-        logging.debug(f'Full file path: {self.dev_conf.file["curr_file_name"]}')  
+        logging.debug(f'Full file path: {self.dev_conf.file["curr_file_name"]}')
 
+    def writeHDF5(self):
+        metadata = {
+            'active_channels' : self.buffer_manager.active_channels[:]
+        }        
         try:
             with h5py.File((self.dev_conf.file["curr_file_name"]), 'w') as f:
                 metadata_group = f.create_group('metadata')

@@ -12,9 +12,11 @@ class BufferManager():
         self.overflow = None
         self.active_channels = []
         self.channel_arrays = []
+        self.pha_arrays = []
+        
         self.lv_active_channels = []
         self.lv_channel_arrays = []
-        #self.last_pha = np.empty(shape=(2,0))
+        self.last_pha = np.empty(shape=(2,0))
 
     def generate_arrays(self, *args):
         if args:
