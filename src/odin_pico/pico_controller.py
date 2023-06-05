@@ -127,7 +127,6 @@ class PicoController():
                 value = getattr(value, key)
             except:
                 if isinstance(value, dict):
-                    logging.debug(f'Nested Dict detected using get accessor instead of getattr')
                     value = value.get(key)
         return value
     
@@ -140,7 +139,6 @@ class PicoController():
                     value = getattr(value, key)
                 except:
                     if isinstance(value, dict):
-                        logging.debug(f'Nested Dict detected using get accessor instead of getattr')
                         value = value.get(key)
             return value
         except:
@@ -227,18 +225,22 @@ class PicoController():
                 if self.pico_status.status["open_unit"] == 0:
                     self.pico.stop_scope()
                 self.pico_status.flag["res_changed"] = False
-            self.file_writer.init_file
+            
             if self.pico_status.flag["user_capture"]:
                 if self.pico.run_setup():
                     self.pico.run_block()
-                    self.file_writer.write_adc_HDF5()
-                    self.analysis.PHA()
+                    self.analysis.PHA_one_peak()
+                    self.file_writer.writeHDF5()
+                    #self.file_writer.init_file
+                    #self.file_writer.write_adc_HDF5()
+                    #self.file_writer.write_pha_HDF5()
+                    
                     self.buffer_manager.save_lv_data()
                 self.pico_status.flag["user_capture"] = False
             else:
                 if self.pico.run_setup(self.lv_captures):
                     self.pico.run_block(self.lv_captures)
-                    self.analysis.PHA()
+                    self.analysis.PHA_one_peak()
                     self.buffer_manager.save_lv_data()
       
     def lv_data(self):

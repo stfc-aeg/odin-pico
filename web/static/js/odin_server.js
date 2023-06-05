@@ -80,11 +80,18 @@ const draw_pha = () => {
     c2.beginPath();
     c2.moveTo(0, 175);
 
+    // for (let i = 1; i < (bin_edges.length); i += 1) {
+    //     let x = bin_edges[i];
+    //     let y = (canvas_pha.height/2) - counts[i];
+    //     c2.lineTo(x , y);
+
+    max_value = Math.max(...counts)
     for (let i = 1; i < (bin_edges.length); i += 1) {
         let x = bin_edges[i];
-        let v = counts[i] / (canvas_pha.height);
-        let y = 350 - ((v * canvas_pha.height) / 2 );
+        let v = counts[i] / max_value
+        let y = 175 - ((v * canvas_pha.height) / 2) ;
         c2.lineTo(x , y);
+        //console.log(x,y)
 
     // for (let i = 1; i < (bin_edges.length); i += 1) {
     //     let x = bin_edges[i];
@@ -97,6 +104,34 @@ const draw_pha = () => {
     c2.lineTo(canvas_pha.width, canvas_pha.height / 2);
     c2.stroke();
     //requestAnimationFrame(draw);
+}
+
+const drawPHA = () => { 
+    // Clear the canvas
+    c2.clearRect(0, 0, canvas_pha.width, canvas_pha.height);
+  
+    // Find the maximum count value
+    let maxCount = Math.max(...counts);
+  
+    // Begin drawing the graph
+    c2.beginPath();
+    c2.moveTo(0, canvas_pha.height / 2);
+  
+    for (let i = 1; i < bin_edges.length; i++) {
+      let x = bin_edges[i];
+      let y = counts[i]
+
+      //let v = counts[i] / maxCount;
+      //let y = (1 - v) * canvas_pha.height;
+  
+      c2.lineTo(x, y);
+      console.log(x,y)
+    }
+  
+    // Set the line style and stroke the path
+    c2.lineWidth = 2;
+    c2.strokeStyle = 'blue';
+    c2.stroke();
 }
 
 function run_sync(){
@@ -158,14 +193,15 @@ function sync_with_adapter(){
             bin_edges = response.device.live_view.pha_data[0]
             counts = response.device.live_view.pha_data[1]
         } catch {
-            console.log("Oppsie")
+            console.log("error")
         }
-
+        
+        console.log(counts)
         draw();
-        draw_pha();
-        console.log(data_array.length)
+        drawPHA();
+        //console.log(data_array.length)
 
-        console.log(bin_edges,counts)
+        //console.log(bin_edges,counts)
 
         //$("#file-name-span").val(response.device.settings.file.curr_file_name)
         //$("#file-write-succ-span").val(response.device.settings.file.last_write_success)

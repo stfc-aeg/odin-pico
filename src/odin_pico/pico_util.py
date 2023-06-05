@@ -108,6 +108,7 @@ class PicoUtil():
         flag = {
             "verify_all": False,
             "res_changed": False,
+            "range_changed": False,
             "user_capture": False
         }
         return flag

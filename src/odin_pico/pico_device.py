@@ -71,7 +71,7 @@ class PicoDevice():
             self.open_unit()
         if self.pico_status.status["open_unit"] == 0:
             self.set_channels()
-            self.set_trigger()
+            self.set_trigger() 
             if args:
                 self.assign_buffers(args[0])
             else:
