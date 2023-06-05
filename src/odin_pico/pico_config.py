@@ -2,7 +2,7 @@ import ctypes
 from odin_pico.pico_util import PicoUtil
 
 class DeviceConfig():
-    def __init__(self):
+    def __init__(self, path):
         self.util = PicoUtil()
 
         # self.mode = self.util.set_mode_defaults()
@@ -16,7 +16,7 @@ class DeviceConfig():
         #     i += 1
         
         # self.meta_data = self.util.set_meta_data_defaults()
-
+        self.file = self.util.set_file_defaults(path)
 
         self.mode = {
             "handle" : ctypes.c_int16(0),
@@ -55,10 +55,3 @@ class DeviceConfig():
             i += 1
         
         self.meta_data = self.util.set_meta_data_defaults()
-
-
-# test = DeviceConfig()
-# path = "trigger"
-# print(f'Connection:{test.connection} \nTrigger:{getattr(test,path)["active"]}\nChannels:{test.channels}')
-
-

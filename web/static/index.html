@@ -372,10 +372,45 @@
                           </div>
                           </div>
                           </div>
+                          <div class = "row">
+                            <div class="col-sm-12">
+                            <div id = "setup-6" class="panel panel-default">
+                              <div class="panel-heading">File Settings</div>
+                              <div class="panel-body">
+                                <table class="table table-striped">            
+                                  <tr id ="capture-row">
+                                    <th>
+                                      <form>
+                                        <label for="capture-folder-name">Folder name: </label>
+                                        <input id="capture-folder-name" type="text" oninput="commit_str_adapter('capture-folder-name','settings/file','folder_name')" />
+                                      </form>
+                                    </th>
+                                    <th>
+                                      <form>
+                                        <label for="capture-file-name">File Name: </label>
+                                        <input id="capture-file-name" type="text" oninput="commit_str_adapter('capture-file-name','settings/file','file_name')"" />
+                                      </form>
+                                    </th>
+                                    <th>
+                                        <label for="save_cap_butt">Record scope traces (and PHA if enabled) to file: </label>
+                                        <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
+                                    </th>
+                                  </tr>
+                                  <tr>
+                                  <tr>
+                                    <th><span>File : </span><span id="file-name-span"></span></th>
+                                    <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
+                                  </tr>   
+                                  </tr>
+                                </table>
+                              </div>
+                            </div>
+                            </div>
+                            </div>
               
                     <!-- </div> -->
                 </div>
-
+                
                 <div role="tabpanel" class="tab-pane fade" id="two">
                   <div class ="row">
                     <div class="col-sm-6">
@@ -390,27 +425,46 @@
                       </div>
                     </div>
                     <div class="col-sm-6">
-                      <button class="btn btn-default" id="run_capture_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Run Capture</button>
+                      
                     </div>
                   </div>
 
                 </div>
 
                   <div role="tabpanel" class="tab-pane fade" id="three">
-                    <select id = "lv-source" onchange="commit_int_adapter('lv-source','live_view','preview_channel')"   >
-                      <option value="" selected disabled hidden> </option>
-                      <option value = "0" >Channel A</option> 
-                      <option value = "1" >Channel B</option>
-                      <option value = "2" >Channel C</option>
-                      <option value = "3" >Channel D</option>
-                    </select>
-                    <canvas id="canvas"></canvas>
+                    <div class = "row">
+                      <div class="col-sm-12">
+                      <div id = "setup-6" class="panel panel-default">
+                        <div class="panel-heading">Live View and PHA preview:</div>
+                        <div class="panel-body">
+                          <table class="table table-striped">            
+                            <tr>
+                              <select id = "lv-source" onchange="commit_int_adapter('lv-source','live_view','preview_channel')"   >
+                                <option value="" selected disabled hidden> </option>
+                                <option value = "0" >Channel A</option> 
+                                <option value = "1" >Channel B</option>
+                                <option value = "2" >Channel C</option>
+                                <option value = "3" >Channel D</option>
+                              </select>
+                              <span>Raw ADC_Count LiveView</span>
+                              <canvas id="canvas-lv"></canvas>
+                              
+                            </tr>
+                            <div></div>
+                            <tr>
+                              <span>PHA of last run of captures</span>
+                              <canvas id="canvas-pha"></canvas>   
+                            </tr>
+                          </table>
+                        </div>
+                      </div>
+                      </div>
+                      </div>
                   </div>
                 </div>
-
           </div>
-
           </div>
+          
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="js/jquery-2.2.3.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->

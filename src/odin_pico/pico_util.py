@@ -108,6 +108,7 @@ class PicoUtil():
         flag = {
             "verify_all": False,
             "res_changed": False,
+            "range_changed": False,
             "user_capture": False
         }
         return flag
@@ -184,6 +185,16 @@ class PicoUtil():
             "samples_per_seg": ctypes.c_int32(0)
         }
         return meta_data
+    
+    def set_file_defaults(self,path):
+        file = {
+            "file_name": '',
+            "folder_name": '',
+            "file_path": path,
+            "curr_file_name": '',
+            "last_write_success": False,
+        }
+        return file
     
     def verify_channels_defined(self, channels, mode):
         channel_count = 0

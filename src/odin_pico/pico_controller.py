@@ -12,21 +12,23 @@ from odin_pico.pico_status import Status
 from odin_pico.pico_device import PicoDevice
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.file_writer import FileWriter
+from odin_pico.analysis import PicoAnalysis
 
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
-    def __init__(self,lock,loop):
+    def __init__(self,lock,loop,path):
         # Threading lock and control variables
         self.lock = lock
         self.update_loop_active = loop
         self.lv_captures = 1
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
-        self.dev_conf = DeviceConfig()
+        self.dev_conf = DeviceConfig(path)
         self.pico_status = Status()
         self.buffer_manager = BufferManager(self.dev_conf)
         self.file_writer = FileWriter(self.dev_conf,self.buffer_manager) 
+        self.analysis = PicoAnalysis(self.dev_conf, self.buffer_manager)
         self.pico = PicoDevice(self.dev_conf,self.pico_status,self.buffer_manager)
         self.util = PicoUtil()
 
@@ -73,16 +75,26 @@ class PicoController():
             'timebase': (lambda: self.get_mode_value("timebase"), partial(self.set_mode_value, "timebase"))
         })
 
+        pico_file = ParameterTree ({
+            'folder_name': (lambda: self.get_value(self.dev_conf,'file','folder_name'), partial(self.set_file_value,'folder_name')),
+            'file_name': (lambda: self.get_file_value("file_name"), partial(self.set_file_value,'file_name')),
+            'file_path': (lambda: self.get_value(self.dev_conf,'file','file_path'), None),
+            'curr_file_name': (lambda: self.get_value(self.dev_conf,'file','curr_file_name'), None),
+            'last_write_success': (lambda: self.get_value(self.dev_conf,'file','last_write_success'), None)
+        })
+
         pico_settings = ParameterTree ({
             'mode': pico_mode,
             'channels':{name: channel for (name, channel) in self.chan_params.items()},
             'trigger': pico_trigger,
-            'capture': pico_capture
+            'capture': pico_capture,
+            'file': pico_file,
         })
 
         live_view = ParameterTree ({
             'preview_channel': (lambda: self.get_dev_conf_value('preview_channel'), partial(self.set_dev_conf_value,'preview_channel')),
-            'lv_data': (self.lv_data, None)
+            'lv_data': (self.lv_data, None),
+            'pha_data': (self.pha_data, None)
         })
 
         pico_commands = ParameterTree ({
@@ -115,7 +127,6 @@ class PicoController():
                 value = getattr(value, key)
             except:
                 if isinstance(value, dict):
-                    logging.debug(f'Nested Dict detected using get accessor instead of getattr')
                     value = value.get(key)
         return value
     
@@ -128,12 +139,14 @@ class PicoController():
                     value = getattr(value, key)
                 except:
                     if isinstance(value, dict):
-                        logging.debug(f'Nested Dict detected using get accessor instead of getattr')
                         value = value.get(key)
             return value
         except:
             return None
-        
+
+    def get_file_value(self, value):
+        return self.dev_conf.file[value]    
+    
     def get_channel_value(self, channel, value):
         return self.dev_conf.channels[channel][value]
     
@@ -151,8 +164,6 @@ class PicoController():
 
     def get_flag_value(self,value):
         return self.pico_status.flag[value]
-    
-
     
     def set_dev_conf_value(self,path,value):
         setattr(self.dev_conf,path,value)
@@ -180,7 +191,10 @@ class PicoController():
         if key == "resolution":
             logging.debug(f'resolution change detected, setting flag')
             self.pico_status.flag["res_changed"] = True
-            
+
+    def set_file_value(self,key,value):
+        self.dev_conf.file[key] = value
+
     def set_capture_value(self,key,value):
         self.dev_conf.capture[key] = value
 
@@ -211,16 +225,22 @@ class PicoController():
                 if self.pico_status.status["open_unit"] == 0:
                     self.pico.stop_scope()
                 self.pico_status.flag["res_changed"] = False
-
+            
             if self.pico_status.flag["user_capture"]:
                 if self.pico.run_setup():
                     self.pico.run_block()
+                    self.analysis.PHA_one_peak()
                     self.file_writer.writeHDF5()
+                    #self.file_writer.init_file
+                    #self.file_writer.write_adc_HDF5()
+                    #self.file_writer.write_pha_HDF5()
+                    
                     self.buffer_manager.save_lv_data()
                 self.pico_status.flag["user_capture"] = False
             else:
                 if self.pico.run_setup(self.lv_captures):
                     self.pico.run_block(self.lv_captures)
+                    self.analysis.PHA_one_peak()
                     self.buffer_manager.save_lv_data()
       
     def lv_data(self):
@@ -228,6 +248,11 @@ class PicoController():
             if (c == self.dev_conf.preview_channel):
                 return b[-1][::10].tolist()
         return []
+
+    def pha_data(self):
+        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.pha_arrays):
+            if (c == self.dev_conf.preview_channel):
+                return b.tolist()
 
 ##### Adapter specific functions below #####
 
