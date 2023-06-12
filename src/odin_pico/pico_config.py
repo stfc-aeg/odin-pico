@@ -38,6 +38,13 @@ class DeviceConfig():
             "n_captures": 3
         }
 
+        self.buffer_control = {
+            "caps_comp": 0,
+            "caps_in_run": 0,
+            "caps_remaining": 0,
+            "caps_max": 0
+        }
+
         self.preview_channel = 0
 
         self.channels = {}

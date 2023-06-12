@@ -208,7 +208,9 @@ class PicoController():
         self.pico_status.status["channel_setup_verify"] = self.util.set_channel_verify_flag(self.dev_conf.channels)
         self.pico_status.status["channel_trigger_verify"] = self.util.verify_trigger(self.dev_conf.channels, self.dev_conf.trigger)
         self.pico_status.status["capture_settings_verify"] = self.util.verify_capture(self.dev_conf.capture)
-        
+
+        self.pico_status.flag["pico_mem_exceeded"] = self.util.memory_check()
+        #self    
         self.pico_status.flag["verify_all"] = self.set_verify_flag()
 
     def set_verify_flag(self):
@@ -221,6 +223,8 @@ class PicoController():
 
     def run_capture(self):
         if self.pico_status.flag["verify_all"]:
+            # reset dev_conf.buffer_control to sensible / default values
+
             if self.pico_status.flag["res_changed"]:
                 if self.pico_status.status["open_unit"] == 0:
                     self.pico.stop_scope()
@@ -231,12 +235,14 @@ class PicoController():
                     self.pico.run_block()
                     self.analysis.PHA_one_peak()
                     self.file_writer.writeHDF5()
+
                     #self.file_writer.init_file
                     #self.file_writer.write_adc_HDF5()
                     #self.file_writer.write_pha_HDF5()
                     
                     self.buffer_manager.save_lv_data()
                 self.pico_status.flag["user_capture"] = False
+
             else:
                 if self.pico.run_setup(self.lv_captures):
                     self.pico.run_block(self.lv_captures)

@@ -29,20 +29,42 @@ class PicoDevice():
         if self.pico_status.status["open_unit"] == 0:
             self.pico_status.status["maximumValue"] = ps.ps5000aMaximumValue(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_adc"]))
         logging.debug(f'open_unit value:{self.pico_status.status["open_unit"]} /nopen_unit() finished')
-              
-    def assign_buffers(self, *args):
+
+    # Split out into generate_arrays() and assign_pico_memory() 
+    # 
+    #
+    def generate_arrays(self, *args):
+        if args:
+            n_captures = args[0]
+            self.buffer_manager.generate_arrays(n_captures)
+        else:
+            n_captures = self.dev_conf.capture["n_captures"]
+            self.buffer_manager.generate_arrays()
+
+    def assign_pico_memory(self, *args):
         if True:#self.ping_scope():
             if args:
                 n_captures = args[0]
-                self.buffer_manager.generate_arrays(n_captures)
             else:
-                n_captures = self.dev_conf.capture["n_captures"]
-                self.buffer_manager.generate_arrays()
+                n_captures = self.dev_conf.buffer_control["caps_in_run"]
             
             self.pico_status.status["memory_segments"] = ps.ps5000aMemorySegments(self.dev_conf.mode["handle"], n_captures,
                                                                                 ctypes.byref(self.dev_conf.meta_data["samples_per_seg"]))
             self.pico_status.status["set_no_captures"] = ps.ps5000aSetNoOfCaptures(self.dev_conf.mode["handle"], n_captures)
+
             samples=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
+
+            # New block for segmented capture
+            for c,b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
+                for i in range(self.dev_conf.buffer_control["caps_comp"],self.dev_conf.buffer_control["caps_comp"]+self.dev_conf.buffer_control["caps_in_run"]):
+                    buff = b[i]
+                    self.pico_status.status[f'SetDataBuffer_{c}_{i}'] =  ps.ps5000aSetDataBuffer(self.dev_conf.mode["handle"], c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), 
+                                                                                                 samples, i-self.dev_conf.buffer_control["caps_comp"], 0)
+            # calculate captures compelted
+            self.dev_conf.buffer_control["caps_comp"] = self.dev_conf.buffer_control["caps_in_run"]
+
+            return
+            # Old block for standard singular capture
             for c,b in zip(self.buffer_manager.active_channels,self.buffer_manager.channel_arrays):
                 for i in range(len(b)):
                     buff = b[i]

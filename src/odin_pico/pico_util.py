@@ -109,7 +109,8 @@ class PicoUtil():
             "verify_all": False,
             "res_changed": False,
             "range_changed": False,
-            "user_capture": False
+            "user_capture": False,
+            "pico_mem_exceeded": False
         }
         return flag
         
@@ -264,7 +265,31 @@ class PicoUtil():
             return -1
         if (capture["n_captures"] <= 0):
             return -1
-        if ((total_samples * capture["n_captures"]) > 50000000):
+        if ((total_samples * capture["n_captures"]) > 50,000,000):
             return -1
         return 0
+
+    def max_samples(self, resolution):
+        if resolution == 0:
+            return ((512)*10**6)
+        elif resolution == 1:
+            return ((256)*10**6)
+        else:
+            return None
+
+    def max_segments(self, resolution):
+        if resolution == 0:
+            return ((1)*10**6)
+        elif resolution == 1:
+            return ((5)*10**5)
+        else:
+            return None
+    
+    def memory_check(self, capture, resolution):
+        capture_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
+        all_samples = capture_samples * capture["n_captures"]
+        if all_samples > self.max_samples(resolution):
+            return False
+        if capture["n_captures"] > self.max_segments(resolution):
+            return False
 
