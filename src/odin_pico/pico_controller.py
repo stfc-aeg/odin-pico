@@ -259,7 +259,7 @@ class PicoController():
                         
                         self.set_capture_run_length()
                         self.pico.assign_pico_memory()
-                        #self.pico.run_block()
+                        self.pico.run_block()
 
                         self.dev_conf.capture_run["caps_comp"] += self.dev_conf.capture_run["caps_in_run"]
                         self.dev_conf.capture_run["caps_remaining"] -= self.dev_conf.capture_run["caps_in_run"]
@@ -268,6 +268,9 @@ class PicoController():
                 
                 self.dev_conf.capture_run = self.util.set_capture_run_defaults()
                 self.pico_status.flag["user_capture"] = False
+
+                self.analysis.PHA_one_peak()
+                self.buffer_manager.save_lv_data()
                 
                    
 
