@@ -49,7 +49,9 @@ class PicoDevice():
             if args:
                 n_captures = args[0]
             else:
-                n_captures = self.dev_conf.capture_run["caps_in_run"]
+                pass
+            
+            n_captures = self.dev_conf.capture_run["caps_in_run"]
             
             self.pico_status.status["memory_segments"] = ps.ps5000aMemorySegments(self.dev_conf.mode["handle"], n_captures,
                                                                                 ctypes.byref(self.dev_conf.meta_data["samples_per_seg"]))

@@ -240,6 +240,11 @@ class PicoController():
         else:
             self.dev_conf.capture_run["caps_in_run"] = self.dev_conf.capture_run["caps_max"]
 
+    def set_capture_run_lv(self):
+        self.dev_conf.capture_run["caps_max"] = self.lv_captures
+        self.dev_conf.capture_run["caps_remaining"] = self.lv_captures
+        self.dev_conf.capture_run["caps_in_run"] = self.lv_captures
+
     def run_capture(self):
         if self.pico_status.flag["verify_all"]:
             # Detect if the device resolution has been changed, if so apply to picoscope
@@ -263,21 +268,19 @@ class PicoController():
 
                         self.dev_conf.capture_run["caps_comp"] += self.dev_conf.capture_run["caps_in_run"]
                         self.dev_conf.capture_run["caps_remaining"] -= self.dev_conf.capture_run["caps_in_run"]
+
+                        self.analysis.PHA_one_peak()
+                        self.buffer_manager.save_lv_data()
                 else:
                     print("error in setup")
                 
                 self.dev_conf.capture_run = self.util.set_capture_run_defaults()
-                self.pico_status.flag["user_capture"] = False
-
-                self.analysis.PHA_one_peak()
-                self.buffer_manager.save_lv_data()
+                self.pico_status.flag["user_capture"] = False          
                 
-                   
-
             # Run specific steps for live view capture
             else:
-                return
                 if self.pico.run_setup(self.lv_captures):
+                    self.pico.assign_pico_memory()
                     
                     self.pico.run_block(self.lv_captures)
                     self.analysis.PHA_one_peak()
