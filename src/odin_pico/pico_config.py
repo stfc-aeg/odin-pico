@@ -8,6 +8,7 @@ class DeviceConfig():
         # self.mode = self.util.set_mode_defaults()
         # self.trigger = self.util.set_trigger_defaults()
         # self.capture = self.util.set_capture_defaults()
+        self.capture_run = self.util.set_capture_run_defaults()
         # self.preview_channel = 0
         # self.channels = {}
         # i = 0
@@ -36,13 +37,6 @@ class DeviceConfig():
             "pre_trig_samples": 0,
             "post_trig_samples": 100000,
             "n_captures": 3
-        }
-
-        self.buffer_control = {
-            "caps_comp": 0,
-            "caps_in_run": 0,
-            "caps_remaining": 0,
-            "caps_max": 0
         }
 
         self.preview_channel = 0

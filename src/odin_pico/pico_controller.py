@@ -1,3 +1,4 @@
+import math
 import time
 import logging
 
@@ -207,10 +208,7 @@ class PicoController():
             self.dev_conf.channels[chan]["verified"] = self.util.verify_channel_settings(self.dev_conf.channels[chan])
         self.pico_status.status["channel_setup_verify"] = self.util.set_channel_verify_flag(self.dev_conf.channels)
         self.pico_status.status["channel_trigger_verify"] = self.util.verify_trigger(self.dev_conf.channels, self.dev_conf.trigger)
-        self.pico_status.status["capture_settings_verify"] = self.util.verify_capture(self.dev_conf.capture)
-
-        self.pico_status.flag["pico_mem_exceeded"] = self.util.memory_check()
-        #self    
+        self.pico_status.status["capture_settings_verify"] = self.util.verify_capture(self.dev_conf.capture)   
         self.pico_status.flag["verify_all"] = self.set_verify_flag()
 
     def set_verify_flag(self):
@@ -220,31 +218,64 @@ class PicoController():
             if status != 0:
                 return False
         return True
+    
+    def set_capture_run_limits(self):
+        """ 
+            Set the value for maximum amount of captures that can fit into
+            the picoscope memory taking into account current user settings
+            as well as setting the captures_remaning variable 
+        """
+        capture_samples = self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"]
+        self.dev_conf.capture_run["caps_max"] = math.floor(self.util.max_samples(self.dev_conf.mode["resolution"]) / capture_samples)
+        self.dev_conf.capture_run["caps_remaining"] = self.dev_conf.capture["n_captures"]
+
+    def set_capture_run_length(self):
+        """
+            Sets the captures to be completed in each "run" based on 
+            the maximum allowed captures, and the amount of captures
+            left to be collected
+        """
+        if self.dev_conf.capture_run["caps_remaining"] <= self.dev_conf.capture_run["caps_max"]:
+            self.dev_conf.capture_run["caps_in_run"] = self.dev_conf.capture_run["caps_remaining"]
+        else:
+            self.dev_conf.capture_run["caps_in_run"] = self.dev_conf.capture_run["caps_max"]
 
     def run_capture(self):
         if self.pico_status.flag["verify_all"]:
-            # reset dev_conf.buffer_control to sensible / default values
-
+            # Detect if the device resolution has been changed, if so apply to picoscope
             if self.pico_status.flag["res_changed"]:
                 if self.pico_status.status["open_unit"] == 0:
                     self.pico.stop_scope()
                 self.pico_status.flag["res_changed"] = False
-            
+
+            # Run specific steps for user defined capture
             if self.pico_status.flag["user_capture"]:
+                self.set_capture_run_limits()
                 if self.pico.run_setup():
-                    self.pico.run_block()
-                    self.analysis.PHA_one_peak()
-                    self.file_writer.writeHDF5()
-
-                    #self.file_writer.init_file
-                    #self.file_writer.write_adc_HDF5()
-                    #self.file_writer.write_pha_HDF5()
+                    print("setup completed")
+                    while self.dev_conf.capture_run["caps_comp"] < self.dev_conf.capture["n_captures"]:
+                        print("entering capture loop")
                     
-                    self.buffer_manager.save_lv_data()
-                self.pico_status.flag["user_capture"] = False
+                        
+                        self.set_capture_run_length()
+                        self.pico.assign_pico_memory()
+                        #self.pico.run_block()
 
+                        self.dev_conf.capture_run["caps_comp"] += self.dev_conf.capture_run["caps_in_run"]
+                        self.dev_conf.capture_run["caps_remaining"] -= self.dev_conf.capture_run["caps_in_run"]
+                else:
+                    print("error in setup")
+                
+                self.dev_conf.capture_run = self.util.set_capture_run_defaults()
+                self.pico_status.flag["user_capture"] = False
+                
+                   
+
+            # Run specific steps for live view capture
             else:
+                return
                 if self.pico.run_setup(self.lv_captures):
+                    
                     self.pico.run_block(self.lv_captures)
                     self.analysis.PHA_one_peak()
                     self.buffer_manager.save_lv_data()

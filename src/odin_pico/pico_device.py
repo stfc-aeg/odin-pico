@@ -33,6 +33,9 @@ class PicoDevice():
     # Split out into generate_arrays() and assign_pico_memory() 
     # 
     #
+
+    ## Remove generate arrays? decripated by calling buffer_manager.generate_arrays() direct from run_setup() 
+
     def generate_arrays(self, *args):
         if args:
             n_captures = args[0]
@@ -46,23 +49,25 @@ class PicoDevice():
             if args:
                 n_captures = args[0]
             else:
-                n_captures = self.dev_conf.buffer_control["caps_in_run"]
+                n_captures = self.dev_conf.capture_run["caps_in_run"]
             
-            self.pico_status.status["memory_segments"] = ps.ps5000aMemorySegments(self.dev_conf.mode["handle"], n_captures,
-                                                                                ctypes.byref(self.dev_conf.meta_data["samples_per_seg"]))
-            self.pico_status.status["set_no_captures"] = ps.ps5000aSetNoOfCaptures(self.dev_conf.mode["handle"], n_captures)
+            #self.pico_status.status["memory_segments"] = ps.ps5000aMemorySegments(self.dev_conf.mode["handle"], n_captures,
+            #                                                                    ctypes.byref(self.dev_conf.meta_data["samples_per_seg"]))
+            #self.pico_status.status["set_no_captures"] = ps.ps5000aSetNoOfCaptures(self.dev_conf.mode["handle"], n_captures)
+            print(f'setting n_captures and segments to {n_captures}')
 
             samples=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
 
             # New block for segmented capture
             for c,b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
-                for i in range(self.dev_conf.buffer_control["caps_comp"],self.dev_conf.buffer_control["caps_comp"]+self.dev_conf.buffer_control["caps_in_run"]):
-                    buff = b[i]
-                    self.pico_status.status[f'SetDataBuffer_{c}_{i}'] =  ps.ps5000aSetDataBuffer(self.dev_conf.mode["handle"], c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), 
-                                                                                                 samples, i-self.dev_conf.buffer_control["caps_comp"], 0)
-            # calculate captures compelted
-            self.dev_conf.buffer_control["caps_comp"] = self.dev_conf.buffer_control["caps_in_run"]
-
+                for i in range(self.dev_conf.capture_run["caps_comp"],self.dev_conf.capture_run["caps_comp"]+self.dev_conf.capture_run["caps_in_run"]):
+                    print(f'Selecting buffer at memory location: {i}, assigning buffer to segment {i-self.dev_conf.capture_run["caps_comp"]}')
+                    
+                    #buff = b[i]
+                    #self.pico_status.status[f'SetDataBuffer_{c}_{i}'] =  ps.ps5000aSetDataBuffer(self.dev_conf.mode["handle"], c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), 
+                    #                                                                            samples, i-self.dev_conf.capture_run["caps_comp"], 0)
+            
+            # caps_comp and caps_remaining are both calculated in pico_controller
             return
             # Old block for standard singular capture
             for c,b in zip(self.buffer_manager.active_channels,self.buffer_manager.channel_arrays):
@@ -95,9 +100,9 @@ class PicoDevice():
             self.set_channels()
             self.set_trigger() 
             if args:
-                self.assign_buffers(args[0])
+                self.buffer_manager.generate_arrays(args[0])
             else:
-                self.assign_buffers()
+                self.buffer_manager.generate_arrays()
             return True
 
     def run_block(self, *args):

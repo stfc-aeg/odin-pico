@@ -197,6 +197,15 @@ class PicoUtil():
         }
         return file
     
+    def set_capture_run_defaults(self):
+        capture_run = {
+            "caps_comp": 0,
+            "caps_in_run": 0,
+            "caps_remaining": 0,
+            "caps_max": 0
+        }
+        return capture_run
+    
     def verify_channels_defined(self, channels, mode):
         channel_count = 0
         for chan in channels:
@@ -262,11 +271,15 @@ class PicoUtil():
     def verify_capture(self, capture):
         total_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
         if (total_samples < 1):
+            print("samples less than 1")
             return -1
         if (capture["n_captures"] <= 0):
+            print("captures less than 1")
             return -1
-        if ((total_samples * capture["n_captures"]) > 50,000,000):
-            return -1
+        #if ((total_samples * capture["n_captures"]) > 50000000):
+        #    print("samples over 50M")
+        #    return -1
+        print("all verfied, returning 0")
         return 0
 
     def max_samples(self, resolution):
@@ -276,16 +289,13 @@ class PicoUtil():
             return ((256)*10**6)
         else:
             return None
-
-    def max_segments(self, resolution):
-        if resolution == 0:
-            return ((1)*10**6)
-        elif resolution == 1:
-            return ((5)*10**5)
-        else:
-            return None
     
     def memory_check(self, capture, resolution):
+        max_samples = self.max_samples(resolution)
+
+
+
+        
         capture_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
         all_samples = capture_samples * capture["n_captures"]
         if all_samples > self.max_samples(resolution):
