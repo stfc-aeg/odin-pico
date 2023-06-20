@@ -101,22 +101,31 @@ class PicoDevice():
             return True
 
     def run_block(self, *args):
+        print(f'\n\npico_status when called: {self.pico_status.status}')
         if args:
             n_captures = args[0]
         else:
-            n_captures = self.dev_conf.capture["n_captures"]
+            n_captures = self.dev_conf.capture_run["caps_in_run"]
         
         if True:#self.ping_scope():
             self.pico_status.status["block_ready"] = ctypes.c_int16(0)
             self.dev_conf.meta_data["total_cap_samples"]=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
             self.dev_conf.meta_data["max_samples"] = ctypes.c_int32(self.dev_conf.meta_data["total_cap_samples"])
-            
+            print(f'\n\npico_status before run_block: {self.pico_status.status}')
             self.pico_status.status["run_block"] =  ps.ps5000aRunBlock(self.dev_conf.mode["handle"], self.dev_conf.capture["pre_trig_samples"], 
                                                                         self.dev_conf.capture["post_trig_samples"], self.dev_conf.mode["timebase"], None, 0, None, None)
+            print(f'\n\npico_status after run_block: {self.pico_status.status}')
             while self.pico_status.status["block_ready"].value == self.pico_status.status["block_check"].value:
+                #print(f'\n\npico_status in while ready loop: {self.pico_status.status}')
                 self.pico_status.status["is_ready"] =  ps.ps5000aIsReady(self.dev_conf.mode["handle"], ctypes.byref(self.pico_status.status["block_ready"]))
+                print(f'block_ready:{self.pico_status.status["block_ready"].value}')
+                #time.sleep(5)
+                #self.pico_status.status["block_ready"].value = 1
+            print(f'\n\npico_status before get_values: {self.pico_status.status}')
             self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
                                                                             (n_captures-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
+            
+            print(self.pico_status.status)
       
     def ping_scope(self):
         if (ps.ps5000aPingUnit(self.dev_conf.mode["handle"])) == 0:

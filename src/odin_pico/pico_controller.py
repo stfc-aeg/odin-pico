@@ -279,6 +279,8 @@ class PicoController():
                 
             # Run specific steps for live view capture
             else:
+                print("entering liveview condition")
+                self.set_capture_run_lv()
                 if self.pico.run_setup(self.lv_captures):
                     self.pico.assign_pico_memory()
                     
