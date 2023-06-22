@@ -45,7 +45,21 @@ function generate_canvas(){
 const draw = () => {
     
     segmentWidth = canvas.width / (data_array.length);
-    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    
+      // Draw x-axis ticks and labels
+    c.beginPath();
+    for (var i = 0; i <= data_array.length; i++) {
+        var x = (i * segmentWidth);
+        var y = canvas.height - 20;
+        c.moveTo(x, y);
+        c.lineTo(x, y + 10);
+        c.fillText(x.toFixed(1), x - 10, y + 20);
+    }
+    c.stroke();
+
+
+
     c.beginPath();
     c.moveTo(0, (175));
     for (let i = 1; i < (data_array.length); i += 1) {
@@ -125,7 +139,7 @@ const drawPHA = () => {
       //let y = (1 - v) * canvas_pha.height;
   
       c2.lineTo(x, y);
-      console.log(x,y)
+      //console.log(x,y)
     }
   
     // Set the line style and stroke the path
@@ -193,10 +207,18 @@ function sync_with_adapter(){
             bin_edges = response.device.live_view.pha_data[0]
             counts = response.device.live_view.pha_data[1]
         } catch {
-            console.log("error")
+            //console.log("error")
         }
         
-        console.log(counts)
+        //console.log(counts)
+        console.log("Cap count:",response.device.live_view.capture_count)
+        console.log("caps total:", response.device.live_view.captures_requested)
+        let cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
+        let progressBar = document.getElementById('capture-progress-bar');
+        progressBar.style.width = cap_percent + '%';
+        progressBar.innerHTML = cap_percent + '%';
+
+        
         draw();
         drawPHA();
         //console.log(data_array.length)

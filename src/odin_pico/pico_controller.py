@@ -95,7 +95,9 @@ class PicoController():
         live_view = ParameterTree ({
             'preview_channel': (lambda: self.get_dev_conf_value('preview_channel'), partial(self.set_dev_conf_value,'preview_channel')),
             'lv_data': (self.lv_data, None),
-            'pha_data': (self.pha_data, None)
+            'pha_data': (self.pha_data, None),
+            'capture_count': (lambda: self.dev_conf.capture_run["live_cap_comp"], None),
+            'captures_requested': (lambda: self.dev_conf.capture["n_captures"], None)
         })
 
         pico_commands = ParameterTree ({
@@ -270,6 +272,7 @@ class PicoController():
                         self.dev_conf.capture_run["caps_remaining"] -= self.dev_conf.capture_run["caps_in_run"]
 
                         self.analysis.PHA_one_peak()
+                        self.file_writer.writeHDF5()
                         self.buffer_manager.save_lv_data()
                 else:
                     print("error in setup")
@@ -279,6 +282,7 @@ class PicoController():
                 
             # Run specific steps for live view capture
             else:
+                #return
                 print("entering liveview condition")
                 self.set_capture_run_lv()
                 if self.pico.run_setup(self.lv_captures):
@@ -307,6 +311,7 @@ class PicoController():
         
         while self.update_loop_active:
             self.run_capture()
+            #print(f'captures completed: {self.pico.ping_cap_count()}')
             time.sleep(0.2)
     
     def set_update_loop_state(self, state=bool):

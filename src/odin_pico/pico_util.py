@@ -202,7 +202,8 @@ class PicoUtil():
             "caps_comp": 0,
             "caps_in_run": 0,
             "caps_remaining": 0,
-            "caps_max": 0
+            "caps_max": 0,
+            "live_cap_comp": 0
         }
         return capture_run
     

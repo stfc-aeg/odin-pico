@@ -99,6 +99,7 @@
                                 <form>
                                   <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
                                 </form>
+                                <span>Sample Interval : </span><span id="samp_int"></span>
                               </th>
                               <th>
                                 <form >
@@ -313,19 +314,19 @@
                               <tr id="trigger-row2">
                                 <th>
                                   <form>
-                                    <label for="trigger-threshold">Threshold:</label>
+                                    <label for="trigger-threshold">Threshold (mV):</label>
                                     <input id="trigger-threshold" type="text" oninput="commit_int_adapter('trigger-threshold','settings/trigger/','threshold')"  />
                                   </form>
                                 </th>
                                 <th>
                                   <form>
-                                    <label for="trigger-delay">Delay:</label>
+                                    <label for="trigger-delay">Delay (mS):</label>
                                     <input id="trigger-delay" type="text" oninput="commit_int_adapter('trigger-delay','settings/trigger/','delay')"  />
                                   </form>
                                 </th>
                                 <th>
                                   <form>
-                                    <label for="trigger-auto">Trigger After:</label>
+                                    <label for="trigger-auto">Trigger After (mS):</label>
                                     <input id="trigger-auto" type="text" oninput="commit_int_adapter('trigger-auto','settings/trigger/','auto_trigger')"  />
                                   </form>
                                 </th>
@@ -400,6 +401,13 @@
                                   <tr>
                                     <th><span>File : </span><span id="file-name-span"></span></th>
                                     <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
+                                  </tr>
+                                  <tr>
+                                    <th>
+                                      <div class="progress">
+                                        <div id="capture-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                    </th>
                                   </tr>   
                                   </tr>
                                 </table>

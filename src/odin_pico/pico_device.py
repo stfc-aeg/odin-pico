@@ -22,6 +22,8 @@ class PicoDevice():
         self.dev_conf = dev_conf
         self.pico_status = pico_status
         self.buffer_manager = buffer_manager
+        self.cap_time = 30
+        self.caps = 0
 
     def open_unit(self):
         logging.debug(f'Trying to open Device')
@@ -66,8 +68,10 @@ class PicoDevice():
                     print(f'Selecting buffer at memory location: {i}, assigning buffer to segment {i-self.dev_conf.capture_run["caps_comp"]}')
                     
                     buff = b[i]
-                    self.pico_status.status[f'SetDataBuffer_{c}_{i}'] =  ps.ps5000aSetDataBuffer(self.dev_conf.mode["handle"], c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), 
+                    self.pico_status.status[f'SetDataBuffer'] =  ps.ps5000aSetDataBuffer(self.dev_conf.mode["handle"], c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), 
                                                                                                 samples, i-self.dev_conf.capture_run["caps_comp"], 0)
+                    # self.pico_status.status[f'SetDataBuffer_{c}_{i}'] =  ps.ps5000aSetDataBuffer(self.dev_conf.mode["handle"], c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), 
+                    #                                                                             samples, i-self.dev_conf.capture_run["caps_comp"], 0)
             # caps_comp and caps_remaining are both calculated in pico_controller
     
     def set_trigger(self):
@@ -101,6 +105,7 @@ class PicoDevice():
             return True
 
     def run_block(self, *args):
+        self.caps = 0
         print(f'\n\npico_status when called: {self.pico_status.status}')
         if args:
             n_captures = args[0]
@@ -108,6 +113,7 @@ class PicoDevice():
             n_captures = self.dev_conf.capture_run["caps_in_run"]
         
         if True:#self.ping_scope():
+            start_time = time.time()
             self.pico_status.status["block_ready"] = ctypes.c_int16(0)
             self.dev_conf.meta_data["total_cap_samples"]=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
             self.dev_conf.meta_data["max_samples"] = ctypes.c_int32(self.dev_conf.meta_data["total_cap_samples"])
@@ -116,12 +122,16 @@ class PicoDevice():
                                                                         self.dev_conf.capture["post_trig_samples"], self.dev_conf.mode["timebase"], None, 0, None, None)
             print(f'\n\npico_status after run_block: {self.pico_status.status}')
             while self.pico_status.status["block_ready"].value == self.pico_status.status["block_check"].value:
-                #print(f'\n\npico_status in while ready loop: {self.pico_status.status}')
                 self.pico_status.status["is_ready"] =  ps.ps5000aIsReady(self.dev_conf.mode["handle"], ctypes.byref(self.pico_status.status["block_ready"]))
-                print(f'block_ready:{self.pico_status.status["block_ready"].value}')
-                #time.sleep(5)
-                #self.pico_status.status["block_ready"].value = 1
+
+                if (time.time() - start_time >= 0.25):
+                    start_time = time.time()
+                    self.ping_cap_count()
+                    print(f'Caps: {self.dev_conf.capture_run["live_cap_comp"]}')
+                    pass
+                    # #ps.ps5000aStop(self.dev_conf.mode["handle"])
             print(f'\n\npico_status before get_values: {self.pico_status.status}')
+            self.ping_cap_count()
             self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
                                                                             (n_captures-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
             
@@ -133,6 +143,11 @@ class PicoDevice():
         else:
             self.pico_status.status["open_unit"] = -1
             return False
+        
+    def ping_cap_count(self):
+        caps = ctypes.c_uint32(0)
+        ps.ps5000aGetNoOfCaptures(self.dev_conf.mode["handle"], ctypes.byref(caps))
+        self.dev_conf.capture_run["live_cap_comp"] = caps.value
     
     def stop_scope(self):
         if True:#self.ping_scope():
