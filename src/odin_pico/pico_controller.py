@@ -104,10 +104,15 @@ class PicoController():
             'run_user_capture': (lambda: self.get_flag_value("user_capture"), self.start_user_capture)
         })
 
+        pico_flags = ParameterTree ({
+            'abort_cap': (lambda: self.pico_status.flag["abort_cap"], self.abort_cap)
+        })
+
         self.pico_param_tree = ParameterTree ({
             'status': adapter_status,
             'commands': pico_commands,
             'settings': pico_settings,
+            'flags': pico_flags,
             'live_view': live_view
         })
 
@@ -204,6 +209,9 @@ class PicoController():
     def start_user_capture(self, value):
         self.pico_status.flag["user_capture"] = value
 
+    def abort_cap(self, value):
+        self.pico_status.flag["abort_cap"] = value
+
     def verify_settings(self):
         self.pico_status.status["pico_setup_verify"] = self.util.verify_channels_defined(self.dev_conf.channels, self.dev_conf.mode)
         for chan in self.dev_conf.channels:
@@ -248,6 +256,7 @@ class PicoController():
         self.dev_conf.capture_run["caps_in_run"] = self.lv_captures
 
     def run_capture(self):
+        self.pico_status.flag["abort_cap"] = False
         if self.pico_status.flag["verify_all"]:
             # Detect if the device resolution has been changed, if so apply to picoscope
             if self.pico_status.flag["res_changed"]:

@@ -110,7 +110,8 @@ class PicoUtil():
             "res_changed": False,
             "range_changed": False,
             "user_capture": False,
-            "pico_mem_exceeded": False
+            "pico_mem_exceeded": False,
+            "abort_cap": False
         }
         return flag
         

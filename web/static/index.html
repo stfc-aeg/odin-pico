@@ -135,7 +135,7 @@
                                 <th>Channel: </th>
                                 <th>Channel Coupling</th>
                                 <th>Channel Range</th>
-                                <th>Offset</th>
+                                <th>Offset (mV)</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -401,6 +401,10 @@
                                   <tr>
                                     <th><span>File : </span><span id="file-name-span"></span></th>
                                     <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
+                                    <th>
+                                      <label for="abort_cap_butt">Abort current capture: </label>
+                                      <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
+                                  </th>
                                   </tr>
                                   <tr>
                                     <th>

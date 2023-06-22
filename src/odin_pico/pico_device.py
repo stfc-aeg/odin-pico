@@ -129,7 +129,9 @@ class PicoDevice():
                     self.ping_cap_count()
                     print(f'Caps: {self.dev_conf.capture_run["live_cap_comp"]}')
                     pass
-                    # #ps.ps5000aStop(self.dev_conf.mode["handle"])
+                if (self.pico_status.flag["abort_cap"]):
+                    ps.ps5000aStop(self.dev_conf.mode["handle"])
+                    print(f'Aborting capture')
             print(f'\n\npico_status before get_values: {self.pico_status.status}')
             self.ping_cap_count()
             self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
