@@ -270,19 +270,21 @@ class PicoController():
                 if self.pico.run_setup():
                     print("setup completed")
                     while self.dev_conf.capture_run["caps_comp"] < self.dev_conf.capture["n_captures"]:
-                        print("entering capture loop")
+                        print("\n\n\nentering capture loop")
+                       
                     
                         
                         self.set_capture_run_length()
                         self.pico.assign_pico_memory()
+                        print(self.dev_conf.capture_run)
                         self.pico.run_block()
 
                         self.dev_conf.capture_run["caps_comp"] += self.dev_conf.capture_run["caps_in_run"]
                         self.dev_conf.capture_run["caps_remaining"] -= self.dev_conf.capture_run["caps_in_run"]
 
                         self.analysis.PHA_one_peak()
-                        self.file_writer.writeHDF5()
                         self.buffer_manager.save_lv_data()
+                    self.file_writer.writeHDF5()
                 else:
                     print("error in setup")
                 
@@ -320,9 +322,7 @@ class PicoController():
         
         while self.update_loop_active:
             self.run_capture()
-            #print(f'captures completed: {self.pico.ping_cap_count()}')
             time.sleep(0.2)
-            print(f'triger {self.dev_conf.trigger}')
     
     def set_update_loop_state(self, state=bool):
         self.update_loop_active = state

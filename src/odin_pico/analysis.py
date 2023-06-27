@@ -60,9 +60,9 @@ class PicoAnalysis():
                 data = b[i]
                 # Find the peaks in each capture, using pre-determined bin_width for grouping peaks
                 peak_pos = np.argmax(data)
-                print(f'peak pos:{peak_pos}')
+                #print(f'peak pos:{peak_pos}')
                 peak_values.append(data[peak_pos])
-                print(f'Length of peak_values:{len(peak_values)}')
+                #print(f'Length of peak_values:{len(peak_values)}')
             # Calculate the number of bins required based on the bin_width
             #num_bins = math.ceil(np.max((self.dev_conf.meta_data["max_adc"].value)/self.bin_width))
             num_bins = 1024
