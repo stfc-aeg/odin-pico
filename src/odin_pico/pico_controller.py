@@ -322,6 +322,7 @@ class PicoController():
             self.run_capture()
             #print(f'captures completed: {self.pico.ping_cap_count()}')
             time.sleep(0.2)
+            print(f'triger {self.dev_conf.trigger}')
     
     def set_update_loop_state(self, state=bool):
         self.update_loop_active = state

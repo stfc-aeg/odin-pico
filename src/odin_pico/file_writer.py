@@ -38,7 +38,13 @@ class FileWriter():
 
     def write_adc_HDF5(self):
         metadata = {
-            'active_channels' : self.buffer_manager.active_channels[:]
+            'active_channels' : self.buffer_manager.active_channels[:],
+            'channel_a' : self.dev_conf.channels["a"],
+            'channel_b' : self.dev_conf.channels["b"],
+            'channel_c' : self.dev_conf.channels["c"],
+            'channel_d' : self.dev_conf.channels["d"],
+            'trigger' : self.dev_conf.trigger,
+            'mode' : self.dev_conf.mode
         }        
         try:
             with h5py.File((self.dev_conf.file["curr_file_name"]), 'w') as f:
