@@ -99,7 +99,7 @@
                                 <form>
                                   <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
                                 </form>
-                                <span>Sample Interval : </span><span id="samp_int"></span>
+                                <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
                               </th>
                               <th>
                                 <form >
@@ -135,7 +135,7 @@
                                 <th>Channel: </th>
                                 <th>Channel Coupling</th>
                                 <th>Channel Range</th>
-                                <th>Offset (mV)</th>
+                                <th>Offset (V)</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -320,13 +320,13 @@
                                 </th>
                                 <th>
                                   <form>
-                                    <label for="trigger-delay">Delay (mS):</label>
+                                    <label for="trigger-delay">Delay (ms):</label>
                                     <input id="trigger-delay" type="text" oninput="commit_int_adapter('trigger-delay','settings/trigger/','delay')"  />
                                   </form>
                                 </th>
                                 <th>
                                   <form>
-                                    <label for="trigger-auto">Trigger After (mS):</label>
+                                    <label for="trigger-auto">Trigger After (ms):</label>
                                     <input id="trigger-auto" type="text" oninput="commit_int_adapter('trigger-auto','settings/trigger/','auto_trigger')"  />
                                   </form>
                                 </th>

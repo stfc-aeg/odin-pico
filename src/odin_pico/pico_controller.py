@@ -236,8 +236,8 @@ class PicoController():
             as well as setting the captures_remaning variable 
         """
         capture_samples = self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"]
-        self.dev_conf.capture_run["caps_max"] = 100
-       # self.dev_conf.capture_run["caps_max"] = math.floor(self.util.max_samples(self.dev_conf.mode["resolution"]) / capture_samples)
+        #self.dev_conf.capture_run["caps_max"] = 1000
+        self.dev_conf.capture_run["caps_max"] = math.floor(self.util.max_samples(self.dev_conf.mode["resolution"]) / capture_samples)
         self.dev_conf.capture_run["caps_remaining"] = self.dev_conf.capture["n_captures"]
 
     def set_capture_run_length(self):
