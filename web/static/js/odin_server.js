@@ -219,22 +219,22 @@ function sync_with_adapter(){
         progressBar.style.width = cap_percent + '%';
         progressBar.innerHTML = cap_percent + '%';
         
-        let samp_int = 0 
-        if (response.device.settings.mode.resolution == 0){
-            if(response.device.settings.mode.timebase >= 0 && response.device.settings.mode.timebase <= 2){
-                samp_int = (Math.pow(2,parseInt(response.device.settings.mode.timebase))/1000000000)                
-            } else {
-                samp_int = ((parseInt(response.device.settings.mode.timebase)-2 ) /125000000)
-            }
-        }
-        else if (response.device.settings.mode.resolution == 1){
-            if(response.device.settings.mode.timebase >= 1 && response.device.settings.mode.timebase <= 3){
-                samp_int = ((Math.pow(2,parseInt(response.device.settings.mode.timebase)-1))/500000000)                
-            } else {
-                samp_int = ((parseInt(response.device.settings.mode.timebase)-3 ) /62500000)
-            }
-        }
-        document.getElementById("samp-int").textContent = toSiUnit(samp_int)
+        // let samp_int = 0 
+        // if (response.device.settings.mode.resolution == 0){
+        //     if(response.device.settings.mode.timebase >= 0 && response.device.settings.mode.timebase <= 2){
+        //         samp_int = (Math.pow(2,parseInt(response.device.settings.mode.timebase))/1000000000)                
+        //     } else {
+        //         samp_int = ((parseInt(response.device.settings.mode.timebase)-2 ) /125000000)
+        //     }
+        // }
+        // else if (response.device.settings.mode.resolution == 1){
+        //     if(response.device.settings.mode.timebase >= 1 && response.device.settings.mode.timebase <= 3){
+        //         samp_int = ((Math.pow(2,parseInt(response.device.settings.mode.timebase)-1))/500000000)                
+        //     } else {
+        //         samp_int = ((parseInt(response.device.settings.mode.timebase)-3 ) /62500000)
+        //     }
+        // }
+        // document.getElementById("samp-int").textContent = toSiUnit(samp_int)
 
 
         draw();
