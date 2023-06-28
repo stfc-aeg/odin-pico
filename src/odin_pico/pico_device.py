@@ -135,8 +135,9 @@ class PicoDevice():
            #print(f'\n\npico_status before get_values: {self.pico_status.status}')
             self.ping_cap_count()
             logging.debug(f'getting values form {self.dev_conf.capture_run["caps_comp"]} to {(self.dev_conf.capture_run["caps_comp"]+self.dev_conf.capture_run["caps_in_run"]-1)}')
-            self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), self.dev_conf.capture_run["caps_comp"], 
-                                                                (self.dev_conf.capture_run["caps_comp"]+self.dev_conf.capture_run["caps_in_run"]-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
+            
+            self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
+                                                                (self.dev_conf.capture_run["caps_in_run"]-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
 
             # self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
             #                                                                 (n_captures-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))

@@ -236,7 +236,8 @@ class PicoController():
             as well as setting the captures_remaning variable 
         """
         capture_samples = self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"]
-        self.dev_conf.capture_run["caps_max"] = math.floor(self.util.max_samples(self.dev_conf.mode["resolution"]) / capture_samples)
+        self.dev_conf.capture_run["caps_max"] = 100
+       # self.dev_conf.capture_run["caps_max"] = math.floor(self.util.max_samples(self.dev_conf.mode["resolution"]) / capture_samples)
         self.dev_conf.capture_run["caps_remaining"] = self.dev_conf.capture["n_captures"]
 
     def set_capture_run_length(self):
@@ -306,7 +307,7 @@ class PicoController():
     def lv_data(self):
         for c,b in zip(self.buffer_manager.lv_active_channels,self.buffer_manager.lv_channel_arrays):
             if (c == self.dev_conf.preview_channel):
-                return b[-1][::10].tolist()
+                return b[self.dev_conf.capture_run["caps_comp"]-1][::10].tolist()
         return []
 
     def pha_data(self):
