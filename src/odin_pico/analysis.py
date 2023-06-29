@@ -71,8 +71,5 @@ class PicoAnalysis():
             # Combine the bin_edge's and counts into one np.array
             self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
 
-            #plt.plot(bin_edge[:-1], counts)
-            #plt.show()
-
             # Is prominence relevant?
             #prom = math.ceil(max_adc_count*0.1) # max_adc returned from picoSDK is
