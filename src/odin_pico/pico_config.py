@@ -8,6 +8,7 @@ class DeviceConfig():
         # self.mode = self.util.set_mode_defaults()
         # self.trigger = self.util.set_trigger_defaults()
         # self.capture = self.util.set_capture_defaults()
+        self.capture_run = self.util.set_capture_run_defaults()
         # self.preview_channel = 0
         # self.channels = {}
         # i = 0

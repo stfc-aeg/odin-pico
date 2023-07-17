@@ -19,6 +19,10 @@ class BufferManager():
         self.lv_pha = []
 
     def generate_arrays(self, *args):
+        """
+            Creates the local buffers that the picoscope will eventually be mapped 
+            onto for data collection
+        """
         if args:
             n_captures = args[0]
         else:
@@ -35,11 +39,17 @@ class BufferManager():
             self.channel_arrays.append(np.zeros(shape=(n_captures,samples), dtype=np.int16))
 
     def save_lv_data(self):
+        """
+            Temporary solution to return a live view of traces being captured
+        """
         self.lv_active_channels = self.active_channels
         self.lv_channel_arrays = self.channel_arrays
         self.lv_pha = self.pha_arrays
 
     def clear_arrays(self):
+        """
+            Removes previously created buffers from the buffer_manager
+        """
         while (len(self.active_channels)) > 0:
             self.active_channels.pop()
         while (len(self.channel_arrays)) > 0:

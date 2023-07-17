@@ -45,7 +45,22 @@ function generate_canvas(){
 const draw = () => {
     
     segmentWidth = canvas.width / (data_array.length);
-    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    
+    //   // Draw x-axis ticks and labels
+    // c.beginPath();
+    // div = data_array.length/10
+    // for (var i = 0; i <= data_array.length; i+= div) {
+    //     var x = (i * segmentWidth);
+    //     var y = canvas.height - 20;
+    //     c.moveTo(x, y);
+    //     c.lineTo(x, y + 10);
+    //     c.fillText(x.toFixed(1), x - 10, y + 20);
+    // }
+    // c.stroke();
+
+
+
     c.beginPath();
     c.moveTo(0, (175));
     for (let i = 1; i < (data_array.length); i += 1) {
@@ -106,31 +121,32 @@ const draw_pha = () => {
     //requestAnimationFrame(draw);
 }
 
-const drawPHA = () => { 
-    // Clear the canvas
-    c2.clearRect(0, 0, canvas_pha.width, canvas_pha.height);
-  
-    // Find the maximum count value
-    let maxCount = Math.max(...counts);
-  
-    // Begin drawing the graph
-    c2.beginPath();
-    c2.moveTo(0, canvas_pha.height / 2);
-  
-    for (let i = 1; i < bin_edges.length; i++) {
-      let x = bin_edges[i];
-      let y = counts[i]
 
-      //let v = counts[i] / maxCount;
-      //let y = (1 - v) * canvas_pha.height;
-  
-      c2.lineTo(x, y);
-      console.log(x,y)
+const draw_PHA_2 = () => {
+    let x_min = Math.min(...bin_edges);
+    let x_max = Math.max(...bin_edges);
+
+    let y_min = Math.min(...counts);
+    let y_max = Math.max(...counts);
+
+    let x_scale = canvas_pha.width / (x_max - x_min);
+    let y_scale = canvas_pha.height / (y_max - y_min);
+
+    c2.clearRect(0, 0, canvas_pha.width, canvas_pha.height);
+
+    c2.beginPath();
+
+    for (let i = 0; i < bin_edges.length; i++) {
+    const x = (bin_edges[i] - x_min) * x_scale;
+    const y = canvas_pha.height - (counts[i] - y_min) * y_scale;
+
+    if (i === 0) {
+        c2.moveTo(x, y);
+    } else {
+        c2.lineTo(x, y);
     }
-  
-    // Set the line style and stroke the path
-    c2.lineWidth = 2;
-    c2.strokeStyle = 'blue';
+    }
+
     c2.stroke();
 }
 
@@ -193,18 +209,38 @@ function sync_with_adapter(){
             bin_edges = response.device.live_view.pha_data[0]
             counts = response.device.live_view.pha_data[1]
         } catch {
-            console.log("error")
+            //console.log("error")
         }
         
-        console.log(counts)
+        //console.log(counts)
+        console.log("Cap count:",response.device.live_view.capture_count)
+        console.log("caps total:", response.device.live_view.captures_requested)
+        let cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
+        let progressBar = document.getElementById('capture-progress-bar');
+        progressBar.style.width = cap_percent + '%';
+        progressBar.innerHTML = cap_percent + '%';
+        
+        // let samp_int = 0 
+        // if (response.device.settings.mode.resolution == 0){
+        //     if(response.device.settings.mode.timebase >= 0 && response.device.settings.mode.timebase <= 2){
+        //         samp_int = (Math.pow(2,parseInt(response.device.settings.mode.timebase))/1000000000)                
+        //     } else {
+        //         samp_int = ((parseInt(response.device.settings.mode.timebase)-2 ) /125000000)
+        //     }
+        // }
+        // else if (response.device.settings.mode.resolution == 1){
+        //     if(response.device.settings.mode.timebase >= 1 && response.device.settings.mode.timebase <= 3){
+        //         samp_int = ((Math.pow(2,parseInt(response.device.settings.mode.timebase)-1))/500000000)                
+        //     } else {
+        //         samp_int = ((parseInt(response.device.settings.mode.timebase)-3 ) /62500000)
+        //     }
+        // }
+        // document.getElementById("samp-int").textContent = toSiUnit(samp_int)
+        
+
         draw();
-        drawPHA();
-        //console.log(data_array.length)
+        draw_PHA_2();
 
-        //console.log(bin_edges,counts)
-
-        //$("#file-name-span").val(response.device.settings.file.curr_file_name)
-        //$("#file-write-succ-span").val(response.device.settings.file.last_write_success)
 
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
         if (response.device.settings.file.last_write_success == true){
@@ -377,9 +413,9 @@ function toSiUnit(num){
         testnum = (numin / (Math.pow(10,pow[i])))
     }
     if (isNegative) {
-        return(('-'+testnum.toFixed(2))+' '+siUnit[i]+'A')
+        return(('-'+testnum.toFixed(2))+' '+siUnit[i])
     } else{
-        return((testnum.toFixed(2))+' '+siUnit[i]+'A')
+        return((testnum.toFixed(2))+' '+siUnit[i])
     }
 }
 
