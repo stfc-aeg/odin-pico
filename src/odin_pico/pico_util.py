@@ -304,4 +304,3 @@ class PicoUtil():
             return False
         if capture["n_captures"] > self.max_segments(resolution):
             return False
-
