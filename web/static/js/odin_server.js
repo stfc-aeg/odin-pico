@@ -235,12 +235,10 @@ function sync_with_adapter(){
         //         samp_int = ((parseInt(response.device.settings.mode.timebase)-3 ) /62500000)
         //     }
         // }
-        // document.getElementById("samp-int").textContent = toSiUnit(samp_int)
+        document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
         
-
         draw();
         draw_PHA_2();
-
 
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
         if (response.device.settings.file.last_write_success == true){
@@ -318,6 +316,15 @@ function sync_with_adapter(){
             } else {
                 document.getElementById("settings_status").textContent = "False"
             }
+            document.getElementById("system-state").textContent = response.device.flags.system_state
+
+            let 
+
+            TESTER = document.getElementById('tester');
+            Plotly.newPlot( TESTER, [{
+            x: x = data_array.map((value, index) => index),
+            y: data_array }], {
+            margin: { t: 0 } } );
     }
 }
 

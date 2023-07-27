@@ -28,11 +28,12 @@ class PicoController():
         self.dev_conf = DeviceConfig(path)
         self.pico_status = Status()
         self.buffer_manager = BufferManager(self.dev_conf)
-        self.file_writer = FileWriter(self.dev_conf,self.buffer_manager) 
-        self.analysis = PicoAnalysis(self.dev_conf, self.buffer_manager)
+        self.file_writer = FileWriter(self.dev_conf, self.buffer_manager, self.pico_status) 
+        self.analysis = PicoAnalysis(self.dev_conf, self.buffer_manager, self.pico_status)
         self.pico = PicoDevice(self.dev_conf,self.pico_status,self.buffer_manager)
         self.util = PicoUtil()
 
+        print(f'testing system state {self.pico_status.flag["system_state"]}')
         # ParameterTree's to represent different parts of the system
         adapter_status = ParameterTree ({
             'settings_verified': (lambda: self.get_flag_value("verify_all"), None),
@@ -73,7 +74,8 @@ class PicoController():
         
         pico_mode = ParameterTree ({
             'resolution': (lambda: self.get_mode_value("resolution"), partial(self.set_mode_value, "resolution")),
-            'timebase': (lambda: self.get_mode_value("timebase"), partial(self.set_mode_value, "timebase"))
+            'timebase': (lambda: self.get_mode_value("timebase"), partial(self.set_mode_value, "timebase")),
+            'samp_time': (lambda: self.get_mode_value("samp_time"), None)
         })
 
         pico_file = ParameterTree ({
@@ -105,7 +107,8 @@ class PicoController():
         })
 
         pico_flags = ParameterTree ({
-            'abort_cap': (lambda: self.pico_status.flag["abort_cap"], self.abort_cap)
+            'abort_cap': (lambda: self.pico_status.flag["abort_cap"], self.abort_cap),
+            'system_state': (lambda: self.pico_status.flag["system_state"], None)
         })
 
         self.pico_param_tree = ParameterTree ({
@@ -270,10 +273,23 @@ class PicoController():
         self.dev_conf.capture_run["caps_remaining"] = self.lv_captures
         self.dev_conf.capture_run["caps_in_run"] = self.lv_captures
 
+    def calc_samp_time(self):
+        if self.dev_conf.mode["resolution"] == 0:
+            if ((self.dev_conf.mode["timebase"]) >= 0 and (self.dev_conf.mode["timebase"] <=2)):
+                self.dev_conf.mode["samp_time"] = (math.pow(2,self.dev_conf.mode["timebase"])/(1000000000))
+            else:
+                self.dev_conf.mode["samp_time"] = ((self.dev_conf.mode["timebase"] - 2)/(125000000))
+        elif self.dev_conf.mode["resolution"] == 1:
+            if ((self.dev_conf.mode["timebase"]) >= 1 and (self.dev_conf.mode["timebase"] <=3)):
+                self.dev_conf.mode["samp_time"] = (math.pow(2,self.dev_conf.mode["timebase"] - 1)/(500000000))
+            else:
+                self.dev_conf.mode["samp_time"] = ((self.dev_conf.mode["timebase"] - 3)/(62500000))
+
     def run_capture(self):
         """
             Responsible for telling the picoscope to collect and return data
         """
+        self.calc_samp_time()
         self.pico_status.flag["abort_cap"] = False
         if self.pico_status.flag["verify_all"]:
 
@@ -336,6 +352,7 @@ class PicoController():
             responsible for calling the run_capture function 
         """
         while self.update_loop_active:
+            print(f'max_adc value is {self.dev_conf.meta_data["max_adc"].value} resolution is: {self.dev_conf.mode["resolution"]}')
             self.run_capture()
             time.sleep(0.2)
     

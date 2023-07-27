@@ -7,11 +7,15 @@ import time
 
 from odin_pico.pico_config import DeviceConfig
 from odin_pico.buffer_manager import BufferManager
+from odin_pico.pico_util import PicoUtil
+from odin_pico.pico_status import Status
 
 class FileWriter():
-    def __init__(self, dev_conf=DeviceConfig(None), buffer_manager=BufferManager()):
+    def __init__(self, dev_conf=DeviceConfig(None), buffer_manager=BufferManager(), pico_status=Status()):
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
+        self.pico_status = pico_status
+        self.util = PicoUtil()
 
         if not (os.path.isdir(self.dev_conf.file["file_path"])):
             os.mkdir(self.dev_conf.file["file_path"])
@@ -37,7 +41,7 @@ class FileWriter():
         logging.debug(f'Full file path: {self.dev_conf.file["curr_file_name"]}')
 
     def write_adc_HDF5(self):
-        metadata = {
+        metadata = self.util.flatten_dict({
             'active_channels' : self.buffer_manager.active_channels[:],
             'channel_a' : self.dev_conf.channels["a"],
             'channel_b' : self.dev_conf.channels["b"],
@@ -45,7 +49,8 @@ class FileWriter():
             'channel_d' : self.dev_conf.channels["d"],
             'trigger' : self.dev_conf.trigger,
             'mode' : self.dev_conf.mode
-        }        
+        })
+               
         try:
             with h5py.File((self.dev_conf.file["curr_file_name"]), 'w') as f:
                 metadata_group = f.create_group('metadata')
@@ -77,16 +82,19 @@ class FileWriter():
 ### Pre commit function ### 
         
     def writeHDF5(self):
-        metadata = {
+        self.pico_status.flag["system_state"] = "Connected to Picoscope, writing hdf5 file"
+        logging.debug(f'channel_a "id" =: {self.dev_conf.channels["a"]["channel_id"]}')
+        
+        metadata = self.util.flatten_metadata_dict({
             'active_channels' : self.buffer_manager.active_channels[:],
-            # 'channel_a' : self.dev_conf.channels["a"],
-            # 'channel_b' : self.dev_conf.channels["b"],
-            # 'channel_c' : self.dev_conf.channels["c"],
-            # 'channel_d' : self.dev_conf.channels["d"],
-            # 'trigger' : self.dev_conf.trigger,
-            # 'resolution' : self.dev_conf.mode["resolution"],
-            # 'timebase' : self.dev_conf.mode["timebase"]
-        } 
+            'channel_a' : self.dev_conf.channels["a"],
+            'channel_b' : self.dev_conf.channels["b"],
+            'channel_c' : self.dev_conf.channels["c"],
+            'channel_d' : self.dev_conf.channels["d"],
+            'trigger' : self.dev_conf.trigger,
+            'resolution' : self.dev_conf.mode["resolution"],
+            'timebase' : self.dev_conf.mode["timebase"]
+        })
 
         logging.debug("Starting file writing")
         if (self.dev_conf.file["file_name"]) == "" or (os.path.isfile(self.dev_conf.file["file_path"] + self.dev_conf.file["folder_name"] + self.dev_conf.file["file_name"])):
@@ -119,6 +127,7 @@ class FileWriter():
                 for c, p in zip(self.buffer_manager.active_channels, self.buffer_manager.pha_arrays):
                     # Create a dataset in the already existing file to contain the PHA data
                     f.create_dataset(('pha_'+str(c)), data = p)
+                f.create_dataset('trigger_timings', data=self.buffer_manager.trigger_times)
         except Exception as e: 
             logging.debug(f'Exception caught:{e}')
             self.dev_conf.file["last_write_success"] = False

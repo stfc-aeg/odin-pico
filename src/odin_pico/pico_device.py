@@ -12,6 +12,7 @@ from odin_pico.pico_config import DeviceConfig
 from odin_pico.pico_status import Status
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.pico_util import PicoUtil
+from odin_pico.PS5000A_Trigger_Info import Trigger_Info
 
 class PicoDevice():
     def __init__(self, dev_conf=DeviceConfig(None), pico_status=Status(), buffer_manager=BufferManager()):
@@ -81,13 +82,25 @@ class PicoDevice():
                                                                             self.dev_conf.trigger["direction"], self.dev_conf.trigger["delay"], self.dev_conf.trigger["auto_trigger_ms"])
         
     def set_channels(self):
+        
         """
             Responsible for setting the channel information for each channel on the picoscope
         """
         if True:#self.ping_scope():
             for chan in self.dev_conf.channels:
+
+                max_v = ctypes.c_float(0)
+                min_v = ctypes.c_float(0)
+
+                ps.ps5000aGetAnalogueOffset(self.dev_conf.mode["handle"],self.dev_conf.channels[chan]["range"], self.dev_conf.channels[chan]["coupling"], ctypes.byref(max_v), ctypes.byref(min_v))
+                logging.debug(f'Max offset:{max_v.value} Min offset:{min_v.value}')
+
+
+                offset = self.util.calc_offset(self.dev_conf.channels[chan]["range"],self.dev_conf.channels[chan]["offset"])
+
+                logging.debug(f'calculated offset value: {offset} based on percentage of {self.dev_conf.channels[chan]["offset"]}')
                 self.pico_status.status["set_channels"] = ps.ps5000aSetChannel(self.dev_conf.mode["handle"], self.dev_conf.channels[chan]["channel_id"], int(self.dev_conf.channels[chan]["active"]), 
-                                                            self.dev_conf.channels[chan]["coupling"], self.dev_conf.channels[chan]["range"], self.dev_conf.channels[chan]["offset"])
+                                                            self.dev_conf.channels[chan]["coupling"], self.dev_conf.channels[chan]["range"], offset)
     
     def run_setup(self, *args):
         """
@@ -95,8 +108,10 @@ class PicoDevice():
             and for calling the buffer generating function
         """
         if self.pico_status.status["open_unit"] != 0:
+            self.pico_status.flag["system_state"] = "Waiting for connection"
             self.open_unit()
         if self.pico_status.status["open_unit"] == 0:
+            self.pico_status.flag["system_state"] = "Connected to Picoscope, running setup"
             self.set_channels()
             self.set_trigger() 
             if args:
@@ -120,6 +135,7 @@ class PicoDevice():
             self.dev_conf.meta_data["max_samples"] = ctypes.c_int32(self.dev_conf.meta_data["total_cap_samples"])
             self.pico_status.status["run_block"] =  ps.ps5000aRunBlock(self.dev_conf.mode["handle"], self.dev_conf.capture["pre_trig_samples"], 
                                                                         self.dev_conf.capture["post_trig_samples"], self.dev_conf.mode["timebase"], None, 0, None, None)
+            self.pico_status.flag["system_state"] = "Connected to Picoscope, starting data collection"
             while self.pico_status.status["block_ready"].value == self.pico_status.status["block_check"].value:
                 self.pico_status.status["is_ready"] =  ps.ps5000aIsReady(self.dev_conf.mode["handle"], ctypes.byref(self.pico_status.status["block_ready"]))
                 if (time.time() - start_time >= 0.25):
@@ -132,15 +148,27 @@ class PicoDevice():
                     print(f'Aborting capture')
            #print(f'\n\npico_status before get_values: {self.pico_status.status}')
             self.ping_cap_count()
-            logging.debug(f'getting values form {self.dev_conf.capture_run["caps_comp"]} to {(self.dev_conf.capture_run["caps_comp"]+self.dev_conf.capture_run["caps_in_run"]-1)}')
+            self.pico_status.flag["system_state"] = "Connected to Picoscope, returning data to pc"
+           
+            logging.debug(f'getting values from {self.dev_conf.capture_run["caps_comp"]} to {(self.dev_conf.capture_run["caps_comp"]+self.dev_conf.capture_run["caps_in_run"]-1)}')
             
             self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
                                                                 (self.dev_conf.capture_run["caps_in_run"]-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
-
-            # self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
-            #                                                                 (n_captures-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
+            self.pico_status.flag["system_state"] = "Connected to Picoscope, calculating trigger timings"
+            self.get_trigger_timing()
             
-            #print(self.pico_status.status)
+
+    def get_trigger_timing(self):
+        trigger_info = (Trigger_Info*self.dev_conf.capture_run["caps_in_run"]) ()
+        ps.ps5000aGetTriggerInfoBulk(self.dev_conf.mode["handle"], ctypes.byref(trigger_info), 0, (self.dev_conf.capture_run["caps_in_run"]-1))
+
+        last_samples = 0
+        for i in trigger_info:
+            sample_interval = i.timeStampCounter - last_samples
+            time_interval = sample_interval * self.dev_conf.mode["samp_time"]
+            last_samples = i.timeStampCounter
+            self.buffer_manager.trigger_times.append(time_interval)
+
       
     def ping_scope(self):
         """

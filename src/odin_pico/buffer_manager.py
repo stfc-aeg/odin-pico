@@ -13,6 +13,7 @@ class BufferManager():
         self.active_channels = []
         self.channel_arrays = []
         self.pha_arrays = []
+        self.trigger_times = []
         
         self.lv_active_channels = []
         self.lv_channel_arrays = []
@@ -56,6 +57,8 @@ class BufferManager():
             self.channel_arrays.pop()
         while (len(self.pha_arrays)) > 0:
             self.pha_arrays.pop()
+        while (len(self.trigger_times)) > 0:
+            self.trigger_times.pop()
 
 
 

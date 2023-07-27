@@ -7,11 +7,13 @@ import math
 
 from odin_pico.pico_config import DeviceConfig
 from odin_pico.buffer_manager import BufferManager
+from odin_pico.pico_status import Status
 
 class PicoAnalysis():
-    def __init__(self, dev_conf=DeviceConfig(None), buffer_manager=BufferManager()):
+    def __init__(self, dev_conf=DeviceConfig(None), buffer_manager=BufferManager(), pico_status=Status()):
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
+        self.pico_status = pico_status
         self.bin_width = 250
 
     def PHA(self):
@@ -47,6 +49,7 @@ class PicoAnalysis():
             #prom = math.ceil(max_adc_count*0.1) # max_adc returned from picoSDK is
 
     def PHA_one_peak(self):
+        self.pico_status.flag["system_state"] = "Connected to Picoscope, calculating PHA"
         ''' 
             Analysis function that generates a distribution of peak heights in multiple  
             traces and saves the information into a np.array in a dataset inside the file 

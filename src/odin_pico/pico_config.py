@@ -23,6 +23,7 @@ class DeviceConfig():
             "handle" : ctypes.c_int16(0),
             "resolution" : 1,
             "timebase" : 2,
+            "samp_time": 0
         }
         self.trigger = {
             "active": True,
