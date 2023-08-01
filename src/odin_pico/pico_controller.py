@@ -331,7 +331,7 @@ class PicoController():
         """
         for c,b in zip(self.buffer_manager.lv_active_channels,self.buffer_manager.lv_channel_arrays):
             if (c == self.dev_conf.preview_channel):
-                return b[self.dev_conf.capture_run["caps_comp"]-1][::10].tolist()
+                return b#[::10]
         return []
 
     def pha_data(self):
@@ -352,7 +352,10 @@ class PicoController():
             responsible for calling the run_capture function 
         """
         while self.update_loop_active:
-            print(f'max_adc value is {self.dev_conf.meta_data["max_adc"].value} resolution is: {self.dev_conf.mode["resolution"]}')
+            #print(f'channel 0 range : {self.dev_conf.channels}')
+            #print(f'channel[2]: {self.util.channel_names_dict[2]}')
+            #print(f'channel [2] range : {self.dev_conf.channels[self.util.channel_names_dict[2]]["range"]}')
+            #print(f'max_adc value is {self.dev_conf.meta_data["max_adc"].value} resolution is: {self.dev_conf.mode["resolution"]}')
             self.run_capture()
             time.sleep(0.2)
     

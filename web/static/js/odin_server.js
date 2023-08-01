@@ -149,10 +149,17 @@ const draw_PHA_2 = () => {
 
     c2.stroke();
 }
+function plotly_liveview(){
+    TESTER = document.getElementById('tester');
+    Plotly.newPlot( TESTER, [{
+    x: x = data_array.map((value, index) => index),
+    y: data_array }], {
+    margin: { t: 0 } } );
+}
 
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
-    setTimeout(run_sync, 100);
+    setTimeout(run_sync, 150);
 }
 
 function sync_with_adapter(){
@@ -204,6 +211,7 @@ function sync_with_adapter(){
         }
          
         data_array = response.device.live_view.lv_data
+        console.log(data_array)
 
         try{
             bin_edges = response.device.live_view.pha_data[0]
@@ -318,13 +326,7 @@ function sync_with_adapter(){
             }
             document.getElementById("system-state").textContent = response.device.flags.system_state
 
-            let 
-
-            TESTER = document.getElementById('tester');
-            Plotly.newPlot( TESTER, [{
-            x: x = data_array.map((value, index) => index),
-            y: data_array }], {
-            margin: { t: 0 } } );
+            plotly_liveview();
     }
 }
 
