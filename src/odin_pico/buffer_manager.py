@@ -47,53 +47,26 @@ class BufferManager():
 
     def save_lv_data(self):
         """
-            Temporary solution to return a live view of traces being captured
+            Return a live view of traces being captured
         """
-        # start = time.time()
         self.lv_active_channels = self.active_channels
-        self.lv_pha = self.pha_arrays
-        # self.lv_channel_arrays = self.channel_arrays
-        # end = time.time()
-        # print(f'Time to copy data is: {end-start}')
 
-        start = time.time()
-        for c, b in zip(self.active_channels, self.channel_arrays):
-            # Gets the "range" value for each channel inside the active_channels array
+        for c, b in zip(self.active_channels, self.pha_arrays):
             range = self.dev_conf.channels[self.util.channel_names_dict[c]]["range"]
+            self.lv_pha.append(adc2mV(b[0], range, self.dev_conf.meta_data["max_adc"]))
+            print(f'pha converted: {(adc2mV(b[0], range, self.dev_conf.meta_data["max_adc"]))}')
 
-            # Print channel_array before conversion
-            print(f'array before calc: {b[0]}')
+        for c, b in zip(self.active_channels, self.channel_arrays):
+            range = self.dev_conf.channels[self.util.channel_names_dict[c]]["range"]
+            self.lv_channel_arrays.append(adc2mV(b[-1], range, self.dev_conf.meta_data["max_adc"]))
 
-            # test array of fake, but realistic data, 8k samples for chosen settings is around 50mV
-            test_array = [8217, 8251, 8251, -8235, -8218, -8218]
-            print(f'test_array converted = :{adc2mV(test_array, range, self.dev_conf.meta_data["max_adc"])}')
-
-            print(f'range for adc2mV: {range} | max_ADC: {self.dev_conf.meta_data["max_adc"]}')
-
-            self.lv_channel_arrays.append(adc2mV(b[0], range, self.dev_conf.meta_data["max_adc"]))
-
-        end = time.time()
-        print(f'Time to calculate data is: {end-start}')
-
+            #time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
 
     def clear_arrays(self):
         """
             Removes previously created buffers from the buffer_manager
         """
-        while (len(self.active_channels)) > 0:
-            self.active_channels.pop()
-        while (len(self.channel_arrays)) > 0:
-            self.channel_arrays.pop()
-        while (len(self.pha_arrays)) > 0:
-            self.pha_arrays.pop()
-        while (len(self.trigger_times)) > 0:
-            self.trigger_times.pop()
-        while (len(self.lv_active_channels)) > 0:
-            self.lv_active_channels.pop()
-        while (len(self.lv_channel_arrays)) > 0:
-            self.lv_channel_arrays.pop()
-        while (len(self.lv_pha)) > 0:
-            self.lv_pha.pop()
-
-
-
+        arrays = [self.active_channels, self.channel_arrays, self.pha_arrays,self.trigger_times,
+                  self.lv_active_channels, self.lv_channel_arrays, self.lv_pha]
+        for array in arrays:
+            array.clear()

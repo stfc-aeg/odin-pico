@@ -4,21 +4,12 @@ page_not_loaded = true;
 data_array = new Int16Array()
 counts = new Int16Array()
 bin_edges = new Int16Array()
-
-var canvas = document.getElementById("canvas-lv"), c = canvas.getContext("2d");
-var canvas_pha = document.getElementById("canvas-pha"), c2 = canvas_pha.getContext("2d");
-canvas.width = "1510";
-canvas.height = "350";
-
-canvas_pha.width = "1510";
-canvas_pha.height = "350";
+play_button = true;
 
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
-    generate_canvas();
-    generate_canvas_pha();
 });
 
 //gets the most up to date api version
@@ -29,137 +20,75 @@ function update_api_version() {
     });
 }
 
-function generate_canvas(){
-    let pixelRatio, sizeOnScreen, segmentWidth;
-
-    c.fillStyle = "#181818";
-    c.fillRect(0, 0, canvas.width, canvas.height);
-    c.strokeStyle = "#33ee55";
-    c.beginPath();
-    c.moveTo(0, canvas.height / 2);
-    c.lineTo(canvas.width, canvas.height / 2);
-    c.stroke();
-
-}
-
-const draw = () => {
+function toggle_play() {
+    const button = document.getElementById('p_p_button');
+    play_button = !play_button;
     
-    segmentWidth = canvas.width / (data_array.length);
-    c.clearRect(0, 0, canvas.width, canvas.height);
-    
-    //   // Draw x-axis ticks and labels
-    // c.beginPath();
-    // div = data_array.length/10
-    // for (var i = 0; i <= data_array.length; i+= div) {
-    //     var x = (i * segmentWidth);
-    //     var y = canvas.height - 20;
-    //     c.moveTo(x, y);
-    //     c.lineTo(x, y + 10);
-    //     c.fillText(x.toFixed(1), x - 10, y + 20);
-    // }
-    // c.stroke();
-
-
-
-    c.beginPath();
-    c.moveTo(0, (175));
-    for (let i = 1; i < (data_array.length); i += 1) {
-        let x = i * segmentWidth;
-        let v = data_array[i] / 65335
-        let y = 175 - ((v * canvas.height) / 2) ;
-        c.lineTo(x , y);
-        //console.log(x,y)
-    }
-
-    c.lineTo(canvas.width, canvas.height / 2);
-    c.stroke();
-    //requestAnimationFrame(draw);
-}
-
-function generate_canvas_pha(){
-    let pixelRatio, sizeOnScreen, segmentWidth;
-
-    c2.fillStyle = "#181818";
-    c2.fillRect(0, 0, canvas_pha.width, canvas_pha.height);
-    c2.strokeStyle = "#33ee55";
-    c2.beginPath();
-    c2.moveTo(0, canvas_pha.height / 2);
-    c2.lineTo(canvas_pha.width, canvas_pha.height / 2);
-    c2.stroke();
-
-}
-
-const draw_pha = () => {
-    
-    c2.fillRect(0, 0, canvas_pha.width, canvas_pha.height);
-    c2.beginPath();
-    c2.moveTo(0, 175);
-
-    // for (let i = 1; i < (bin_edges.length); i += 1) {
-    //     let x = bin_edges[i];
-    //     let y = (canvas_pha.height/2) - counts[i];
-    //     c2.lineTo(x , y);
-
-    max_value = Math.max(...counts)
-    for (let i = 1; i < (bin_edges.length); i += 1) {
-        let x = bin_edges[i];
-        let v = counts[i] / max_value
-        let y = 175 - ((v * canvas_pha.height) / 2) ;
-        c2.lineTo(x , y);
-        //console.log(x,y)
-
-    // for (let i = 1; i < (bin_edges.length); i += 1) {
-    //     let x = bin_edges[i];
-    //     let v = counts[i] /65335
-    //     let y = 175 - ((v * canvas_pha.height) / 2) ;
-    //     c2.lineTo(x , y);
-        //console.log(x,y)
-    }
-
-    c2.lineTo(canvas_pha.width, canvas_pha.height / 2);
-    c2.stroke();
-    //requestAnimationFrame(draw);
-}
-
-
-const draw_PHA_2 = () => {
-    let x_min = Math.min(...bin_edges);
-    let x_max = Math.max(...bin_edges);
-
-    let y_min = Math.min(...counts);
-    let y_max = Math.max(...counts);
-
-    let x_scale = canvas_pha.width / (x_max - x_min);
-    let y_scale = canvas_pha.height / (y_max - y_min);
-
-    c2.clearRect(0, 0, canvas_pha.width, canvas_pha.height);
-
-    c2.beginPath();
-
-    for (let i = 0; i < bin_edges.length; i++) {
-    const x = (bin_edges[i] - x_min) * x_scale;
-    const y = canvas_pha.height - (counts[i] - y_min) * y_scale;
-
-    if (i === 0) {
-        c2.moveTo(x, y);
+    if (play_button) {
+      button.innerHTML = '<span class="material-icons">pause</span>'; 
     } else {
-        c2.lineTo(x, y);
+      button.innerHTML = '<span class="material-icons">play_arrow</span>';
     }
+  }
+
+function plotly_liveview(ranges){
+    channel = parseInt(document.getElementById('lv-source').value)
+    let range = get_range_value_mv(ranges[channel])
+
+    var tickVals = [];
+    var tickText = [];
+    var stepSize = 2 * range / 8;
+
+    for (var i = -range; i <= range; i += stepSize) {
+        tickVals.push(i);
+        tickText.push(i.toFixed(2)); 
     }
 
-    c2.stroke();
-}
-function plotly_liveview(){
-    TESTER = document.getElementById('tester');
-    Plotly.newPlot( TESTER, [{
-    x: x = data_array.map((value, index) => index),
-    y: data_array }], {
-    margin: { t: 0 } } );
+    if (play_button){
+        scope_lv = document.getElementById('scope_lv');
+        Plotly.newPlot( scope_lv, [{
+            x: x = data_array.map((value, index) => index),
+            y: data_array }], {
+                margin: { t: 20, b: 20, },
+                yaxis: {
+                    range: [-range, range],
+                    tickvals: tickVals,
+                    ticktext: tickText } });
+
+        scope_pha = document.getElementById('scope_pha');
+        Plotly.newPlot( scope_pha, [{
+            x: bin_edges,
+            y: counts }], {
+                margin: { t: 0} });
+    }
+    else {
+        return;
+    }
 }
 
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
     setTimeout(run_sync, 150);
+}
+
+function get_range_value_mv(key) {
+    var range_values = {
+        0: 10,
+        1: 20,
+        2: 50,
+        3: 100,
+        4: 200,
+        5: 500,
+        6: 1000,
+        7: 2000,
+        8: 5000,
+        9: 10000,
+        10: 20000
+    };
+
+    if (key in range_values) {
+        return range_values[key];
+    }
 }
 
 function sync_with_adapter(){
@@ -209,45 +138,39 @@ function sync_with_adapter(){
             $("#capture-file-name").val(response.device.settings.file.file_name)
             page_not_loaded = false;
         }
-         
-        data_array = response.device.live_view.lv_data
-        console.log(data_array)
 
+        // Check the lv_data array contains data, if it does, assign the data locally
         try{
-            bin_edges = response.device.live_view.pha_data[0]
-            counts = response.device.live_view.pha_data[1]
+            if ((response.device.live_view.lv_data).length != 0) {
+                data_array = response.device.live_view.lv_data
+            } else {
+                console.log("\n\nEmpty LV Array not updating graph")
+            }
         } catch {
-            //console.log("error")
+                console.log("Error in assigning LV values")
+            }
+
+        try{   
+            if ((response.device.live_view.pha_data[0]).length != 0){
+                bin_edges = response.device.live_view.pha_data[0]
+                counts = response.device.live_view.pha_data[1]
+                console.log("PHA DATA:",bin_edges, counts)
+            } else {
+                console.log("\n\nEmpty PHA Array not updating graph")
+            }
+
+        } catch (err){
+            console.log("Error in assigning PHA values, error: ",err.message)
         }
         
-        //console.log(counts)
-        console.log("Cap count:",response.device.live_view.capture_count)
-        console.log("caps total:", response.device.live_view.captures_requested)
         let cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
         let progressBar = document.getElementById('capture-progress-bar');
         progressBar.style.width = cap_percent + '%';
         progressBar.innerHTML = cap_percent + '%';
         
-        // let samp_int = 0 
-        // if (response.device.settings.mode.resolution == 0){
-        //     if(response.device.settings.mode.timebase >= 0 && response.device.settings.mode.timebase <= 2){
-        //         samp_int = (Math.pow(2,parseInt(response.device.settings.mode.timebase))/1000000000)                
-        //     } else {
-        //         samp_int = ((parseInt(response.device.settings.mode.timebase)-2 ) /125000000)
-        //     }
-        // }
-        // else if (response.device.settings.mode.resolution == 1){
-        //     if(response.device.settings.mode.timebase >= 1 && response.device.settings.mode.timebase <= 3){
-        //         samp_int = ((Math.pow(2,parseInt(response.device.settings.mode.timebase)-1))/500000000)                
-        //     } else {
-        //         samp_int = ((parseInt(response.device.settings.mode.timebase)-3 ) /62500000)
-        //     }
-        // }
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
-        
-        draw();
-        draw_PHA_2();
 
+        document.getElementById('lv-source').value = response.device.live_view.preview_channel
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"
@@ -326,7 +249,9 @@ function sync_with_adapter(){
             }
             document.getElementById("system-state").textContent = response.device.flags.system_state
 
-            plotly_liveview();
+            ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
+                response.device.settings.channels.c.range, response.device.settings.channels.d.range]
+            plotly_liveview(ranges);
     }
 }
 

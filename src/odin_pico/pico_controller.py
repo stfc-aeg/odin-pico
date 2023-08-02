@@ -309,6 +309,7 @@ class PicoController():
                         self.dev_conf.capture_run["caps_comp"] += self.dev_conf.capture_run["caps_in_run"]
                         self.dev_conf.capture_run["caps_remaining"] -= self.dev_conf.capture_run["caps_in_run"]
                         self.analysis.PHA_one_peak()
+                        self.buffer_manager.save_lv_data()
                     self.file_writer.writeHDF5()
                 self.dev_conf.capture_run = self.util.set_capture_run_defaults()
                 self.pico_status.flag["user_capture"] = False          
@@ -318,11 +319,13 @@ class PicoController():
                 self.set_capture_run_lv()
                 if self.pico.run_setup(self.lv_captures):
                     self.pico_capture()
+                    self.buffer_manager.save_lv_data()
+
 
     def pico_capture(self):
         self.pico.assign_pico_memory()
         self.pico.run_block()
-        self.buffer_manager.save_lv_data()
+        #self.buffer_manager.save_lv_data()
       
     def lv_data(self):
         """
@@ -332,6 +335,8 @@ class PicoController():
         for c,b in zip(self.buffer_manager.lv_active_channels,self.buffer_manager.lv_channel_arrays):
             if (c == self.dev_conf.preview_channel):
                 return b#[::10]
+            else:
+                return [0]
         return []
 
     def pha_data(self):
@@ -339,9 +344,12 @@ class PicoController():
             Returns array of the last calculated PHA, that has been stored in the buffer manager, for
             a channel selected by the user in the UI
         """
-        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.pha_arrays):
+        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.lv_pha):
             if (c == self.dev_conf.preview_channel):
-                return b.tolist()
+                return b
+            else:
+                return [0]
+        return []
 
 ##### Adapter specific functions below #####
 
@@ -352,10 +360,6 @@ class PicoController():
             responsible for calling the run_capture function 
         """
         while self.update_loop_active:
-            #print(f'channel 0 range : {self.dev_conf.channels}')
-            #print(f'channel[2]: {self.util.channel_names_dict[2]}')
-            #print(f'channel [2] range : {self.dev_conf.channels[self.util.channel_names_dict[2]]["range"]}')
-            #print(f'max_adc value is {self.dev_conf.meta_data["max_adc"].value} resolution is: {self.dev_conf.mode["resolution"]}')
             self.run_capture()
             time.sleep(0.2)
     
