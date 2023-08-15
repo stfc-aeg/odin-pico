@@ -449,6 +449,7 @@
                           <table class="table table-borderless">
                             <tr>
                               <td class="select-container">
+                                <span>Select channel to view: </span>
                                 <select id="lv-source" onchange="commit_int_adapter('lv-source','live_view','preview_channel')">
                                   <option value="" selected disabled hidden> </option>
                                   <option value="0">Channel A</option>
@@ -456,7 +457,6 @@
                                   <option value="2">Channel C</option>
                                   <option value="3">Channel D</option>
                                 </select>
-                                <span>LiveView</span>
                               </td>
                               <td class="toggle-container">
                                 <button id="p_p_button" class="icon-button" onclick="toggle_play()">
@@ -467,12 +467,12 @@
                             </tr>
                             <tr>
                               <td colspan="2">
-                                <div id="scope_lv" style="width:1400px;height:440px;"></div>
+                                <div class="plot-container" id="scope_lv"></div>
                               </td>
                             </tr>
                             <tr>
                               <td colspan="2">
-                                <div id="scope_pha" style="width:1400px;height:440px;"></div>
+                                <div class="plot-container" id="scope_pha"></div>
                               </td>
                             </tr>
                           </table>

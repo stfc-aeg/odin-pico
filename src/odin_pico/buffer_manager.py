@@ -53,8 +53,8 @@ class BufferManager():
 
         for c, b in zip(self.active_channels, self.pha_arrays):
             range = self.dev_conf.channels[self.util.channel_names_dict[c]]["range"]
-            self.lv_pha.append(adc2mV(b[0], range, self.dev_conf.meta_data["max_adc"]))
-            print(f'pha converted: {(adc2mV(b[0], range, self.dev_conf.meta_data["max_adc"]))}')
+            #self.lv_pha.append(adc2mV(b[0], range, self.dev_conf.meta_data["max_adc"]))
+            self.lv_pha.append(b)
 
         for c, b in zip(self.active_channels, self.channel_arrays):
             range = self.dev_conf.channels[self.util.channel_names_dict[c]]["range"]
@@ -67,6 +67,6 @@ class BufferManager():
             Removes previously created buffers from the buffer_manager
         """
         arrays = [self.active_channels, self.channel_arrays, self.pha_arrays,self.trigger_times,
-                  self.lv_active_channels, self.lv_channel_arrays, self.lv_pha]
+                  self.lv_active_channels, self.lv_channel_arrays]#, self.lv_pha]
         for array in arrays:
             array.clear()

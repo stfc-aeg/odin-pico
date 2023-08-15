@@ -319,6 +319,7 @@ class PicoController():
                 self.set_capture_run_lv()
                 if self.pico.run_setup(self.lv_captures):
                     self.pico_capture()
+                    #self.analysis.PHA_one_peak()
                     self.buffer_manager.save_lv_data()
 
 
@@ -332,12 +333,16 @@ class PicoController():
             Returns array of the last captured trace, that has been stored in the buffer manager, for
             a channel selected by the user in the UI
         """
+        array = None
+
         for c,b in zip(self.buffer_manager.lv_active_channels,self.buffer_manager.lv_channel_arrays):
             if (c == self.dev_conf.preview_channel):
-                return b#[::10]
-            else:
-                return [0]
-        return []
+                array = b#[::10]
+        if array == None:
+            return []
+        else:
+            return array
+        
 
     def pha_data(self):
         """
@@ -346,7 +351,7 @@ class PicoController():
         """
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.lv_pha):
             if (c == self.dev_conf.preview_channel):
-                return b
+                return b.tolist()
             else:
                 return [0]
         return []

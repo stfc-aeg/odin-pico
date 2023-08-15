@@ -111,7 +111,7 @@ class PicoDevice():
             self.pico_status.flag["system_state"] = "Waiting for connection"
             self.open_unit()
         if self.pico_status.status["open_unit"] == 0:
-            self.pico_status.flag["system_state"] = "Connected to Picoscope, running setup"
+            self.pico_status.flag["system_state"] = "Connected to Picoscope"
             self.set_channels()
             self.set_trigger() 
             if args:
@@ -135,7 +135,7 @@ class PicoDevice():
             self.dev_conf.meta_data["max_samples"] = ctypes.c_int32(self.dev_conf.meta_data["total_cap_samples"])
             self.pico_status.status["run_block"] =  ps.ps5000aRunBlock(self.dev_conf.mode["handle"], self.dev_conf.capture["pre_trig_samples"], 
                                                                         self.dev_conf.capture["post_trig_samples"], self.dev_conf.mode["timebase"], None, 0, None, None)
-            self.pico_status.flag["system_state"] = "Connected to Picoscope, starting data collection"
+            self.pico_status.flag["system_state"] = "Collecting Data"
             while self.pico_status.status["block_ready"].value == self.pico_status.status["block_check"].value:
                 self.pico_status.status["is_ready"] =  ps.ps5000aIsReady(self.dev_conf.mode["handle"], ctypes.byref(self.pico_status.status["block_ready"]))
                 if (time.time() - start_time >= 0.25):
@@ -151,7 +151,8 @@ class PicoDevice():
             self.pico_status.flag["system_state"] = "Connected to Picoscope, returning data to pc"
            
             logging.debug(f'getting values from {self.dev_conf.capture_run["caps_comp"]} to {(self.dev_conf.capture_run["caps_comp"]+self.dev_conf.capture_run["caps_in_run"]-1)}')
-            
+            # add logic here for if aborted do getvaluesbulk with self.dev_conf.capture_run["live_cap_comp"] would need to calculate actual amount
+            #                    if not aborted do getvaluesbulk with caps_in_run
             self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
                                                                 (self.dev_conf.capture_run["caps_in_run"]-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
             self.pico_status.flag["system_state"] = "Connected to Picoscope, calculating trigger timings"

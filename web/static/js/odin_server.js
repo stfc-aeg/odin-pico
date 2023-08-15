@@ -47,19 +47,24 @@ function plotly_liveview(ranges){
     if (play_button){
         scope_lv = document.getElementById('scope_lv');
         Plotly.newPlot( scope_lv, [{
-            x: x = data_array.map((value, index) => index),
+            x: x = data_array.map((value, index) => index),                
             y: data_array }], {
-                margin: { t: 20, b: 20, },
-                yaxis: {
-                    range: [-range, range],
-                    tickvals: tickVals,
-                    ticktext: tickText } });
+                title: 'Live view of PicoScope traces',
+                margin: { t: 40, b: 40 },
+                xaxis: { title: 'Sample Interval' },
+                yaxis: { title: 'Voltage (mV)',
+                        range: [-range, range],
+                        tickvals: tickVals,
+                        ticktext: tickText } });
 
         scope_pha = document.getElementById('scope_pha');
         Plotly.newPlot( scope_pha, [{
             x: bin_edges,
             y: counts }], {
-                margin: { t: 0} });
+                title: 'Last PHA from recorded traces',
+                margin: { t: 40, b: 40 },
+                yaxis: { title: 'Counts'},
+                xaxis: { title: 'Energy level (ADC_Counts)'} });
     }
     else {
         return;
@@ -151,10 +156,11 @@ function sync_with_adapter(){
             }
 
         try{   
-            if ((response.device.live_view.pha_data[0]).length != 0){
+            if ((response.device.live_view.pha_data).length != 0){
                 bin_edges = response.device.live_view.pha_data[0]
                 counts = response.device.live_view.pha_data[1]
-                console.log("PHA DATA:",bin_edges, counts)
+                console.log("PHA DATA:",bin_edges[50], counts[50])
+                console.log("pha response: ", response.device.live_view.pha_data)
             } else {
                 console.log("\n\nEmpty PHA Array not updating graph")
             }

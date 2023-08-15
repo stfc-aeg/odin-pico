@@ -17,6 +17,7 @@ class PicoAnalysis():
         self.bin_width = 250
 
     def PHA_one_peak(self):
+        self.buffer_manager.lv_pha.clear()
         self.pico_status.flag["system_state"] = "Connected to Picoscope, calculating PHA"
         ''' 
             Analysis function that generates a distribution of peak heights in multiple  
@@ -36,3 +37,4 @@ class PicoAnalysis():
             counts, bin_edge = np.histogram(peak_values, bins=num_bins, range=(0,(self.dev_conf.meta_data["max_adc"].value)))
             # Combine the bin_edge's and counts into one np.array
             self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
+            #logging.debug(f'Latest PHA: {bin_edge, counts}')
