@@ -24,7 +24,8 @@ class PicoDevice():
         self.pico_status = pico_status
         self.buffer_manager = buffer_manager
         self.cap_time = 30
-        self.caps = 0
+        self.seg_caps = 0
+        self.prev_seg_caps = 0
 
     def open_unit(self):
         """
@@ -35,6 +36,7 @@ class PicoDevice():
         self.pico_status.status["open_unit"] = ps.ps5000aOpenUnit(ctypes.byref(self.dev_conf.mode["handle"]), None, self.dev_conf.mode["resolution"])
         if self.pico_status.status["open_unit"] == 0:
             self.pico_status.status["maximumValue"] = ps.ps5000aMaximumValue(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_adc"]))
+            self.dev_conf.pha["upper_range"] = (self.dev_conf.meta_data["max_adc"].value)
         logging.debug(f'open_unit value:{self.pico_status.status["open_unit"]} /nopen_unit() finished')
 
     def generate_arrays(self, *args):
@@ -126,9 +128,11 @@ class PicoDevice():
             when to collect it, retrives that data into local buffers once
             data collection is finished
         """
-        self.caps = 0
+        self.prev_seg_caps = 0
+        self.seg_caps = 0
         #print(f'\n\npico_status when called: {self.pico_status.status}')
         if True:#self.ping_scope():
+
             start_time = time.time()
             self.pico_status.status["block_ready"] = ctypes.c_int16(0)
             self.dev_conf.meta_data["total_cap_samples"]=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
@@ -136,29 +140,36 @@ class PicoDevice():
             self.pico_status.status["run_block"] =  ps.ps5000aRunBlock(self.dev_conf.mode["handle"], self.dev_conf.capture["pre_trig_samples"], 
                                                                         self.dev_conf.capture["post_trig_samples"], self.dev_conf.mode["timebase"], None, 0, None, None)
             self.pico_status.flag["system_state"] = "Collecting Data"
+
+            # 7a. To obtain data before rapid block capture has finished, call ps5000aStop and then
+            # ps5000aGetNoOfCaptures to find out how many captures were completed
+
             while self.pico_status.status["block_ready"].value == self.pico_status.status["block_check"].value:
                 self.pico_status.status["is_ready"] =  ps.ps5000aIsReady(self.dev_conf.mode["handle"], ctypes.byref(self.pico_status.status["block_ready"]))
+
                 if (time.time() - start_time >= 0.25):
                     start_time = time.time()
-                    self.ping_cap_count()
+                    self.get_cap_count()
                     print(f'Caps: {self.dev_conf.capture_run["live_cap_comp"]}')
-                    pass
+
+                    if (self.prev_seg_caps == self.seg_caps):
+                        self.pico_status.flag["system_state"] = "Waiting for trigger"
+
                 if (self.pico_status.flag["abort_cap"]):
                     ps.ps5000aStop(self.dev_conf.mode["handle"])
-                    print(f'Aborting capture')
-           #print(f'\n\npico_status before get_values: {self.pico_status.status}')
-            self.ping_cap_count()
-            self.pico_status.flag["system_state"] = "Connected to Picoscope, returning data to pc"
-           
-            logging.debug(f'getting values from {self.dev_conf.capture_run["caps_comp"]} to {(self.dev_conf.capture_run["caps_comp"]+self.dev_conf.capture_run["caps_in_run"]-1)}')
-            # add logic here for if aborted do getvaluesbulk with self.dev_conf.capture_run["live_cap_comp"] would need to calculate actual amount
-            #                    if not aborted do getvaluesbulk with caps_in_run
+                time.sleep(0.05)
+                self.prev_seg_caps = self.seg_caps
+            self.get_cap_count()
+
+            if (self.pico_status.flag["abort_cap"]):
+                seg_to_indx = self.seg_caps
+            else:
+                seg_to_indx = (self.dev_conf.capture_run["caps_in_run"]-1)
+
             self.pico_status.status["get_values"] = ps.ps5000aGetValuesBulk(self.dev_conf.mode["handle"], ctypes.byref(self.dev_conf.meta_data["max_samples"]), 0, 
-                                                                (self.dev_conf.capture_run["caps_in_run"]-1), 0, 0, ctypes.byref(self.buffer_manager.overflow))
-            self.pico_status.flag["system_state"] = "Connected to Picoscope, calculating trigger timings"
+                                                                (seg_to_indx), 0, 0, ctypes.byref(self.buffer_manager.overflow))
             self.get_trigger_timing()
             
-
     def get_trigger_timing(self):
         trigger_info = (Trigger_Info*self.dev_conf.capture_run["caps_in_run"]) ()
         ps.ps5000aGetTriggerInfoBulk(self.dev_conf.mode["handle"], ctypes.byref(trigger_info), 0, (self.dev_conf.capture_run["caps_in_run"]-1))
@@ -169,7 +180,6 @@ class PicoDevice():
             time_interval = sample_interval * self.dev_conf.mode["samp_time"]
             last_samples = i.timeStampCounter
             self.buffer_manager.trigger_times.append(time_interval)
-
       
     def ping_scope(self):
         """
@@ -181,13 +191,14 @@ class PicoDevice():
             self.pico_status.status["open_unit"] = -1
             return False
         
-    def ping_cap_count(self):
+    def get_cap_count(self):
         """
             Responsible for querying the picoscope to check how many traces have 
             been captured
         """
         caps = ctypes.c_uint32(0)
         ps.ps5000aGetNoOfCaptures(self.dev_conf.mode["handle"], ctypes.byref(caps))
+        self.seg_caps = caps.value
         self.dev_conf.capture_run["live_cap_comp"] = (self.dev_conf.capture_run["caps_comp"] + caps.value)
     
     def stop_scope(self):

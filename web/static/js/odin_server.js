@@ -336,7 +336,6 @@ function verify_float(id){
     }       
 }
 
-
 // May be useful to keep for picoscope ?
 function toSiUnit(num){
     numin = num

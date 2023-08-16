@@ -60,10 +60,10 @@
             <div class="panel-heading panel-heading-nav">
               <ul class="nav nav-tabs">
                 <li role="presentation" class="active">
-                  <a href="#one" aria-controls="one" role="tab" data-toggle="tab">Settings For Block Capture</a>
+                  <a href="#one" aria-controls="one" role="tab" data-toggle="tab">Block Capture Settings</a>
                 </li>
                 <li role="presentation">
-                  <a href="#two" aria-controls="two" role="tab" data-toggle="tab">Capture Controls</a>
+                  <a href="#two" aria-controls="two" role="tab" data-toggle="tab">PHA & File Settings</a>
                 </li>
                 <li role="presentation">
                   <a href="#three" aria-controls="three" role="tab" data-toggle="tab">Live View</a>
@@ -128,8 +128,6 @@
                      
                     </div>
                     </div>
-                    
-              
                     <div class="col-sm-6">
                       <div id = "setup-3" class="panel panel-default">
                         <div class="panel-heading">Channel Setup</div>
@@ -379,50 +377,6 @@
                           </div>
                           </div>
                           <div class = "row">
-                            <div class="col-sm-12">
-                            <div id = "setup-6" class="panel panel-default">
-                              <div class="panel-heading">File Settings</div>
-                              <div class="panel-body">
-                                <table class="table table-striped">            
-                                  <tr id ="capture-row">
-                                    <th>
-                                      <form>
-                                        <label for="capture-folder-name">Folder name: </label>
-                                        <input id="capture-folder-name" type="text" oninput="commit_str_adapter('capture-folder-name','settings/file','folder_name')" />
-                                      </form>
-                                    </th>
-                                    <th>
-                                      <form>
-                                        <label for="capture-file-name">File Name: </label>
-                                        <input id="capture-file-name" type="text" oninput="commit_str_adapter('capture-file-name','settings/file','file_name')"" />
-                                      </form>
-                                    </th>
-                                    <th>
-                                        <label for="save_cap_butt">Record scope traces (and PHA if enabled) to file: </label>
-                                        <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
-                                    </th>
-                                  </tr>
-                                  <tr>
-                                  <tr>
-                                    <th><span>File : </span><span id="file-name-span"></span></th>
-                                    <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
-                                    <th>
-                                      <label for="abort_cap_butt">Abort current capture: </label>
-                                      <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
-                                  </th>
-                                  </tr>
-                                  <tr>
-                                    <th>
-                                      <div class="progress">
-                                        <div id="capture-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                                      </div>
-                                    </th>
-                                  </tr>   
-                                  </tr>
-                                </table>
-                              </div>
-                            </div>
-                            </div>
                             </div>
               
                     <!-- </div> -->
@@ -430,14 +384,80 @@
                 
                 <div role="tabpanel" class="tab-pane fade" id="two">
                   <div class ="row">
-                    <div class="col-sm-6">
-
+                    <div class = "col-sm-12">
+                        <div id = "setup-6" class="panel panel-default">
+                            <div class="panel-heading">PHA Settings</div>
+                            <div class="panel-body">
+                                <table class="table table-striped">            
+                                    <tr id ="capture-row">
+                                    <th>
+                                        <form>
+                                        <label for="pha-num-bins">Number Bins: </label>
+                                        <input id="pha-num-bins" type="text" oninput="commit_str_adapter('pha-num-bins','settings/pha','num_bins')" />
+                                        </form>
+                                    </th>
+                                    <th>
+                                        <form>
+                                        <label for="pha-lower-range">: </label>
+                                        <input id="pha-lower-range" type="text" oninput="commit_str_adapter('pha-num-bins','settings/pha','lower_range')" />
+                                        </form>
+                                    </th>
+                                    <th>
+                                        <form>
+                                        <label for="pha-upper-range">: </label>
+                                        <input id="pha-upper-range" type="text" oninput="commit_str_adapter('pha-num-bins','settings/pha','upper_range')" />
+                                        </form>
+                                    </th>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-sm-6">
-                      
+                    <div class = "col-sm-12">
+                        <div id = "setup-6" class="panel panel-default">
+                            <div class="panel-heading">File Settings</div>
+                            <div class="panel-body">
+                            <table class="table table-striped">            
+                                <tr id ="capture-row">
+                                <th>
+                                    <form>
+                                    <label for="capture-folder-name">Folder name: </label>
+                                    <input id="capture-folder-name" type="text" oninput="commit_str_adapter('capture-folder-name','settings/file','folder_name')" />
+                                    </form>
+                                </th>
+                                <th>
+                                    <form>
+                                    <label for="capture-file-name">File Name: </label>
+                                    <input id="capture-file-name" type="text" oninput="commit_str_adapter('capture-file-name','settings/file','file_name')"" />
+                                    </form>
+                                </th>
+                                <th>
+                                    <label for="save_cap_butt">Record scope traces and PHA to file: </label>
+                                    <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
+                                </th>
+                                </tr>
+                                <tr>
+                                <tr>
+                                <th><span>File : </span><span id="file-name-span"></span></th>
+                                <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
+                                <th>
+                                    <label for="abort_cap_butt">Abort current capture: </label>
+                                    <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
+                                </th>
+                                </tr>
+                                <tr>
+                                <th>
+                                    <div class="progress">
+                                    <div id="capture-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </th>
+                                </tr>   
+                                </tr>
+                            </table>
+                            </div>
+                        </div>
                     </div>
                   </div>
-
                 </div>
 
                   <div role="tabpanel" class="tab-pane fade" id="three">

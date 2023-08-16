@@ -212,6 +212,14 @@ class PicoUtil():
         }
         return file
     
+    def set_pha_defaults(self):
+        pha = {
+            "num_bins": 1024,
+            "lower_range": 0,
+            "upper_range": 0
+        }
+        return pha
+    
     def set_capture_run_defaults(self):
         capture_run = {
             "caps_comp": 0,

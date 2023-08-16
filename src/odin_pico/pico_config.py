@@ -57,3 +57,5 @@ class DeviceConfig():
             i += 1
         
         self.meta_data = self.util.set_meta_data_defaults()
+
+        self.pha = self.util.set_pha_defaults()

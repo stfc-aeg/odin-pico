@@ -86,12 +86,19 @@ class PicoController():
             'last_write_success': (lambda: self.get_value(self.dev_conf,'file','last_write_success'), None)
         })
 
+        pico_pha = ParameterTree ({
+            'num_bins': (lambda: self.get_value(self.dev_conf,'pha','num_bins'), None),
+            'lower_range': (lambda: self.get_value(self.dev_conf,'pha','lower_range'), None),
+            'upper_range': (lambda: self.get_value(self.dev_conf,'pha','upper_range'), None)
+        })
+
         pico_settings = ParameterTree ({
             'mode': pico_mode,
             'channels':{name: channel for (name, channel) in self.chan_params.items()},
             'trigger': pico_trigger,
             'capture': pico_capture,
             'file': pico_file,
+            'pha': pico_pha
         })
 
         live_view = ParameterTree ({
@@ -349,12 +356,15 @@ class PicoController():
             Returns array of the last calculated PHA, that has been stored in the buffer manager, for
             a channel selected by the user in the UI
         """
+        array = None
+
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.lv_pha):
             if (c == self.dev_conf.preview_channel):
-                return b.tolist()
-            else:
-                return [0]
-        return []
+                array = b.tolist()
+        if array == None:
+            return []
+        else:
+            return array
 
 ##### Adapter specific functions below #####
 
