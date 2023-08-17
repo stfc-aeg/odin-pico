@@ -141,6 +141,10 @@ function sync_with_adapter(){
 
             $("#capture-folder-name").val(response.device.settings.file.folder_name)
             $("#capture-file-name").val(response.device.settings.file.file_name)
+
+            $("#pha-num-bins").val(response.device.settings.pha.num_bins)
+            $("#pha-lower-range").val(response.device.settings.pha.lower_range)
+            $("#pha-upper-range").val(response.device.settings.pha.upper_range)
             page_not_loaded = false;
         }
 
@@ -235,6 +239,7 @@ function sync_with_adapter(){
                 document.getElementById("capture-row").className ="danger";
 
             }
+            console.log("open_unit:",response.device.status.open_unit)
 
             if (response.device.status.open_unit == 0){
                 document.getElementById("connection_status").textContent = "True"

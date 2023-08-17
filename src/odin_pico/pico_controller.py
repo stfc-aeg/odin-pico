@@ -33,63 +33,60 @@ class PicoController():
         self.pico = PicoDevice(self.dev_conf,self.pico_status,self.buffer_manager)
         self.util = PicoUtil()
 
-        print(f'testing system state {self.pico_status.flag["system_state"]}')
         # ParameterTree's to represent different parts of the system
         adapter_status = ParameterTree ({
-            'settings_verified': (lambda: self.get_flag_value("verify_all"), None),
-            'open_unit': (lambda: self.get_status_value("open_unit"), None),
-            'pico_setup_verify': (lambda: self.get_status_value("pico_setup_verify"), None),
-            'channel_setup_verify': (lambda: self.get_status_value("channel_setup_verify"), None),
-            'channel_trigger_verify': (lambda: self.get_status_value("channel_trigger_verify"), None),
-            'capture_settings_verify': (lambda: self.get_status_value("capture_settings_verify"), None)
+            'settings_verified': (lambda: self.get_value(self.pico_status, 'flag', 'verify_all'), None),
+            'open_unit': (lambda: self.get_value(self.pico_status, 'status', 'open_unit'), None),
+            'pico_setup_verify': (lambda: self.get_value(self.pico_status, 'status', 'pico_setup_verify'), None),
+            'channel_setup_verify': (lambda: self.get_value(self.pico_status, 'status', 'channel_setup_verify'), None),
+            'channel_trigger_verify': (lambda: self.get_value(self.pico_status, 'status', 'channel_trigger_verify'), None),
+            'capture_settings_verify': (lambda: self.get_value(self.pico_status, 'status', 'capture_settings_verify'), None)
         })
 
         self.chan_params = {}
         for channel in self.util.channel_names:
             self.chan_params[channel] = ParameterTree({
-                'channel_id': (partial(self.get_channel_value, channel, "channel_id"), None),
-                'active': (partial(self.get_channel_value, channel, "active"), partial(self.set_channel_value, channel, "active")),
-                'verified': (partial(self.get_channel_value, channel,"verified"), None),
-                'coupling': (partial(self.get_channel_value, channel, "coupling"), partial(self.set_channel_value, channel, "coupling")),
-                'range': (partial(self.get_channel_value, channel, "range"), partial(self.set_channel_value, channel, "range")),
-                'offset': (partial(self.get_channel_value, channel, "offset"), partial(self.set_channel_value, channel, "offset"))
+                'channel_id': (partial(self.get_value, self.dev_conf, 'channels', channel, 'channel_id'), None),
+                'active': (partial(self.get_value, self.dev_conf, 'channels', channel, 'active'), partial(self.set_channel_value, channel, "active")),
+                'verified': (partial(self.get_value, self.dev_conf, 'channels', channel, 'verified'), None),
+                'coupling': (partial(self.get_value, self.dev_conf, 'channels', channel, 'coupling'), partial(self.set_channel_value, channel, "coupling")),
+                'range': (partial(self.get_value, self.dev_conf, 'channels', channel, 'range'), partial(self.set_channel_value, channel, "range")),
+                'offset': (partial(self.get_value, self.dev_conf, 'channels', channel, 'offset'), partial(self.set_channel_value, channel, "offset"))
                 })
 
-            #print(self.get_dev_conf_value('channels',channel,'active'))
-
         pico_trigger = ParameterTree ({
-            'active': (lambda: self.get_trigger_value("active"), partial(self.set_trigger_value, "active")),
-            'auto_trigger': (lambda: self.get_trigger_value("auto_trigger_ms"), partial(self.set_trigger_value, "auto_trigger_ms")),
-            'direction': (lambda: self.get_trigger_value("direction"), partial(self.set_trigger_value, "direction")),
-            'delay': (lambda: self.get_trigger_value("delay"), partial(self.set_trigger_value, "delay")),
-            'source': (lambda: self.get_trigger_value("source"), partial(self.set_trigger_value, "source")),
-            'threshold': (lambda: self.get_trigger_value("threshold"), partial(self.set_trigger_value, "threshold"))
+            'active': (lambda: self.get_value(self.dev_conf, 'trigger', 'active'), partial(self.set_trigger_value, "active")),
+            'auto_trigger': (lambda: self.get_value(self.dev_conf, 'trigger', 'auto_trigger'), partial(self.set_trigger_value, "auto_trigger")),
+            'direction': (lambda: self.get_value(self.dev_conf, 'trigger', 'direction'), partial(self.set_trigger_value, "direction")),
+            'delay': (lambda: self.get_value(self.dev_conf, 'trigger', 'delay'), partial(self.set_trigger_value, "delay")),
+            'source': (lambda: self.get_value(self.dev_conf, 'trigger', 'source'), partial(self.set_trigger_value, "source")),
+            'threshold': (lambda: self.get_value(self.dev_conf, 'trigger', 'threshold'), partial(self.set_trigger_value, "threshold"))
         })
 
         pico_capture = ParameterTree ({
-            'pre_trig_samples': (lambda: self.get_capture_value("pre_trig_samples"), partial(self.set_capture_value, "pre_trig_samples")),
-            'post_trig_samples': (lambda: self.get_capture_value("post_trig_samples"), partial(self.set_capture_value, "post_trig_samples")),
-            'n_captures': (lambda: self.get_capture_value("n_captures"), partial(self.set_capture_value, "n_captures"))
+            'pre_trig_samples': (lambda: self.get_value(self.dev_conf, 'capture', 'pre_trig_samples'), lambda v: self.set_value('capture', 'pre_trig_samples', obj=self.dev_conf, new_val=v)),
+            'post_trig_samples': (lambda: self.get_value(self.dev_conf, 'capture', 'post_trig_samples'), lambda v: self.set_value('capture', 'post_trig_samples', obj=self.dev_conf, new_val=v)),
+            'n_captures': (lambda: self.get_value(self.dev_conf, 'capture', 'n_captures'), lambda v: self.set_value('capture', 'n_captures', obj=self.dev_conf, new_val=v))
         })
         
         pico_mode = ParameterTree ({
-            'resolution': (lambda: self.get_mode_value("resolution"), partial(self.set_mode_value, "resolution")),
-            'timebase': (lambda: self.get_mode_value("timebase"), partial(self.set_mode_value, "timebase")),
-            'samp_time': (lambda: self.get_mode_value("samp_time"), None)
+            'resolution': (lambda: self.get_value(self.dev_conf, 'mode', 'resolution'), partial(self.set_mode_value, "resolution")),
+            'timebase': (lambda: self.get_value(self.dev_conf, 'mode', 'timebase'), partial(self.set_mode_value, "timebase")),
+            'samp_time': (lambda: self.get_value(self.dev_conf, 'mode', 'samp_time'), None)
         })
 
         pico_file = ParameterTree ({
-            'folder_name': (lambda: self.get_value(self.dev_conf,'file','folder_name'), partial(self.set_file_value,'folder_name')),
-            'file_name': (lambda: self.get_file_value("file_name"), partial(self.set_file_value,'file_name')),
+            'folder_name': (lambda: self.get_value(self.dev_conf,'file','folder_name'), lambda v: self.set_value('file', 'folder_name', obj=self.dev_conf, new_val=v)),
+            'file_name': (lambda: self.get_value(self.dev_conf,'file','file_name'), lambda v: self.set_value('file', 'file_name', obj=self.dev_conf, new_val=v)),
             'file_path': (lambda: self.get_value(self.dev_conf,'file','file_path'), None),
             'curr_file_name': (lambda: self.get_value(self.dev_conf,'file','curr_file_name'), None),
             'last_write_success': (lambda: self.get_value(self.dev_conf,'file','last_write_success'), None)
         })
 
         pico_pha = ParameterTree ({
-            'num_bins': (lambda: self.get_value(self.dev_conf,'pha','num_bins'), None),
-            'lower_range': (lambda: self.get_value(self.dev_conf,'pha','lower_range'), None),
-            'upper_range': (lambda: self.get_value(self.dev_conf,'pha','upper_range'), None)
+            'num_bins': (lambda: self.get_value(self.dev_conf,'pha','num_bins'), lambda v: self.set_value('pha', 'num_bins', obj=self.dev_conf, new_val=v)),
+            'lower_range': (lambda: self.get_value(self.dev_conf,'pha','lower_range'), lambda v: self.set_value('pha', 'lower_range', obj=self.dev_conf, new_val=v)),
+            'upper_range': (lambda: self.get_value(self.dev_conf,'pha','upper_range'), lambda v: self.set_value('pha', 'upper_range', obj=self.dev_conf, new_val=v))
         })
 
         pico_settings = ParameterTree ({
@@ -102,20 +99,20 @@ class PicoController():
         })
 
         live_view = ParameterTree ({
-            'preview_channel': (lambda: self.get_dev_conf_value('preview_channel'), partial(self.set_dev_conf_value,'preview_channel')),
+            'preview_channel': (lambda: self.get_value(self.dev_conf,'preview_channel'), lambda v: self.set_value('preview_channel', obj=self.dev_conf, new_val=v)),
             'lv_data': (self.lv_data, None),
             'pha_data': (self.pha_data, None),
-            'capture_count': (lambda: self.dev_conf.capture_run["live_cap_comp"], None),
-            'captures_requested': (lambda: self.dev_conf.capture["n_captures"], None)
+            'capture_count': (lambda: self.get_value(self.dev_conf,'capture_run', 'live_cap_comp'), None), 
+            'captures_requested': (lambda: self.get_value(self.dev_conf,'capture', 'n_captures'), None)
         })
 
         pico_commands = ParameterTree ({
-            'run_user_capture': (lambda: self.get_flag_value("user_capture"), self.start_user_capture)
+            'run_user_capture': (lambda: self.get_value(self.pico_status, 'flag', 'user_capture'), lambda v: self.set_value('flag', 'user_capture', obj=self.pico_status, new_val=v))
         })
 
         pico_flags = ParameterTree ({
-            'abort_cap': (lambda: self.pico_status.flag["abort_cap"], self.abort_cap),
-            'system_state': (lambda: self.pico_status.flag["system_state"], None)
+            'abort_cap': (lambda: self.get_value(self.pico_status, 'flag', 'abort_cap'), lambda v: self.set_value('flag', 'abort_cap', obj=self.pico_status, new_val=v)), 
+            'system_state': (lambda: self.get_value(self.pico_status, 'flag', 'system_state'), None)
         })
 
         self.pico_param_tree = ParameterTree ({
@@ -135,21 +132,7 @@ class PicoController():
             self.update_loop()
         # Set initial state of the verification system
         self.verify_settings()
-
-    def get_dev_conf_value(self, *args):
-        """
-            Takes a path as *args and traverses until it finds the value specified by the last key in *args
-        """
-        value = self.dev_conf
-        keys = [item for item in args]
-        for key in keys:
-            try:            
-                value = getattr(value, key)
-            except:
-                if isinstance(value, dict):
-                    value = value.get(key)
-        return value
-    
+   
     def get_value(self, obj, *args):
         """
             Takes an obj and a path as *args and traverses until it finds the value specified by the last key in *args
@@ -166,30 +149,40 @@ class PicoController():
             return value
         except:
             return None
+        
+    def set_value(self, *args, obj, new_val):
+        """
+            Sets the value of a key specified by the path *args in the obj to the provided new_val
+        """
+        value = obj
+        keys = [item for item in args]
 
-    def get_file_value(self, value):
-        return self.dev_conf.file[value]    
-    
-    def get_channel_value(self, channel, value):
-        return self.dev_conf.channels[channel][value]
-    
-    def get_trigger_value(self, value):
-        return self.dev_conf.trigger[value]
+        # Check if there's at least one key to work with
+        if not keys:
+            return None
 
-    def get_capture_value(self,value):
-        return self.dev_conf.capture[value]
-
-    def get_mode_value(self,value):
-        return self.dev_conf.mode[value]
-    
-    def get_status_value(self,value):
-        return self.pico_status.status[value]
-
-    def get_flag_value(self,value):
-        return self.pico_status.flag[value]
-    
-    def set_dev_conf_value(self,path,value):
-        setattr(self.dev_conf,path,value)
+        try:
+            # Traverse all keys except the last one to get the relevant dictionary or object
+            for key in keys[:-1]:
+                try:
+                    # If it's an attribute, get its value
+                    value = getattr(value, key)
+                except AttributeError:
+                    # If it's a key of a dictionary, get the nested dictionary
+                    if isinstance(value, dict):
+                        value = value.get(key)
+            
+            # Now, set the value for the last key
+            final_key = keys[-1]
+            try:
+                # If it's an attribute, set its value
+                setattr(value, final_key, new_val)
+            except AttributeError:
+                # If it's a key of a dictionary, set its value
+                if isinstance(value, dict):
+                    value[final_key] = new_val
+        except Exception as e:
+            print(f"Error: {e}")
     
     def set_channel_value(self, channel, key, value):
         if key in self.util.channel_dicts:
@@ -214,18 +207,6 @@ class PicoController():
         if key == "resolution":
             logging.debug(f'resolution change detected, setting flag')
             self.pico_status.flag["res_changed"] = True
-
-    def set_file_value(self,key,value):
-        self.dev_conf.file[key] = value
-
-    def set_capture_value(self,key,value):
-        self.dev_conf.capture[key] = value
-
-    def start_user_capture(self, value):
-        self.pico_status.flag["user_capture"] = value
-
-    def abort_cap(self, value):
-        self.pico_status.flag["abort_cap"] = value
 
     def verify_settings(self):
         """
@@ -328,7 +309,8 @@ class PicoController():
                     self.pico_capture()
                     #self.analysis.PHA_one_peak()
                     self.buffer_manager.save_lv_data()
-
+        if ((self.pico_status.status["open_unit"] == 0) and (self.pico_status.flag["verify_all"] == False)):
+            self.pico_status.flag["system_state"] = "Connected to Picoscope, Idle"
 
     def pico_capture(self):
         self.pico.assign_pico_memory()
