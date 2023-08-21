@@ -173,10 +173,17 @@ function sync_with_adapter(){
             console.log("Error in assigning PHA values, error: ",err.message)
         }
         
-        let cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
-        let progressBar = document.getElementById('capture-progress-bar');
-        progressBar.style.width = cap_percent + '%';
-        progressBar.innerHTML = cap_percent + '%';
+        if (response.device.commands.run_user_capture == true){
+            let cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
+            let progressBar = document.getElementById('capture-progress-bar');
+            progressBar.style.width = cap_percent + '%';
+            progressBar.innerHTML = cap_percent + '%';
+        } else {
+            let progressBar = document.getElementById('capture-progress-bar');
+            progressBar.style.width = 0 + '%';
+            progressBar.innerHTML = 0 + '%';
+        }
+
         
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
 

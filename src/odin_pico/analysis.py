@@ -10,6 +10,12 @@ from odin_pico.buffer_manager import BufferManager
 from odin_pico.pico_status import Status
 
 class PicoAnalysis():
+    """
+        Picoscope data analysis class.
+
+        This class implements analysis methods that manipulate the data captured by
+        the picoscope.
+    """
     def __init__(self, dev_conf=DeviceConfig(None), buffer_manager=BufferManager(), pico_status=Status()):
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
@@ -17,13 +23,15 @@ class PicoAnalysis():
         self.bin_width = 250
 
     def PHA_one_peak(self):
+        """
+            Analysis function that generates a distribution of peak heights in multiple
+            traces and saves the information into a np.array in a dataset inside the file
+            containing the raw adc_counts dataset
+        """
+                
         self.buffer_manager.lv_pha.clear()
         self.pico_status.flag["system_state"] = "Connected to Picoscope, calculating PHA"
-        ''' 
-            Analysis function that generates a distribution of peak heights in multiple  
-            traces and saves the information into a np.array in a dataset inside the file 
-            containing the raw adc_counts dataset
-        '''
+
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
             peak_values = []
             # Iterate through the channel array to expose each capture as b[i]
@@ -32,9 +40,7 @@ class PicoAnalysis():
                 # Find the peaks in each capture, using bin_width for grouping peaks
                 peak_pos = np.argmax(data)
                 peak_values.append(data[peak_pos])
-            num_bins = 1024
             # Use np.histogram to calculate the counts for each bin, based on the peak_values data
-            counts, bin_edge = np.histogram(peak_values, bins=num_bins, range=(0,(self.dev_conf.meta_data["max_adc"].value)))
+            counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha["num_bins"], range=(self.dev_conf.pha["lower_range"],self.dev_conf.pha["upper_range"]))
             # Combine the bin_edge's and counts into one np.array
             self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
-            #logging.debug(f'Latest PHA: {bin_edge, counts}')

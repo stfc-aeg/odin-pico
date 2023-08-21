@@ -103,7 +103,7 @@ class PicoDevice():
                 logging.debug(f'calculated offset value: {offset} based on percentage of {self.dev_conf.channels[chan]["offset"]}')
                 self.pico_status.status["set_channels"] = ps.ps5000aSetChannel(self.dev_conf.mode["handle"], self.dev_conf.channels[chan]["channel_id"], int(self.dev_conf.channels[chan]["active"]), 
                                                             self.dev_conf.channels[chan]["coupling"], self.dev_conf.channels[chan]["range"], offset)
-    
+
     def run_setup(self, *args):
         """
             Responsible for "setting up" the picoscope, calling functions that apply local settings to the picoscope
@@ -137,8 +137,8 @@ class PicoDevice():
             self.pico_status.status["block_ready"] = ctypes.c_int16(0)
             self.dev_conf.meta_data["total_cap_samples"]=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
             self.dev_conf.meta_data["max_samples"] = ctypes.c_int32(self.dev_conf.meta_data["total_cap_samples"])
-            self.pico_status.status["run_block"] =  ps.ps5000aRunBlock(self.dev_conf.mode["handle"], self.dev_conf.capture["pre_trig_samples"], 
-                                                                        self.dev_conf.capture["post_trig_samples"], self.dev_conf.mode["timebase"], None, 0, None, None)
+            self.pico_status.status["run_block"] = ps.ps5000aRunBlock(self.dev_conf.mode["handle"], self.dev_conf.capture["pre_trig_samples"],
+                                                                      self.dev_conf.capture["post_trig_samples"], self.dev_conf.mode["timebase"], None, 0, None, None)
             self.pico_status.flag["system_state"] = "Collecting Data"
 
             # 7a. To obtain data before rapid block capture has finished, call ps5000aStop and then

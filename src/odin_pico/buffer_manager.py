@@ -27,8 +27,8 @@ class BufferManager():
 
     def generate_arrays(self, *args):
         """
-            Creates the local buffers that the picoscope will eventually be mapped 
-            onto for data collection
+            Creates the local buffers that the picoscope will eventually be mapped
+            onto for data collection.
         """
         if args:
             n_captures = args[0]
@@ -38,7 +38,7 @@ class BufferManager():
         self.overflow = (ctypes.c_int16 * n_captures)()
         self.clear_arrays()
         for chan in self.dev_conf.channels:
-            if (self.dev_conf.channels[chan]["active"] == True):
+            if (self.dev_conf.channels[chan]["active"] is True):
                 self.active_channels.append(self.dev_conf.channels[chan]["channel_id"])
         
         samples=(self.dev_conf.capture["pre_trig_samples"] + self.dev_conf.capture["post_trig_samples"])
@@ -47,7 +47,7 @@ class BufferManager():
 
     def save_lv_data(self):
         """
-            Return a live view of traces being captured
+            Return a live view of traces being captured.
         """
         self.lv_active_channels = self.active_channels
 
@@ -64,9 +64,9 @@ class BufferManager():
 
     def clear_arrays(self):
         """
-            Removes previously created buffers from the buffer_manager
+            Removes previously created buffers from the buffer_manager.
         """
-        arrays = [self.active_channels, self.channel_arrays, self.pha_arrays,self.trigger_times,
-                  self.lv_active_channels, self.lv_channel_arrays]#, self.lv_pha]
+        arrays = [self.active_channels, self.channel_arrays, self.pha_arrays, self.trigger_times,
+                  self.lv_active_channels, self.lv_channel_arrays] #, self.lv_pha]
         for array in arrays:
             array.clear()
