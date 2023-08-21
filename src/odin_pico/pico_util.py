@@ -1,3 +1,4 @@
+import math
 from picosdk.ps5000a import ps5000a as ps
 import ctypes
 import numpy as np
@@ -94,26 +95,39 @@ class PicoUtil():
         }
         if key in range_values:
             return range_values[key]
+        
+    def get_time_unit(self, key):
+        unit_values = {
+            0 : -15,
+            1 : -12,
+            2 : -9,
+            3 : -6,
+            4 : -3,
+            5 : 0
+        }
+        if key in unit_values:
+            return unit_values[key]
     
     def set_mode_defaults(self):
         mode = {
             "handle" : ctypes.c_int16(0),
             "resolution" : 0,
             "timebase" : 0,
-            
+            "samp_time": 0,           
         }
         return mode
     
     def set_flag_defaults(self):
-        flag = {
+        flags = {
             "verify_all": False,
             "res_changed": False,
             "range_changed": False,
             "user_capture": False,
             "pico_mem_exceeded": False,
-            "abort_cap": False
+            "abort_cap": False,
+            "system_state": 'Waiting for connection'
         }
-        return flag
+        return flags
         
     def set_trigger_defaults(self):
         trigger = {
@@ -198,6 +212,14 @@ class PicoUtil():
         }
         return file
     
+    def set_pha_defaults(self):
+        pha = {
+            "num_bins": 1024,
+            "lower_range": 0,
+            "upper_range": 0
+        }
+        return pha
+    
     def set_capture_run_defaults(self):
         capture_run = {
             "caps_comp": 0,
@@ -242,9 +264,11 @@ class PicoUtil():
             return -1
         
     def verify_channel_settings(self, chan):
-        limit = self.range_offsets[chan["range"]]
-        if (chan["offset"] >= (-limit) and chan["offset"] <= limit):
+        if ((chan["offset"] >= 0) and (chan["offset"] <= 100)):
             return True
+        # limit = self.range_offsets[chan["range"]]
+        # if (chan["offset"] >= (-limit) and chan["offset"] <= limit):
+        #     return True
         else:
             return False
 
@@ -283,7 +307,14 @@ class PicoUtil():
         #    return -1
         print("all verfied, returning 0")
         return 0
-
+    
+    def calc_offset(self,range, off_per):
+        try:
+            range_mv = self.get_range_value_mv(range)
+            return((math.ceil(range_mv/(100/off_per)))*pow(10,-3))
+        except:
+            return 0
+        
     def max_samples(self, resolution):
         if resolution == 0:
             return ((512)*10**6)
@@ -291,16 +322,31 @@ class PicoUtil():
             return ((256)*10**6)
         else:
             return None
-    
-    def memory_check(self, capture, resolution):
-        max_samples = self.max_samples(resolution)
-
-
-
         
-        capture_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
-        all_samples = capture_samples * capture["n_captures"]
-        if all_samples > self.max_samples(resolution):
-            return False
-        if capture["n_captures"] > self.max_segments(resolution):
-            return False
+    def flatten_metadata_dict(self, d):
+        ''' 
+            Function to flatten a dictionary structure, whilst maintaning
+            a unique name for each value in the dictionary, returns a dict
+        '''
+        flat_d = {}
+        for key, value in d.items():
+            if isinstance(value, dict):
+                # If the value is a nested dictionary, append the dict_key as a prefix to the keys
+                dict_key = key
+                for inner_key, inner_value in value.items():
+                    flattened_key = f"{dict_key}_{inner_key}"
+                    flat_d[flattened_key] = inner_value
+            else:
+                # If the value is not a dictionary, simply add it to the flat_d dictionary
+                flat_d[key] = value
+        return flat_d
+    
+    # def memory_check(self, capture, resolution):
+    #     max_samples = self.max_samples(resolution)
+
+    #     capture_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
+    #     all_samples = capture_samples * capture["n_captures"]
+    #     if all_samples > self.max_samples(resolution):
+    #         return False
+    #     if capture["n_captures"] > self.max_segments(resolution):
+    #         return False
