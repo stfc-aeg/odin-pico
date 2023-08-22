@@ -79,7 +79,7 @@ class PicoUtil():
             "resolution":self.ps_resolution
         }
         
-    def get_range_value_mv(self,key):
+    def get_range_value_mv(self, key):
         range_values = {
             0 : 10,
             1 : 20,

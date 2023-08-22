@@ -9,12 +9,12 @@ div.page-wrapper{
 
 div.sidebar{
   width: 15%;
-  padding-right: 2%;
+  padding-right: 0.5%;
 }
 
 div.content-container {
   width: 85%;
-  padding-right: 1%;
+  padding-left: 0.5%;
 }
 
 .select-container {
@@ -49,68 +49,41 @@ div.content-container {
     border: none;
 }
 
-/* Toggle slider */
-
-
-.switch input
-{
-display: none;
+.panel-body {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
-.switch 
-{
-display: inline-block;
-width: 40px; /*=w*/
-height: 20px; /*=h*/
-margin: 4px;
-transform: translateY(50%);
-position: relative;
+.panel-heading-nav {
+  padding: 10px;
 }
 
-.switch-label
-{
-padding-bottom: 15px;
+#main-body {
+  padding-top: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
-.slider
-{
-position: absolute;
-top: 0;
-bottom: 0;
-left: 0;
-right: 0;
-border-radius: 20px;
-box-shadow: 0 0 0 2px #777, 0 0 4px #777;
-cursor: pointer;
-border: 4px solid transparent;
-overflow: hidden;
-transition: 0.2s;
+.table-striped {
+  padding-bottom: 0px;
 }
 
-.slider:before
-{
-position: absolute;
-content: "";
-width: 100%;
-height: 100%;
-background-color: #777;
-border-radius: 20px;
-transform: translateX(-20px); /*translateX(-(w-h))*/
-transition: 0.2s;
+.table {
+  margin-bottom: 0px;
 }
 
-input:checked + .slider:before
-{
-transform: translateX(20px); /*translateX(w-h)*/
-background-color:  limegreen;
+.col-sm-12 {
+  padding-bottom: 0px;
 }
 
-input:disabled + .slider:before
-{
-transform: translateX(20px); /*translateX(w-h)*/
-background-color:  #777
+#pico-6-div{
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
-
-
-
+#chan-6-div{
+  padding-left: 0px;
+  padding-right: 15px
+}
