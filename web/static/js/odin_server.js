@@ -61,6 +61,22 @@ function update_api_version() {
     });
 }
 
+// Resize plotly graphs after window changes size
+function resize_plotly() {
+    let div_width = 0.9*(document.getElementById('setup-6')).offsetWidth;
+
+    let update = {
+        width: div_width,  // Set the width to the container div's width
+        height: 300
+    };
+  
+    Plotly.relayout('scope_lv', update);
+    Plotly.relayout('scope_pha', update);
+}
+
+// Listener event for resizing 
+window.addEventListener('resize', resize_plotly);
+
 // Initialize the focus and blur events
 Object.keys(focusFlags).forEach(function(key) {
     $("#" + key).focus(function() {
@@ -129,7 +145,10 @@ function plotly_liveview(ranges){
                 yaxis: { title: 'Voltage (mV)',
                         range: [-range, range],
                         tickvals: tickVals,
-                        ticktext: tickText } });
+                        ticktext: tickText },
+                height: 300,
+                autosize: true                    
+                });
 
         scope_pha = document.getElementById('scope_pha');
         Plotly.newPlot( scope_pha, [{

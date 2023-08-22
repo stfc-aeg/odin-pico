@@ -1,5 +1,5 @@
 body {
-  padding-top: 75px;
+  padding-top: 60px;
 }
 
 div.page-wrapper{
@@ -13,7 +13,7 @@ div.sidebar{
 }
 
 div.content-container {
-  width: 85%;
+  width: 98%;
   padding-left: 0.5%;
 }
 
@@ -36,7 +36,6 @@ div.content-container {
 }
 
 .plot-container {
-  width: 100%;
   height: 300px;
 }
 
@@ -84,6 +83,87 @@ div.content-container {
 }
 
 #chan-6-div{
-  padding-left: 0px;
+  padding-left: 15px;
   padding-right: 15px
+}
+
+#custom-navbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#custom-navbar-brand {
+  margin-right: 15px;
+}
+
+#separator {
+  height: 24px;  /* Adjust as needed */
+  width: 1px;
+  background-color: #9d9d9d;  /* Adjust color as needed */
+  margin-left: 0px;
+  margin-right: 0px;
+  align-self: center;  /* Center align in flexbox layout */
+}
+
+#custom-item-label,
+#custom-item1,
+#custom-item2,
+#custom-item3,
+#custom-item4 {
+  margin-left: 15px;
+  color: #9d9d9d;
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif
+}
+
+#custom-form, #custom-fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+.custom-checkbox {
+  margin: 0;
+  padding: 0;
+}
+
+.custom-label {
+  margin: 0;
+  padding: 0;
+}
+
+#custom-div-a, 
+#custom-div-b, 
+#custom-div-c, 
+#custom-div-d {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+
+@media (max-width: 768px) {
+  .responsive-row {
+    display: block;
+    margin-bottom: 0.6em;
+  }
+  .responsive-row th,
+  .responsive-row td {
+    display: block;
+    text-align: center; /* Change as you see fit */
+  }
+  .responsive-row th {
+    margin-bottom: 0.3em;
+  }
+}
+
+.fixed-width {
+  flex: 0 0 700px;
+}
+/* Styles for flexible-width column */
+.flex-width {
+  flex: 1;
+  padding-left: 15px;
+}
+/* Custom row style */
+.flex-row {
+  display: flex;
 }
