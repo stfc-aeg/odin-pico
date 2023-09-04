@@ -77,6 +77,10 @@ function resize_plotly() {
 // Listener event for resizing 
 window.addEventListener('resize', resize_plotly);
 
+window.addEventListener('resize', function() {
+    location.reload();
+  });
+
 // Initialize the focus and blur events
 Object.keys(focusFlags).forEach(function(key) {
     $("#" + key).focus(function() {

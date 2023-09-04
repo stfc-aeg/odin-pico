@@ -139,31 +139,39 @@ div.content-container {
   margin-right: 10px;
 }
 
-
-@media (max-width: 768px) {
-  .responsive-row {
-    display: block;
-    margin-bottom: 0.6em;
-  }
-  .responsive-row th,
-  .responsive-row td {
-    display: block;
-    text-align: center; /* Change as you see fit */
-  }
-  .responsive-row th {
-    margin-bottom: 0.3em;
-  }
+/* Custom grid-row style */
+.grid-row {
+  display: grid;
+  grid-template-columns: 700px 1fr;
+  gap: 15px;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.fixed-width {
-  flex: 0 0 700px;
-}
-/* Styles for flexible-width column */
 .flex-width {
-  flex: 1;
-  padding-left: 15px;
+  max-width: 100%;
 }
-/* Custom row style */
-.flex-row {
-  display: flex;
+.container-fluid {
+  max-width: 100%;
+}
+
+/* Media query for screen size less than 1300px */
+@media (max-width: 1400px) {
+  .grid-row {
+    grid-template-columns: 1fr;  /* Single column */
+  }
+  .flex-width {
+    padding-left: 0;
+  }
+}
+
+/* Media query for screen size more than 1300px */
+@media (min-width: 1401px) {
+  .grid-row {
+    grid-template-columns: 700px 1fr;  /* Back to two columns */
+  }
+  .flex-width {
+    padding-left: 15px;
+  }
 }
