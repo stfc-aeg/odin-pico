@@ -15,7 +15,7 @@ class ChannelConfig:
 
     @staticmethod
     def default_channel_configs():
-        return {name: ChannelConfig(id, name) for (id, name) in enumerate(['A', 'B', 'C', 'D'])}
+        return {name: ChannelConfig(id, name) for (id, name) in enumerate(['a', 'b', 'c', 'd'])}
     
     @property
     def coupling(self) -> int:

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
 @dataclass
 class CaptureRunConfig:
@@ -7,3 +7,7 @@ class CaptureRunConfig:
     caps_remaining: int = 0
     caps_max: int = 0
     live_cap_comp: int = 0
+
+    def reset(self):
+        for field in fields(self):
+            setattr(self, field.name, field.default)

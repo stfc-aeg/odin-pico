@@ -230,32 +230,33 @@ class PicoUtil():
         }
         return capture_run
     
-    def verify_channels_defined(self, channels, mode):
+    def verify_mode_settings(self, chan_active, mode):
         channel_count = 0
-        for chan in channels:
-            if channels[chan]["active"] == True:
+
+        for chan in chan_active:
+            if chan == True:
                 channel_count += 1
 
-        if mode["resolution"] == 1:
-            if (mode["timebase"] < 1):
+        if mode.resolution == 1:
+            if (mode.timebase < 1):
                 return -1
-            elif (mode["timebase"] == 1 and channel_count >0 and channel_count <2):
+            elif (mode.timebase == 1 and channel_count >0 and channel_count <2):
                 return 0
-            elif (mode["timebase"] == 2 and channel_count >0 and channel_count <3):
+            elif (mode.timebase == 2 and channel_count >0 and channel_count <3):
                 return 0
-            elif (mode["timebase"] >= 3 and channel_count >0 and channel_count <=4):
+            elif (mode.timebase >= 3 and channel_count >0 and channel_count <=4):
                 return 0
             else:
                 return -1
             
-        if mode["resolution"] == 0:
-            if (mode["timebase"] < 0):
+        if mode.resolution == 0:
+            if (mode.timebase < 0):
                 return -1
-            elif (mode["timebase"] == 0 and channel_count >0 and channel_count <2):
+            elif (mode.timebase == 0 and channel_count >0 and channel_count <2):
                 return 0 
-            elif (mode["timebase"] == 1 and channel_count >0 and channel_count <3):
+            elif (mode.timebase == 1 and channel_count >0 and channel_count <3):
                 return 0
-            elif (mode["timebase"] >= 2 and channel_count >0 and channel_count <=4):
+            elif (mode.timebase >= 2 and channel_count >0 and channel_count <=4):
                 return 0
             else:
                 return -1
@@ -263,8 +264,8 @@ class PicoUtil():
         if channel_count == 0:
             return -1
         
-    def verify_channel_settings(self, chan):
-        if ((chan["offset"] >= 0) and (chan["offset"] <= 100)):
+    def verify_channel_settings(self, offset):
+        if ((offset >= 0) and (offset <= 100)):
             return True
         # limit = self.range_offsets[chan["range"]]
         # if (chan["offset"] >= (-limit) and chan["offset"] <= limit):
@@ -273,39 +274,33 @@ class PicoUtil():
             return False
 
     def set_channel_verify_flag(self, channels):
-        error_count = 0
+        error_count = 0 
         for chan in channels:
-            if (channels[chan]["active"] == True) and (channels[chan]["verified"] == False):
+            if (chan.active == True) and (chan.verified == False):
                 error_count += 1
         if error_count == 0:
             return 0
-        else: 
+        else:
             return -1
         
     def verify_trigger(self,channels,trigger):
-        source_channel_info = channels[self.channel_names_dict[trigger["source"]]]
-        if not(source_channel_info["active"]):
-            return -1 
-        if (trigger["threshold"] > self.get_range_value_mv(source_channel_info["range"])):
+        source_chan = channels[trigger.source]
+        if not(source_chan.active):
             return -1
-        if not(trigger["delay"] >= 0 and trigger["delay"] <= 4294967295):
+        if (trigger.threshold > self.get_range_value_mv(source_chan.range)):
             return -1
-        if not(trigger["auto_trigger_ms"] >= 0 and trigger["auto_trigger_ms"] <= 32767):
+        if not(trigger.delay >= 0 and trigger.delay <= 4294967295):
             return -1
-        return 0 
+        if not(trigger.auto_trigger_ms >= 0 and trigger.auto_trigger_ms <= 32767):
+            return -1
+        return 0
     
     def verify_capture(self, capture):
-        total_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
+        total_samples = capture.pre_trig_samples + capture.post_trig_samples
         if (total_samples < 1):
-            print("samples less than 1")
             return -1
-        if (capture["n_captures"] <= 0):
-            print("captures less than 1")
+        if (capture.n_captures < 1 ):
             return -1
-        #if ((total_samples * capture["n_captures"]) > 50000000):
-        #    print("samples over 50M")
-        #    return -1
-        print("all verfied, returning 0")
         return 0
     
     def calc_offset(self,range, off_per):

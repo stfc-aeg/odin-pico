@@ -52,6 +52,7 @@ def main():
         #print(device.channel_config[channel])
 
     device.channel_config['A'].offset = 1.0
+
     #print(device.channel_config['A'])
 
     print(device)
