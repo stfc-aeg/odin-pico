@@ -13,13 +13,6 @@ class Channel:
     range: int = 0
     offset: float = 0.0
 
-    def reset(self):
-        self.active = False
-        self.verified = False
-        self.coupling = 0
-        self.range = 0
-        self.offset = 0.0
-
     def default_channel_configs():
         return {name: Channel(id, name) for (id, name) in enumerate(['A', 'B', 'C', 'D'])}
     
@@ -33,7 +26,7 @@ class Person:
 
     def __init__(self):
         self.name = "test"
-        self.age = 37  # This will use the `age` setter defined below.
+        self.age = 37
         self.location = 0
 
         
@@ -56,11 +49,10 @@ class Person:
     
     @location.setter
     def location(self, value:int):
-        if value in self.util.ps_direction:   #[0,1,2,3,4]
+        if value in self.util.ps_direction:  #[0,1,2,3,4]
             self._location = value
         else:
             print("location out of bounds")
-
 
 @dataclass
 class DeviceConfig:

@@ -22,8 +22,6 @@ class DeviceConfig():
         self.file = self.util.set_file_defaults(path)
         self.pha = self.util.set_pha_defaults()
 
-        
-
     def to_dict(self):
         """Convert the DeviceConfig object to a dictionary."""
         return {

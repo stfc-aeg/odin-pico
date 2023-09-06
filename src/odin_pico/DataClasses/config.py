@@ -18,12 +18,12 @@ class ChannelConfig:
         self.range = 0
         self.offset = 0.0
 
-def default_channel_configs():
-    return {name: ChannelConfig(id, name) for (id, name) in enumerate(['A', 'B', 'C', 'D'])}
+    def default_channel_configs():
+        return {name: ChannelConfig(id, name) for (id, name) in enumerate(['A', 'B', 'C', 'D'])}
 
 @dataclass
 class DeviceConfig:
-    channel_config: Dict[str, ChannelConfig] = field(default_factory=default_channel_configs)
+    channel_config: Dict[str, ChannelConfig] = field(default_factory=ChannelConfig.default_channel_configs)
 
     @property
     def num_channels(self):
