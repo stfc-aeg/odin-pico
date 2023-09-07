@@ -8,7 +8,6 @@ from tornado.concurrent import run_on_executor
 from concurrent import futures
 
 from odin_pico.pico_util import PicoUtil
-from odin_pico.pico_status import Status
 from odin_pico.pico_device import PicoDevice
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.file_writer import FileWriter
@@ -29,24 +28,14 @@ class PicoController():
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
         self.dev_conf = DeviceConfig()
         self.dev_conf.file.file_path = path
-        self.util = PicoUtil()
-
-        print(f'folder_name [-1:]: {self.dev_conf.file.folder_name[-1:]}')
-
         self.channels = [self.dev_conf.channel_a, self.dev_conf.channel_b, self.dev_conf.channel_c, self.dev_conf.channel_d]
-        self.dev_conf.trigger.source = 2
-
-        source_channel = self.channels[self.dev_conf.trigger.source]
-        print(f'source channel range mv: {self.util.get_range_value_mv(source_channel.range)}')
-
+        self.util = PicoUtil()
         self.pico_status = DeviceStatus()
         self.buffer_manager = BufferManager(self.dev_conf)
         self.file_writer = FileWriter(self.dev_conf, self.buffer_manager, self.pico_status) 
         self.analysis = PicoAnalysis(self.dev_conf, self.buffer_manager, self.pico_status)
         self.pico = PicoDevice(self.dev_conf, self.pico_status, self.buffer_manager)
         
-
-
         # ParameterTree's to represent different parts of the system
         adapter_status = ParameterTree({
             'settings_verified': (lambda: self.pico_status.flags.verify_all, None),
@@ -56,19 +45,7 @@ class PicoController():
             'channel_trigger_verify': (lambda: self.pico_status.channel_trigger_verify, None),
             'capture_settings_verify': (lambda: self.pico_status.capture_settings_verify, None)
         })
-
-        # self.chan_params = {}
-        # for name in self.util.channel_names:
-        #     self.chan_params[name] = ParameterTree({
-        #         'channel_id': (lambda name=name: self.get_dc_value(self.dev_conf, f'channel_{name}', 'channel_id'), None),
-        #         'active': (lambda name=name: self.get_dc_value(self.dev_conf, f'channel_{name}', 'active'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'active')),
-        #         'verified': (lambda name=name: self.get_dc_value(self.dev_conf, f'channel_{name}', 'verified'), None),
-        #         'coupling': (lambda name=name: self.get_dc_value(self.dev_conf, f'channel_{name}', 'coupling'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'coupling')),
-        #         'range': (lambda name=name: self.get_dc_value(self.dev_conf, f'channel_{name}', 'range'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'range')),
-        #         'offset': (lambda name=name: self.get_dc_value(self.dev_conf, f'channel_{name}', 'offset'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'offset'))
-        # })
-
-            
+  
         self.chan_params = {}
         for name in self.dev_conf.channel_names:
             self.chan_params[name] = ParameterTree({
@@ -180,7 +157,6 @@ class PicoController():
     def verify_settings(self):
         """Verifies all picoscope settings, sets status of individual groups of settings"""
 
-        # New verify calls for deviceconfig dataclass
         active = [self.dev_conf.channel_a.active, self.dev_conf.channel_b.active, self.dev_conf.channel_c.active, self.dev_conf.channel_d.active]
 
         self.pico_status.pico_setup_verify = self.util.verify_mode_settings(active,self.dev_conf.mode)
@@ -204,7 +180,6 @@ class PicoController():
         """Set the value for maximum amount of captures that can fit into the picoscope memory taking into account current user settings as well as setting the captures_remaning variable"""
 
         capture_samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
-        #self.dev_conf.capture_run["caps_max"] = 100
         self.dev_conf.capture_run.caps_max = math.floor(self.util.max_samples(self.dev_conf.mode.resolution) / capture_samples)
         self.dev_conf.capture_run.caps_remaining = self.dev_conf.capture.n_captures
 

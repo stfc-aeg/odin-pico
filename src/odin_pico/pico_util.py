@@ -107,129 +107,7 @@ class PicoUtil():
         }
         if key in unit_values:
             return unit_values[key]
-    
-    def set_mode_defaults(self):
-        mode = {
-            "handle" : ctypes.c_int16(0),
-            "resolution" : 0,
-            "timebase" : 0,
-            "samp_time": 0,           
-        }
-        return mode
-    
-    def set_flag_defaults(self):
-        flags = {
-            "verify_all": False,
-            "res_changed": False,
-            "range_changed": False,
-            "user_capture": False,
-            "pico_mem_exceeded": False,
-            "abort_cap": False,
-            "system_state": 'Waiting for connection'
-        }
-        return flags
         
-    def set_trigger_defaults(self):
-        trigger = {
-            "active": False,
-            "source": 0,
-            "threshold": 0,
-            "direction": 0,
-            "delay": 0,
-            "auto_trigger_ms": 0
-        }
-        return trigger
-    
-    def set_ps_defaults(self):
-        status = {
-            "open_unit": -1,
-            "stop": -1,
-            "close": -1
-        }
-        return status
-
-    def set_rbs_defaults(self):
-        status = {
-            "block_check": ctypes.c_int16(0),
-            "block_ready": ctypes.c_int16(0)
-        }
-        return status       
-
-    def set_status_defaults(self):
-        status = {
-            "open_unit": -1,
-            "stop": -1,
-            "close": -1,
-            "block_check": ctypes.c_int16(0),
-            "block_ready": ctypes.c_int16(0),
-            "pico_setup_verify": -1,
-            "pico_setup_complete": -1,
-            "channel_setup_verify": -1,
-            "channel_setup_complete": -1,
-            "channel_trigger_verify": -1,
-            "channel_trigger_complete": -1,
-            "capture_settings_verify": -1,
-            "capture_settings_complete": -1,
-        }
-        return status
-    
-    def set_channel_defaults(self,name,id):
-        channel = {
-            "channel_id": id,
-            "name": name,
-            "active": False,
-            "verified": False,
-            "coupling": 0,
-            "range": 0, 
-            "offset": 0.0
-        }
-        return channel
-    
-    def set_capture_defaults(self):
-        capture = {
-            "pre_trig_samples": 0,
-            "post_trig_samples": 0,
-            "n_captures": 0
-        }
-        return capture
-
-    def set_meta_data_defaults(self):
-        meta_data = {
-            "max_adc": ctypes.c_uint16(),
-            "max_samples": ctypes.c_int32(),
-            "total_cap_samples": ctypes.c_int32(),
-            "samples_per_seg": ctypes.c_int32(0)
-        }
-        return meta_data
-    
-    def set_file_defaults(self,path):
-        file = {
-            "file_name": '',
-            "folder_name": '',
-            "file_path": path,
-            "curr_file_name": '',
-            "last_write_success": False,
-        }
-        return file
-    
-    def set_pha_defaults(self):
-        pha = {
-            "num_bins": 1024,
-            "lower_range": 0,
-            "upper_range": 0
-        }
-        return pha
-    
-    def set_capture_run_defaults(self):
-        capture_run = {
-            "caps_comp": 0,
-            "caps_in_run": 0,
-            "caps_remaining": 0,
-            "caps_max": 0,
-            "live_cap_comp": 0
-        }
-        return capture_run
-    
     def verify_mode_settings(self, chan_active, mode):
         channel_count = 0
 
@@ -267,9 +145,6 @@ class PicoUtil():
     def verify_channel_settings(self, offset):
         if ((offset >= 0) and (offset <= 100)):
             return True
-        # limit = self.range_offsets[chan["range"]]
-        # if (chan["offset"] >= (-limit) and chan["offset"] <= limit):
-        #     return True
         else:
             return False
 
