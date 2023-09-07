@@ -318,9 +318,10 @@ class PicoUtil():
         else:
             return None
         
+
     def flatten_metadata_dict(self, d):
         ''' 
-            Function to flatten a dictionary structure, whilst maintaning
+            Function to flatten a dictionary structure, whilst maintaining
             a unique name for each value in the dictionary, returns a dict
         '''
         flat_d = {}
@@ -329,19 +330,11 @@ class PicoUtil():
                 # If the value is a nested dictionary, append the dict_key as a prefix to the keys
                 dict_key = key
                 for inner_key, inner_value in value.items():
-                    flattened_key = f"{dict_key}_{inner_key}"
-                    flat_d[flattened_key] = inner_value
+                    # If the value is not a PicoUtil object add it to the dict, else, skip it
+                    if not isinstance(inner_value, PicoUtil):
+                        flattened_key = f"{dict_key}_{inner_key}"
+                        flat_d[flattened_key] = inner_value
             else:
-                # If the value is not a dictionary, simply add it to the flat_d dictionary
-                flat_d[key] = value
+                if not isinstance(value, PicoUtil):
+                    flat_d[key] = value
         return flat_d
-    
-    # def memory_check(self, capture, resolution):
-    #     max_samples = self.max_samples(resolution)
-
-    #     capture_samples = capture["pre_trig_samples"] + capture["post_trig_samples"]
-    #     all_samples = capture_samples * capture["n_captures"]
-    #     if all_samples > self.max_samples(resolution):
-    #         return False
-    #     if capture["n_captures"] > self.max_segments(resolution):
-    #         return False
