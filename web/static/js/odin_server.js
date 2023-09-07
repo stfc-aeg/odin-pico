@@ -1,5 +1,46 @@
 api_version = '0.1';
-page_not_loaded = true;
+
+// Initialize the focusFlags object with all keys set to false (not focused)
+var focusFlags = {
+  "bit-mode-dropdown": false,
+  "time-base-input": false,
+  "channel-a-active": false,
+  "channel-b-active": false,
+  "channel-c-active": false,
+  "channel-d-active": false,
+  "channel-a-coupl": false,
+  "channel-b-coupl": false,
+  "channel-c-coupl": false,
+  "channel-d-coupl": false,
+  "channel-a-range": false,
+  "channel-b-range": false,
+  "channel-c-range": false,
+  "channel-d-range": false,
+  "channel-a-offset": false,
+  "channel-b-offset": false,
+  "channel-c-offset": false,
+  "channel-d-offset": false,
+  "trigger-enable": false,
+  "trigger-source": false,
+  "trigger-direction": false,
+  "trigger-threshold": false,
+  "trigger-delay": false,
+  "trigger-auto": false,
+  "capture-pretrig-samples": false,
+  "capture-posttrig-samples": false,
+  "capture-count": false,
+  "capture-folder-name": false,
+  "capture-file-name": false,
+  "pha-num-bins": false,
+  "pha-lower-range": false,
+  "pha-upper-range": false,
+  "lv-source": false,
+};
+// Initialize a timers object to keep track of the timers for each field
+var timers = {};
+
+// Time limit (in milliseconds) after which to blur the input
+var timeLimit = 10000; // 5 seconds
 
 data_array = new Int16Array()
 counts = new Int16Array()
@@ -19,6 +60,59 @@ function update_api_version() {
         api_version = response.api;
     });
 }
+
+// Resize plotly graphs after window changes size
+function resize_plotly() {
+    let div_width = 0.9*(document.getElementById('setup-6')).offsetWidth;
+
+    let update = {
+        width: div_width,  // Set the width to the container div's width
+        height: 300
+    };
+  
+    Plotly.relayout('scope_lv', update);
+    Plotly.relayout('scope_pha', update);
+}
+
+// Listener event for resizing 
+window.addEventListener('resize', resize_plotly);
+
+window.addEventListener('resize', function() {
+    location.reload();
+  });
+
+// Initialize the focus and blur events
+Object.keys(focusFlags).forEach(function(key) {
+    $("#" + key).focus(function() {
+      focusFlags[key] = true;
+      
+      // Clear any existing timer for this input
+      clearTimeout(timers[key]);
+      
+      // Set a new timer for this input
+      timers[key] = setTimeout(function() {
+        // Blur the input if the timer runs out
+        $("#" + key).blur();
+      }, timeLimit);
+    });
+    
+    $("#" + key).blur(function() {
+      focusFlags[key] = false;
+      
+      // Clear the timer when the input loses focus
+      clearTimeout(timers[key]);
+    });
+    
+    $("#" + key).change(function() {
+      // Clear the timer when the input changes, so it doesn't blur
+      clearTimeout(timers[key]);
+      
+      // Optionally, reset the timer
+      timers[key] = setTimeout(function() {
+        $("#" + key).blur();
+      }, timeLimit);
+    });
+  });
 
 function toggle_play() {
     const button = document.getElementById('p_p_button');
@@ -55,7 +149,10 @@ function plotly_liveview(ranges){
                 yaxis: { title: 'Voltage (mV)',
                         range: [-range, range],
                         tickvals: tickVals,
-                        ticktext: tickText } });
+                        ticktext: tickText },
+                height: 300,
+                autosize: true                    
+                });
 
         scope_pha = document.getElementById('scope_pha');
         Plotly.newPlot( scope_pha, [{
@@ -98,55 +195,51 @@ function get_range_value_mv(key) {
 
 function sync_with_adapter(){
     return function(response){
-        if (page_not_loaded == true){
-            $("#bit-mode-dropdown").val(response.device.settings.mode.resolution)
-            $("#time-base-input").val(response.device.settings.mode.timebase)
-
-            document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)
-            document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)
-            document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)
-            document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)
-
-            $("#channel-a-coupl").val(response.device.settings.channels.a.coupling)
-            $("#channel-b-coupl").val(response.device.settings.channels.b.coupling)
-            $("#channel-c-coupl").val(response.device.settings.channels.c.coupling)
-            $("#channel-d-coupl").val(response.device.settings.channels.d.coupling)
-
-            $("#channel-a-range").val(response.device.settings.channels.a.range)
-            $("#channel-b-range").val(response.device.settings.channels.b.range)
-            $("#channel-c-range").val(response.device.settings.channels.c.range)
-            $("#channel-d-range").val(response.device.settings.channels.d.range)
-
-            $("#channel-a-range").val(response.device.settings.channels.a.range)
-            $("#channel-b-range").val(response.device.settings.channels.b.range)
-            $("#channel-c-range").val(response.device.settings.channels.c.range)
-            $("#channel-d-range").val(response.device.settings.channels.d.range)
-
-            $("#channel-a-offset").val(response.device.settings.channels.a.offset)
-            $("#channel-b-offset").val(response.device.settings.channels.b.offset)
-            $("#channel-c-offset").val(response.device.settings.channels.c.offset)
-            $("#channel-d-offset").val(response.device.settings.channels.d.offset)
-
+        if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
+        
+        if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
+        
+        if (!focusFlags["channel-a-active"]) {document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)}
+        if (!focusFlags["channel-b-active"]) {document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)}
+        if (!focusFlags["channel-c-active"]) {document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)}
+        if (!focusFlags["channel-d-active"]) {document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)}
+        
+        if (!focusFlags["channel-a-coupl"]) {$("#channel-a-coupl").val(response.device.settings.channels.a.coupling)}
+        if (!focusFlags["channel-b-coupl"]) {$("#channel-b-coupl").val(response.device.settings.channels.b.coupling)}
+        if (!focusFlags["channel-c-coupl"]) {$("#channel-c-coupl").val(response.device.settings.channels.c.coupling)}
+        if (!focusFlags["channel-d-coupl"]) {$("#channel-d-coupl").val(response.device.settings.channels.d.coupling)}
+        
+        if (!focusFlags["channel-a-range"]) {$("#channel-a-range").val(response.device.settings.channels.a.range)}
+        if (!focusFlags["channel-b-range"]) {$("#channel-b-range").val(response.device.settings.channels.b.range)}
+        if (!focusFlags["channel-c-range"]) {$("#channel-c-range").val(response.device.settings.channels.c.range)}
+        if (!focusFlags["channel-d-range"]) {$("#channel-d-range").val(response.device.settings.channels.d.range)}
+        
+        if (!focusFlags["channel-a-offset"]) {$("#channel-a-offset").val(response.device.settings.channels.a.offset)}
+        if (!focusFlags["channel-b-offset"]) {$("#channel-b-offset").val(response.device.settings.channels.b.offset)}
+        if (!focusFlags["channel-c-offset"]) {$("#channel-c-offset").val(response.device.settings.channels.c.offset)}
+        if (!focusFlags["channel-d-offset"]) {$("#channel-d-offset").val(response.device.settings.channels.d.offset)}
+        
+        if (!focusFlags["trigger-enable"]) {
             if (response.device.settings.trigger.active == true){$("#trigger-enable").val("true")}
             if (response.device.settings.trigger.active == false){$("#trigger-enable").val("false")}
-            $("#trigger-source").val(response.device.settings.trigger.source)
-            $("#trigger-direction").val(response.device.settings.trigger.direction)
-            $("#trigger-threshold").val(response.device.settings.trigger.threshold)
-            $("#trigger-delay").val(response.device.settings.trigger.delay)
-            $("#trigger-auto").val(response.device.settings.trigger.auto_trigger)
-
-            $("#capture-pretrig-samples").val(response.device.settings.capture.pre_trig_samples)
-            $("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)
-            $("#capture-count").val(response.device.settings.capture.n_captures)
-
-            $("#capture-folder-name").val(response.device.settings.file.folder_name)
-            $("#capture-file-name").val(response.device.settings.file.file_name)
-
-            $("#pha-num-bins").val(response.device.settings.pha.num_bins)
-            $("#pha-lower-range").val(response.device.settings.pha.lower_range)
-            $("#pha-upper-range").val(response.device.settings.pha.upper_range)
-            page_not_loaded = false;
         }
+        
+        if (!focusFlags["trigger-source"]) {$("#trigger-source").val(response.device.settings.trigger.source)}
+        if (!focusFlags["trigger-direction"]) {$("#trigger-direction").val(response.device.settings.trigger.direction)}
+        if (!focusFlags["trigger-threshold"]) {$("#trigger-threshold").val(response.device.settings.trigger.threshold)}
+        if (!focusFlags["trigger-delay"]) {$("#trigger-delay").val(response.device.settings.trigger.delay)}
+        if (!focusFlags["trigger-auto"]) {$("#trigger-auto").val(response.device.settings.trigger.auto_trigger)}
+        
+        if (!focusFlags["capture-pretrig-samples"]) {$("#capture-pretrig-samples").val(response.device.settings.capture.pre_trig_samples)}
+        if (!focusFlags["capture-posttrig-samples"]) {$("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)}
+        if (!focusFlags["capture-count"]) {$("#capture-count").val(response.device.settings.capture.n_captures)}
+        
+        if (!focusFlags["capture-folder-name"]) {$("#capture-folder-name").val(response.device.settings.file.folder_name)}
+        if (!focusFlags["capture-file-name"]) {$("#capture-file-name").val(response.device.settings.file.file_name)}
+        
+        if (!focusFlags["pha-num-bins"]) {$("#pha-num-bins").val(response.device.settings.pha.num_bins)}
+        if (!focusFlags["pha-lower-range"]) {$("#pha-lower-range").val(response.device.settings.pha.lower_range)}
+        if (!focusFlags["pha-upper-range"]) {$("#pha-upper-range").val(response.device.settings.pha.upper_range)}
 
         // Check the lv_data array contains data, if it does, assign the data locally
         try{
