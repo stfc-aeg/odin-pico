@@ -7,6 +7,7 @@ class ChannelConfig:
     name: str
     active: bool = False
     verified: bool = False
+    live_view: bool = False
     offset: float = 0.0
     _coupling: int = 0
     _range: int = 0    

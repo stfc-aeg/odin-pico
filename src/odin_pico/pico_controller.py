@@ -52,6 +52,7 @@ class PicoController():
                 'channel_id': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'channel_id'), None),
                 'active': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'active'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'active')),
                 'verified': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'verified'), None),
+                'live_view': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'live_view'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'live_view')),
                 'coupling': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'coupling'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'coupling')),
                 'range': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'range'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'range')),
                 'offset': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'offset'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'offset'))
@@ -102,6 +103,7 @@ class PicoController():
         })
 
         live_view = ParameterTree({
+            'active_channels': (lambda: self.buffer_manager.active_channels, None),
             'preview_channel': (lambda: self.dev_conf.preview_channel, partial(self.set_dc_value, self.dev_conf, "preview_channel")),
             'lv_data': (self.lv_data, None),
             'pha_data': (self.pha_data, None),
@@ -262,6 +264,8 @@ class PicoController():
       
     def lv_data(self):
         """Returns array of the last captured trace, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
+
+        #return self.buffer_manager.lv_channel_arrays
 
         array = None
 

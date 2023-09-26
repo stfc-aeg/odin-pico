@@ -116,7 +116,7 @@ div.content-container {
   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif
 }
 
-#custom-form, #custom-fieldset {
+.custom-form, .custom-fieldset {
   margin: 0;
   padding: 0;
 }
@@ -131,12 +131,21 @@ div.content-container {
   padding: 0;
 }
 
-#custom-div-a, 
-#custom-div-b, 
-#custom-div-c, 
-#custom-div-d {
+.custom-div-a, 
+.custom-div-b, 
+.custom-div-c, 
+.custom-div-d {
   display: inline-block;
   margin-right: 10px;
+}
+
+#live-view-channels {
+    display: flex;
+    align-items: center;
+}
+
+#live-view-form {
+  padding-left: 8px;
 }
 
 /* Custom grid-row style */

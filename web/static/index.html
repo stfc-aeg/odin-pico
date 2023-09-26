@@ -85,21 +85,21 @@
                                       <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
                                     </th>
                                     <th>
-                                      <form id="custom-form">
-                                        <fieldset id="custom-fieldset">
-                                          <div id="custom-div-a">
+                                      <form class="custom-form">
+                                        <fieldset class="custom-fieldset">
+                                          <div class="custom-div-a">
                                             <input type="checkbox" id="channel-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-active','settings/channels/a/','active')">
                                             <label for="channel-a" class="custom-label">A</label>
                                           </div>
-                                          <div id="custom-div-b">
+                                          <div class="custom-div-b">
                                             <input type="checkbox" id="channel-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-active','settings/channels/b/','active')">
                                             <label for="channel-b" class="custom-label">B</label>
                                           </div>
-                                          <div id="custom-div-c">
+                                          <div class="custom-div-c">
                                             <input type="checkbox" id="channel-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-active','settings/channels/c/','active')">
                                             <label for="channel-c" class="custom-label">C</label>
                                           </div>
-                                          <div id="custom-div-d">
+                                          <div class="custom-div-d">
                                             <input type="checkbox" id="channel-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-active','settings/channels/d/','active')">
                                             <label for="channel-d" class="custom-label">D</label>
                                           </div>
@@ -366,30 +366,53 @@
                       
                       <!-- Graph Rows -->
                       <div class="flex-width">
-                        <div class="row">
+                      <div class="row">
                       <div class="col-sm-12">
                       <div id = "setup-6" class="panel panel-default">
                         <div class="panel-heading">Live View and PHA preview:</div>
                         <div class="panel-body">
-                          <table class="table table-borderless">
-                            <tr>
-                              <td class="select-container">
-                                <span>Select channel to view: </span>
-                                <select id="lv-source" onchange="commit_int_adapter('lv-source','live_view','preview_channel')">
-                                  <option value="" selected disabled hidden> </option>
-                                  <option value="0">Channel A</option>
-                                  <option value="1">Channel B</option>
-                                  <option value="2">Channel C</option>
-                                  <option value="3">Channel D</option>
-                                </select>
-                              </td>
-                              <td class="toggle-container">
+                              <div class="row">
+                                <div class="col-sm-5" id="live-view-channels">
+                                <span>Select channels for Live View: </span>
+                                <form class="custom-form" id="live-view-form">
+                                  <fieldset class="custom-fieldset">
+                                    <div class="custom-div-a">
+                                      <input type="checkbox" id="liveview-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('liveview-a-active','settings/channels/a/','live_view')">
+                                      <label for="channel-a" class="custom-label">A</label>
+                                    </div>
+                                    <div class="custom-div-b">
+                                      <input type="checkbox" id="liveview-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('liveview-b-active','settings/channels/b/','live_view')">
+                                      <label for="channel-b" class="custom-label">B</label>
+                                    </div>
+                                    <div class="custom-div-c">
+                                      <input type="checkbox" id="liveview-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('liveview-c-active','settings/channels/c/','live_view')">
+                                      <label for="channel-c" class="custom-label">C</label>
+                                    </div>
+                                    <div class="custom-div-d">
+                                      <input type="checkbox" id="liveview-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('liveview-d-active','settings/channels/d/','live_view')">
+                                      <label for="channel-d" class="custom-label">D</label>
+                                    </div>
+                                  </fieldset>
+                                </form>
+                                </div>
+                                <div class="col-sm-5">
+                                  <span>Select channel to view PHA for: </span>
+                                  <select id="lv-source" onchange="commit_int_adapter('lv-source','live_view','preview_channel')">
+                                    <option value="" selected disabled hidden> </option>
+                                    <option value="0">Channel A</option>
+                                    <option value="1">Channel B</option>
+                                    <option value="2">Channel C</option>
+                                    <option value="3">Channel D</option>
+                                  </select>
+                                </div>
+                                  <div class="col-sm-2">
                                 <button id="p_p_button" class="icon-button" onclick="toggle_play()">
                                   <span class="material-icons">pause</span>
                                 </button>
+                              </div>
 
-                              </td>
-                            </tr>
+                            </div>
+                            <table class="table table-borderless">
                             <tr>
                               <td colspan="2">
                                 <div class="plot-container" id="scope_lv"></div>
