@@ -6,7 +6,7 @@ import numpy as np
 import h5py
 
 from picosdk.ps5000a import ps5000a as ps
-from picosdk.functions import adc2mV, assert_pico_ok, mV2adc
+from picosdk.functions import mV2adc
 
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.DataClasses.device_status import DeviceStatus
@@ -144,7 +144,7 @@ class PicoDevice():
                 if (time.time() - start_time >= 0.25):
                     start_time = time.time()
                     self.get_cap_count()
-                    print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
+#                    print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
 
                     if (self.prev_seg_caps == self.seg_caps):
                         self.pico_status.flags.system_state = "Waiting for trigger"
