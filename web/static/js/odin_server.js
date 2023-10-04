@@ -494,6 +494,7 @@ function commit_float_adapter(id,path,key){
 
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
+    
     ajax_put(path,key,checked)
 }
 
