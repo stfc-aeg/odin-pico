@@ -3,10 +3,9 @@ from datetime import datetime
 import logging
 import time
 import numpy as np
-import h5py
 
 from picosdk.ps5000a import ps5000a as ps
-from picosdk.functions import adc2mV, assert_pico_ok, mV2adc
+from picosdk.functions import mV2adc
 
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.DataClasses.device_status import DeviceStatus

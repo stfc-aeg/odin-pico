@@ -1,8 +1,5 @@
 import logging
-import h5py
 import numpy as np 
-from scipy.signal import find_peaks
-import matplotlib.pyplot as plt
 import math
 
 from odin_pico.buffer_manager import BufferManager

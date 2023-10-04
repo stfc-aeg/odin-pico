@@ -1,6 +1,5 @@
 import math
 from picosdk.ps5000a import ps5000a as ps
-import ctypes
 import numpy as np
 
 
