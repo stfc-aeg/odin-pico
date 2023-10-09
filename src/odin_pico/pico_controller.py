@@ -25,7 +25,7 @@ class PicoController():
         self.update_loop_active = loop
         self.lv_captures = 1
 
-        self.active_channels = [False, False, False, False]
+        self.active_channels = [False] * 4
         self.enable = False
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
@@ -106,10 +106,10 @@ class PicoController():
         })
 
         active_channels = ParameterTree({
-            'channel_a_active': (lambda: self.active_channels[0], self.set_active_channel_0),
-            'channel_b_active': (lambda: self.active_channels[1], self.set_active_channel_1),
-            'channel_c_active': (lambda: self.active_channels[2], self.set_active_channel_2),
-            'channel_d_active': (lambda: self.active_channels[3], self.set_active_channel_3)
+            'a': (lambda: self.active_channels[0], self.set_active_channel_0),
+            'b': (lambda: self.active_channels[1], self.set_active_channel_1),
+            'c': (lambda: self.active_channels[2], self.set_active_channel_2),
+            'd': (lambda: self.active_channels[3], self.set_active_channel_3)
         })
 
         live_view = ParameterTree({
@@ -152,6 +152,18 @@ class PicoController():
 
     #Series of functions allowing changing of activating channels
 
+    def set_active_channel_0(self, enable):
+        self.set_active_channels(enable, 0)
+
+    def set_active_channel_1(self, enable):
+        self.set_active_channels(enable, 1)
+
+    def set_active_channel_2(self, enable):
+        self.set_active_channels(enable, 2)
+
+    def set_active_channel_3(self, enable):
+        self.set_active_channels(enable, 3)
+
     def set_active_channels(self, enable, channel):
         if enable == True:
             if self.active_channels[channel] != enable:
@@ -161,31 +173,6 @@ class PicoController():
         if enable == False:
             if self.active_channels[channel] != enable:
                 self.active_channels[channel] = enable  
-
-    def set_active_channel_0(self,enable):
-        if self.active_channels[0] != enable:
-            self.active_channels[0] = enable
-            print(self.active_channels)
-        else:
-            enable = enable
-
-    def set_active_channel_1(self,enable):
-        if self.active_channels[1] != enable:
-            self.active_channels[1] = enable
-        else:
-            enable = enable
-
-    def set_active_channel_2(self,enable):
-        if self.active_channels[2] != enable:
-            self.active_channels[2] = enable
-        else:
-            enable = enable
-
-    def set_active_channel_3(self,enable):
-        if self.active_channels[3] != enable:
-            self.active_channels[3] = enable
-        else:
-            enable = enable
 
     def get_dc_value(self, obj, chan_name, attr_name):
         try:

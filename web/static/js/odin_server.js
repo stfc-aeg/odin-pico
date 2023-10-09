@@ -51,7 +51,9 @@ active_channels = new Array();
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
-    run_sync();
+//    run_sync();
+    console.log("Updated API version")
+    update_channels();
 });
 
 //gets the most up to date api version
@@ -240,10 +242,10 @@ function plotly_liveview(ranges){
 }
 
 
-function run_sync(){
+/*function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
     setTimeout(run_sync, 150);
-}
+}*/
 
 function get_range_value_mv(key) {
     var range_values = {
@@ -265,7 +267,7 @@ function get_range_value_mv(key) {
     }
 }
 
-function sync_with_adapter(){
+/*function sync_with_adapter(){
     return function(response){
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
         
@@ -442,7 +444,7 @@ function sync_with_adapter(){
                 response.device.settings.channels.c.range, response.device.settings.channels.d.range]
             plotly_liveview(ranges);
     }
-}
+}*/
 
 function disable_id(id,bool){
     document.getElementById(id).disabled = bool;
@@ -552,5 +554,37 @@ function ajax_put(path,key,value){
         url: '/api/' + api_version + '/pico/device/' + path,
         contentType: "application/json",
         data: JSON.stringify(data),
+    });
+}
+
+function update_channels() {
+    update_active_channel();
+    setTimeout(update_channels, 10000)
+}
+
+function update_active_channel(){
+
+    $.getJSON('/api/' + api_version + '/pico/device/live_view/active_channels/', function(response) {
+        var channel_a = response.active_channels.a;
+        console.log(channel_a)
+        var channel_b = response.active_channels.b;
+        console.log(channel_b)
+        var channel_c = response.active_channels.c;
+        var channel_d = response.active_channels.d;
+        $('#active-channel-a').prop('checked', channel_a);
+        $('#active-channel-b').prop('checked', channel_b);
+        $('#active-channel-c').prop('checked', channel_c);
+        $('#active-channel-d').prop('checked', channel_d);
+    });
+}
+
+function change_active_channel(channel) {
+    var enabled = $(('#active-channel-')+channel).prop('checked');
+    console.log("Changing channel: " + channel)
+    $.ajax({
+        type: "PUT",
+        url: '/api/' + api_version + '/pico/device/live_view/active_channels/' + channel,
+        contentType: "application/json",
+        data: JSON.stringify({'enable': enabled})
     });
 }
