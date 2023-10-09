@@ -168,11 +168,11 @@ class PicoController():
         if enable == True:
             if self.active_channels[channel] != enable:
                 self.active_channels[channel] = enable
-        else:
-            enable = enable
+                print("Channel changed to", enable)
         if enable == False:
             if self.active_channels[channel] != enable:
                 self.active_channels[channel] = enable  
+                print("Channel changed to", enable)
 
     def get_dc_value(self, obj, chan_name, attr_name):
         try:
