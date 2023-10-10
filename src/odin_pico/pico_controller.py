@@ -345,7 +345,7 @@ class PicoController():
 
         self.set_update_loop_state(False)
         self.pico.stop_scope()
-        logging.debug("Stoping PicoScope services and closing device")
+        logging.debug("Stopping PicoScope services and closing device")
 
     def get(self, path):
         """Get the parameter tree. """

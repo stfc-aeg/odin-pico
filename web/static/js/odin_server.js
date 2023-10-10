@@ -51,7 +51,7 @@ active_channels = new Array();
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
-//    run_sync();
+    run_sync();
     console.log("Updated API version")
     update_channels();
 });
@@ -174,6 +174,7 @@ function toggle_play() {
 function plotly_liveview(ranges){
     let maxRange = 0;
 
+    activeChannels = [];
     // Loop to determine active channels and find the max range
     for(let i = 0; i < ranges.length; i++) {
         if(ranges[i] !== null) {  // Assuming a null value indicates inactive channel
@@ -242,10 +243,10 @@ function plotly_liveview(ranges){
 }
 
 
-/*function run_sync(){
+function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
-    setTimeout(run_sync, 150);
-}*/
+    setTimeout(run_sync, 10000);
+}
 
 function get_range_value_mv(key) {
     var range_values = {
@@ -267,17 +268,30 @@ function get_range_value_mv(key) {
     }
 }
 
-/*function sync_with_adapter(){
+function sync_with_adapter(){
     return function(response){
+        console.log("focusFlags ", focusFlags)
+        console.log(response.device.settings.mode.resolution)
+        console.log("device settings for c", response.device.settings.channels.c.active)
+        console.log("channel b ", focusFlags['channel-b-active'])
+        console.log(document.getElementById("channel-d-active"))
+        console.log("Checked ", document.getElementById("channel-a-active").checked)
+//        console.log(response.device.settings.channels.a.active)
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
         
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
         
-        if (!focusFlags["channel-a-active"]) {document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)}
+        if (!focusFlags["channel-a-active"]) {
+            document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active);
+//            console.log(response.device.settings.channel.a.active);
+            console.log("Here =====> ", document.getElementById("channel-a-active"))
+        }
+
         if (!focusFlags["channel-b-active"]) {document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)}
         if (!focusFlags["channel-c-active"]) {document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)}
         if (!focusFlags["channel-d-active"]) {document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)}
 
+        console.log(document.getElementById("liveview-a-active"));
         if (!focusFlags["liveview-a-active"]) {document.getElementById("liveview-a-active").checked=(response.device.settings.channels.a.live_view)}
         if (!focusFlags["liveview-b-active"]) {document.getElementById("liveview-b-active").checked=(response.device.settings.channels.b.live_view)}
         if (!focusFlags["liveview-c-active"]) {document.getElementById("liveview-c-active").checked=(response.device.settings.channels.c.live_view)}
@@ -444,7 +458,7 @@ function get_range_value_mv(key) {
                 response.device.settings.channels.c.range, response.device.settings.channels.d.range]
             plotly_liveview(ranges);
     }
-}*/
+}
 
 function disable_id(id,bool){
     document.getElementById(id).disabled = bool;
