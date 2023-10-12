@@ -1,13 +1,10 @@
 import logging
 import h5py
 import numpy as np 
-from scipy.signal import find_peaks
-import matplotlib.pyplot as plt
-import math
 
-from odin_pico.pico_config import DeviceConfig
 from odin_pico.buffer_manager import BufferManager
-from odin_pico.pico_status import Status
+from odin_pico.DataClasses.device_config import DeviceConfig
+from odin_pico.DataClasses.device_status import DeviceStatus
 
 class PicoAnalysis():
     """
@@ -16,7 +13,7 @@ class PicoAnalysis():
         This class implements analysis methods that manipulate the data captured by
         the picoscope.
     """
-    def __init__(self, dev_conf=DeviceConfig(None), buffer_manager=BufferManager(), pico_status=Status()):
+    def __init__(self, dev_conf=DeviceConfig(), buffer_manager=BufferManager(), pico_status=DeviceStatus()):
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
         self.pico_status = pico_status
@@ -30,7 +27,7 @@ class PicoAnalysis():
         """
                 
         self.buffer_manager.lv_pha.clear()
-        self.pico_status.flag["system_state"] = "Connected to Picoscope, calculating PHA"
+        self.pico_status.flags.system_state = "Connected to Picoscope, calculating PHA"
 
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
             peak_values = []
@@ -41,6 +38,6 @@ class PicoAnalysis():
                 peak_pos = np.argmax(data)
                 peak_values.append(data[peak_pos])
             # Use np.histogram to calculate the counts for each bin, based on the peak_values data
-            counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha["num_bins"], range=(self.dev_conf.pha["lower_range"],self.dev_conf.pha["upper_range"]))
+            counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range,self.dev_conf.pha.upper_range))
             # Combine the bin_edge's and counts into one np.array
             self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))

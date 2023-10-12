@@ -1,87 +1,61 @@
 from dataclasses import dataclass, field
-from typing import List
-import ctypes
-from odin_pico.pico_util import PicoUtil
+from typing import Dict
 
 @dataclass
-class channel:
+class ChannelConfig:
     channel_id: int
     name: str
     active: bool = False
     verified: bool = False
-    coupling: int = 0 
+    coupling: int = 0
     range: int = 0
     offset: float = 0.0
 
     def reset(self):
         self.active = False
         self.verified = False
-        self.coupling = 0 
+        self.coupling = 0
         self.range = 0
         self.offset = 0.0
 
-
-
+    def default_channel_configs():
+        return {name: ChannelConfig(id, name) for (id, name) in enumerate(['A', 'B', 'C', 'D'])}
 
 @dataclass
 class DeviceConfig:
-    num_channels: int = 0
+    channel_config: Dict[str, ChannelConfig] = field(default_factory=ChannelConfig.default_channel_configs)
 
+    @property
+    def num_channels(self):
+        return len(self.channel_config)
 
-util = PicoUtil()
+    @property
+    def channel_names(self):
 
-
-config = DeviceConfig()
-
-channels = {}
-
-i = 0
-for name in util.channel_names:
-    channels[name] = channel(i,name)
-    i += 1
-    
-    #chan = getattr(config,name)
-    #config.name = channel(name,i)
-    #setattr(config,name,channel(name,i))
-    #setattr(chan,f'channel_{name}',i)
-## config = DeviceConfig(dict of created channel objects?)
+        return list(self.channel_config.keys())
 
 
 
-##########################################
-# Testing overloading dataclass instance 
-
-test_dict = {
-    "pre_trig_samples": 0,
-    "post_trig_samples": 0,
-    "n_captures": 0
-}
-
-config = DeviceConfig()
-
-print(config)
-#config.test = "Added after creation"
-setattr(config,'test',"Testing")
-print(config)
 
 
 
-    
 
 
-######################################
-# Testing - creating a data class with arguments
-# - giving it methods, ie to reset values
-# test = DeviceConfig(0,"a")
-# print(test)
 
-# test.coupling = 9
-# test.range = 5
+def main():
 
-# print(test)
+    device = DeviceConfig()
 
-# #test = DCTest(test.channel_id,test.name)
-# test.reset()
+    #print(f"Device config has {device.num_channels} channels with names: {', '.join(device.channel_names)}")
 
-# print(test)
-######################################
+    #for channel in device.channel_names:
+        #print(device.channel_config[channel])
+
+    device.channel_config['A'].offset = 1.0
+
+    #print(device.channel_config['A'])
+
+    print(device)
+
+if __name__ == '__main__':
+    main()

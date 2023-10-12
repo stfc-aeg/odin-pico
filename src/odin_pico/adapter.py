@@ -8,8 +8,7 @@ from tornado.escape import json_decode
 from odin.adapters.adapter import ApiAdapter, ApiAdapterResponse, request_types, response_types
 from odin.adapters.parameter_tree import ParameterTreeError
 
-from odin_pico.pico_controller import PicoController 
-from odin_pico.pico_controller import PicoControllerError
+from odin_pico.pico_controller import PicoController, PicoControllerError
 
 class PicoAdapter(ApiAdapter):
 
