@@ -1,5 +1,6 @@
 import ctypes
 import numpy as np
+import logging
 
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.pico_util import PicoUtil
@@ -18,7 +19,13 @@ class BufferManager():
         self.trigger_times = []
         
         self.lv_active_channels = []
-        self.lv_channel_arrays = []
+        self.lv_channel_array_a = []
+        self.lv_channel_array_b = []
+        self.lv_channel_array_c = []
+        self.lv_channel_array_d = []
+        self.lv_channel_arrays = [self.lv_channel_array_a, self.lv_channel_array_b,
+                                  self.lv_channel_array_c,self.lv_channel_array_d]
+
         self.lv_pha = []
 
     def generate_arrays(self, *args):
@@ -67,6 +74,7 @@ class BufferManager():
             Removes previously created buffers from the buffer_manager.
         """
         arrays = [self.active_channels, self.channel_arrays, self.pha_arrays, self.trigger_times,
-                  self.lv_active_channels, self.lv_channel_arrays] #, self.lv_pha]
+                  self.lv_active_channels, self.lv_channel_arrays, self.lv_channel_array_a,
+                  self.lv_channel_array_b, self.lv_channel_array_c, self.lv_channel_array_d] #, self.lv_pha]
         for array in arrays:
             array.clear()

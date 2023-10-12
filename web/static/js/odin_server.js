@@ -46,14 +46,11 @@ data_array = new Int16Array()
 counts = new Int16Array()
 bin_edges = new Int16Array()
 play_button = true;
-active_channels = new Array();
 
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
-    console.log("Updated API version")
-    update_channels();
 });
 
 //gets the most up to date api version
@@ -127,125 +124,53 @@ function toggle_play() {
       button.innerHTML = '<span class="material-icons">play_arrow</span>';
     }
   }
-// OLD PLOTING FUNCTION
-// function plotly_liveview(ranges){
-//     channel = parseInt(document.getElementById('lv-source').value)
-//     let range = get_range_value_mv(ranges[channel])
-
-//     var tickVals = [];
-//     var tickText = [];
-//     var stepSize = 2 * range / 8;
-
-//     for (var i = -range; i <= range; i += stepSize) {
-//         tickVals.push(i);
-//         tickText.push(i.toFixed(2)); 
-//     }
-
-//     if (play_button){
-//         scope_lv = document.getElementById('scope_lv');
-//         Plotly.newPlot( scope_lv, [{
-//             x: x = data_array.map((value, index) => index),                
-//             y: data_array }], {
-//                 title: 'Live view of PicoScope traces',
-//                 margin: { t: 40, b: 40 },
-//                 xaxis: { title: 'Sample Interval' },
-//                 yaxis: { title: 'Voltage (mV)',
-//                         range: [-range, range],
-//                         tickvals: tickVals,
-//                         ticktext: tickText },
-//                 height: 300,
-//                 autosize: true                    
-//                 });
-
-//         scope_pha = document.getElementById('scope_pha');
-//         Plotly.newPlot( scope_pha, [{
-//             x: bin_edges,
-//             y: counts }], {
-//                 title: 'Last PHA from recorded traces',
-//                 margin: { t: 40, b: 40 },
-//                 yaxis: { title: 'Counts'},
-//                 xaxis: { title: 'Energy level (ADC_Counts)'} });
-//     }
-//     else {
-//         return;
-//     }
-// }
 
 function plotly_liveview(ranges){
-    let maxRange = 0;
+    channel = parseInt(document.getElementById('lv-source').value)
+    let range = get_range_value_mv(ranges[channel])
 
-    activeChannels = [];
-    // Loop to determine active channels and find the max range
-    for(let i = 0; i < ranges.length; i++) {
-        if(ranges[i] !== null) {  // Assuming a null value indicates inactive channel
-            activeChannels.push(i);
-            maxRange = Math.max(maxRange, get_range_value_mv(ranges[i]));
-        }
-    }
-
-    if (activeChannels.length === 0) {
-        // No active channels
-        return;
-    }
-
-    // Calculating the tick values for y-axis
     var tickVals = [];
     var tickText = [];
-    var stepSize = 2 * maxRange / 8;
+    var stepSize = 2 * range / 8;
 
-    for (var i = -maxRange; i <= maxRange; i += stepSize) {
+    for (var i = -range; i <= range; i += stepSize) {
         tickVals.push(i);
         tickText.push(i.toFixed(2)); 
     }
 
-    // Check if the play_button is true. Assuming it's declared somewhere else in your code.
     if (play_button){
-        let traces = [];
-
-        // Create a trace for each active channel
-        for(let i = 0; i < activeChannels.length; i++) {
-            traces.push({
-                x: liveview_data[activeChannels[i]].map((value, index) => index),
-                y: liveview_data[activeChannels[i]],
-                name: `Channel ${activeChannels[i]}`
-            });
-        }
-
-        // Plotting the scope
         scope_lv = document.getElementById('scope_lv');
-        Plotly.newPlot(scope_lv, traces, {
-            title: 'Live view of PicoScope traces',
-            margin: { t: 40, b: 40 },
-            xaxis: { title: 'Sample Interval' },
-            yaxis: { title: 'Voltage (mV)',
-                    range: [-maxRange, maxRange],
-                    tickvals: tickVals,
-                    ticktext: tickText },
-            height: 300,
-            autosize: true                    
-        });
+        Plotly.newPlot( scope_lv, [{
+            x: x = data_array.map((value, index) => index),                
+            y: data_array }], {
+                title: 'Live view of PicoScope traces',
+                margin: { t: 40, b: 40 },
+                xaxis: { title: 'Sample Interval' },
+                yaxis: { title: 'Voltage (mV)',
+                        range: [-range, range],
+                        tickvals: tickVals,
+                        ticktext: tickText },
+                height: 300,
+                autosize: true                    
+                });
 
-        // Additional plot for scope_pha
         scope_pha = document.getElementById('scope_pha');
-        Plotly.newPlot(scope_pha, [{
-            x: bin_edges,  // Assuming bin_edges is declared somewhere else
-            y: counts  // Assuming counts is declared somewhere else
-        }], {
-            title: 'Last PHA from recorded traces',
-            margin: { t: 40, b: 40 },
-            yaxis: { title: 'Counts'},
-            xaxis: { title: 'Energy level (ADC_Counts)'} 
-        });
+        Plotly.newPlot( scope_pha, [{
+            x: bin_edges,
+            y: counts }], {
+                title: 'Last PHA from recorded traces',
+                margin: { t: 40, b: 40 },
+                yaxis: { title: 'Counts'},
+                xaxis: { title: 'Energy level (ADC_Counts)'} });
     }
     else {
         return;
     }
 }
 
-
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
-    setTimeout(run_sync, 10000);
+    setTimeout(run_sync, 150);
 }
 
 function get_range_value_mv(key) {
@@ -270,32 +195,14 @@ function get_range_value_mv(key) {
 
 function sync_with_adapter(){
     return function(response){
-        console.log("focusFlags ", focusFlags)
-        console.log(response.device.settings.mode.resolution)
-        console.log("device settings for c", response.device.settings.channels.c.active)
-        console.log("channel b ", focusFlags['channel-b-active'])
-        console.log(document.getElementById("channel-d-active"))
-        console.log("Checked ", document.getElementById("channel-a-active").checked)
-//        console.log(response.device.settings.channels.a.active)
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
         
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
         
-        if (!focusFlags["channel-a-active"]) {
-            document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active);
-//            console.log(response.device.settings.channel.a.active);
-            console.log("Here =====> ", document.getElementById("channel-a-active"))
-        }
-
+        if (!focusFlags["channel-a-active"]) {document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)}
         if (!focusFlags["channel-b-active"]) {document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)}
         if (!focusFlags["channel-c-active"]) {document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)}
         if (!focusFlags["channel-d-active"]) {document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)}
-
-        console.log(document.getElementById("liveview-a-active"));
-        if (!focusFlags["liveview-a-active"]) {document.getElementById("liveview-a-active").checked=(response.device.settings.channels.a.live_view)}
-        if (!focusFlags["liveview-b-active"]) {document.getElementById("liveview-b-active").checked=(response.device.settings.channels.b.live_view)}
-        if (!focusFlags["liveview-c-active"]) {document.getElementById("liveview-c-active").checked=(response.device.settings.channels.c.live_view)}
-        if (!focusFlags["liveview-d-active"]) {document.getElementById("liveview-d-active").checked=(response.device.settings.channels.d.live_view)}
         
         if (!focusFlags["channel-a-coupl"]) {$("#channel-a-coupl").val(response.device.settings.channels.a.coupling)}
         if (!focusFlags["channel-b-coupl"]) {$("#channel-b-coupl").val(response.device.settings.channels.b.coupling)}
@@ -338,7 +245,6 @@ function sync_with_adapter(){
         try{
             if ((response.device.live_view.lv_data).length != 0) {
                 data_array = response.device.live_view.lv_data
-                console.log("liveview data:", data_array)
             } else {
                 console.log("\n\nEmpty LV Array not updating graph")
             }
@@ -510,7 +416,6 @@ function commit_float_adapter(id,path,key){
 
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
-    
     ajax_put(path,key,checked)
 }
 
@@ -568,37 +473,5 @@ function ajax_put(path,key,value){
         url: '/api/' + api_version + '/pico/device/' + path,
         contentType: "application/json",
         data: JSON.stringify(data),
-    });
-}
-
-function update_channels() {
-    update_active_channel();
-    setTimeout(update_channels, 10000)
-}
-
-function update_active_channel(){
-
-    $.getJSON('/api/' + api_version + '/pico/device/live_view/active_channels/', function(response) {
-        var channel_a = response.active_channels.a;
-        console.log(channel_a)
-        var channel_b = response.active_channels.b;
-        console.log(channel_b)
-        var channel_c = response.active_channels.c;
-        var channel_d = response.active_channels.d;
-        $('#active-channel-a').prop('checked', channel_a);
-        $('#active-channel-b').prop('checked', channel_b);
-        $('#active-channel-c').prop('checked', channel_c);
-        $('#active-channel-d').prop('checked', channel_d);
-    });
-}
-
-function change_active_channel(channel) {
-    var enabled = $(('#active-channel-')+channel).prop('checked');
-    console.log("Changing channel: " + channel)
-    $.ajax({
-        type: "PUT",
-        url: '/api/' + api_version + '/pico/device/live_view/active_channels/' + channel,
-        contentType: "application/json",
-        data: JSON.stringify({'enable': enabled})
     });
 }

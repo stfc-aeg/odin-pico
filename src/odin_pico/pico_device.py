@@ -92,10 +92,10 @@ class PicoDevice():
                 max_v = ctypes.c_float(0)
                 min_v = ctypes.c_float(0)
                 ps.ps5000aGetAnalogueOffset(self.dev_conf.mode.handle,chan.range, chan.coupling, ctypes.byref(max_v), ctypes.byref(min_v))
-                logging.debug(f'Max offset:{max_v.value} Min offset:{min_v.value}')
+#                logging.debug(f'Max offset:{max_v.value} Min offset:{min_v.value}')
                 offset = self.util.calc_offset(chan.range, chan.offset)
 
-                logging.debug(f'calculated offset value: {offset} based on percentage of {chan.offset}')
+#                logging.debug(f'calculated offset value: {offset} based on percentage of {chan.offset}')
                 ps.ps5000aSetChannel(self.dev_conf.mode.handle, chan.channel_id, int(chan.active), chan.coupling, chan.range, offset)
 
     def run_setup(self, *args):

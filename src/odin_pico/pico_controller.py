@@ -106,19 +106,26 @@ class PicoController():
             'pha': pico_pha
         })
 
+        # active_channels = ParameterTree({
+        #     'a': (lambda: self.lv_active_channels[0], self.set_active_channel_0),
+        #     'b': (lambda: self.lv_active_channels[1], self.set_active_channel_1),
+        #     'c': (lambda: self.lv_active_channels[2], self.set_active_channel_2),
+        #     'd': (lambda: self.lv_active_channels[3], self.set_active_channel_3)
+        # })
+
         active_channels = ParameterTree({
-            'a': (lambda: self.lv_active_channels[0], self.set_active_channel_0),
-            'b': (lambda: self.lv_active_channels[1], self.set_active_channel_1),
-            'c': (lambda: self.lv_active_channels[2], self.set_active_channel_2),
-            'd': (lambda: self.lv_active_channels[3], self.set_active_channel_3)
+            'a': (lambda: self.lv_active_channels[0], partial(self.set_lv_active_channel, 0)),
+            'b': (lambda: self.lv_active_channels[1], partial(self.set_lv_active_channel, 1)),
+            'c': (lambda: self.lv_active_channels[2], partial(self.set_lv_active_channel, 2)),
+            'd': (lambda: self.lv_active_channels[3], partial(self.set_lv_active_channel, 3)),
         })
 
-        lv_data_tree = ParameterTree({
-            'lv_data_a': (self.lv_data, None),
-            'lv_data_b': (self.lv_data, None),
-            'lv_data_c': (self.lv_data, None),
-            'lv_data_d': (self.lv_data, None)
-        })
+        # lv_data_tree = ParameterTree({
+        #     'lv_data_a': (self.lv_data, None),
+        #     'lv_data_b': (self.lv_data, None),
+        #     'lv_data_c': (self.lv_data, None),
+        #     'lv_data_d': (self.lv_data, None)
+        # })
 
         live_view = ParameterTree({
             'active_channels': active_channels,
@@ -126,7 +133,7 @@ class PicoController():
             'pha_data': (self.pha_data, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
-            'lv_data_tree': lv_data_tree
+            'lv_data': (self.lv_data, None),
         })
 
         pico_commands = ParameterTree({
@@ -158,21 +165,22 @@ class PicoController():
         print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
 
 
-    #Series of functions allowing changing of activating channels
+    # Series of functions allowing changing of activating channels
+    # Replaced by a partial function
 
-    def set_active_channel_0(self, enable):
-        self.set_active_channels(enable, 0)
+    # def set_active_channel_0(self, enable):
+    #     self.set_active_channels(enable, 0)
 
-    def set_active_channel_1(self, enable):
-        self.set_active_channels(enable, 1)
+    # def set_active_channel_1(self, enable):
+    #     self.set_active_channels(enable, 1)
 
-    def set_active_channel_2(self, enable):
-        self.set_active_channels(enable, 2)
+    # def set_active_channel_2(self, enable):
+    #     self.set_active_channels(enable, 2)
 
-    def set_active_channel_3(self, enable):
-        self.set_active_channels(enable, 3)
+    # def set_active_channel_3(self, enable):
+    #     self.set_active_channels(enable, 3)
 
-    def set_active_channels(self, enable, channel):
+    def set_lv_active_channel(self, channel, enable):
         if enable == True:
             if self.lv_active_channels[channel] != enable:
                 self.lv_active_channels[channel] = enable
@@ -193,8 +201,17 @@ class PicoController():
         setattr(obj, attr_name, value)
     
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
+        logging.debug("Start of change channel debug")
+        logging.debug(obj)
+        logging.debug(chan_name)
+        logging.debug(attr_name)
+        logging.debug(value)
+        logging.debug("End of change channel debug")
         try:
             channel_dc = getattr(obj, chan_name)
+            logging.debug("Look here (start)")
+            logging.debug(channel_dc)
+            logging.debug("Look here (end)")
             setattr(channel_dc, attr_name, value)
         except AttributeError:
             pass
@@ -317,18 +334,21 @@ class PicoController():
         array = None
 
         for c, b in zip(self.buffer_manager.lv_active_channels, self.buffer_manager.lv_channel_arrays):
-            logging.debug("Start of debugging messages")
-            logging.debug(c)
-            logging.debug(self.dev_conf.preview_channel)
-#            logging.debug(b)
-            logging.debug("End of debugging messages")
-            if (c == self.dev_conf.preview_channel):
-                array = b[:10]
+            if c:
+                array = (b[lambda: self.dev_conf.capture.post_trig_samples] + " channel " + b)
         if array is None:
             return []
         else:
             return array
 
+#            logging.debug("lv_data, channel = %s lv_active = %s", c, self.lv_active_channels[c])
+#            if (c == self.dev_conf.preview_channel):
+#                array = b[:10]
+#        if array is None:
+#            return []
+#        else:
+#            return array
+#
     def pha_data(self):
         """ Returns array of the last calculated PHA, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
 
