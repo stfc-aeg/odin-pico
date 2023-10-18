@@ -16,6 +16,8 @@ from odin_pico.analysis import PicoAnalysis
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.DataClasses.device_status import DeviceStatus
 
+#from picosdk.functions import adc2mv
+
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
@@ -40,6 +42,8 @@ class PicoController():
         self.analysis = PicoAnalysis(self.dev_conf, self.buffer_manager, self.pico_status)
         self.pico = PicoDevice(self.dev_conf, self.pico_status, self.buffer_manager)
         
+        self.buffer_manager.lv_active_channels = [False] * 4
+
         # ParameterTree's to represent different parts of the system
         adapter_status = ParameterTree({
             'settings_verified': (lambda: self.pico_status.flags.verify_all, None),
@@ -120,12 +124,12 @@ class PicoController():
             'd': (lambda: self.lv_active_channels[3], partial(self.set_lv_active_channel, 3)),
         })
 
-        # lv_data_tree = ParameterTree({
-        #     'lv_data_a': (self.lv_data, None),
-        #     'lv_data_b': (self.lv_data, None),
-        #     'lv_data_c': (self.lv_data, None),
-        #     'lv_data_d': (self.lv_data, None)
-        # })
+        lv_data_tree = ParameterTree({
+             'lv_data_a': (self.lv_data_0, None),
+             'lv_data_b': (self.lv_data(1), None),
+             'lv_data_c': (self.lv_data(2), None),
+             'lv_data_d': (self.lv_data(3), None),
+        })
 
         live_view = ParameterTree({
             'active_channels': active_channels,
@@ -133,7 +137,7 @@ class PicoController():
             'pha_data': (self.pha_data, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
-            'lv_data': (self.lv_data, None),
+            'lv_data_tree': lv_data_tree,
         })
 
         pico_commands = ParameterTree({
@@ -182,12 +186,12 @@ class PicoController():
 
     def set_lv_active_channel(self, channel, enable):
         if enable == True:
-            if self.lv_active_channels[channel] != enable:
-                self.lv_active_channels[channel] = enable
+            if self.buffer_manager.lv_active_channels[channel] != enable:
+                self.buffer_manager.lv_active_channels[channel] = enable
                 print("Channel changed to", enable)
         if enable == False:
-            if self.lv_active_channels[channel] != enable:
-                self.lv_active_channels[channel] = enable  
+            if self.buffer_manager.lv_active_channels[channel] != enable:
+                self.buffer_manager.lv_active_channels[channel] = enable  
                 print("Channel changed to", enable)
 
     def get_dc_value(self, obj, chan_name, attr_name):
@@ -201,17 +205,21 @@ class PicoController():
         setattr(obj, attr_name, value)
     
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
-        logging.debug("Start of change channel debug")
-        logging.debug(obj)
-        logging.debug(chan_name)
-        logging.debug(attr_name)
-        logging.debug(value)
-        logging.debug("End of change channel debug")
+        print("The value is.............. ", value)
+
+        if chan_name == "channel_a":
+            self.buffer_manager.lv_active_channels[0] = value
+        elif chan_name == "channel_b":
+            self.buffer_manager.lv_active_channels[1] = value
+        elif chan_name == "channel_c":
+            self.buffer_manager.lv_active_channels[2] = value
+        else:
+            self.buffer_manager.lv_active_channels[3] = value
+
+        print(self.buffer_manager.lv_active_channels)
+
         try:
             channel_dc = getattr(obj, chan_name)
-            logging.debug("Look here (start)")
-            logging.debug(channel_dc)
-            logging.debug("Look here (end)")
             setattr(channel_dc, attr_name, value)
         except AttributeError:
             pass
@@ -321,8 +329,20 @@ class PicoController():
             self.pico.assign_pico_memory()
             self.pico.run_block()
             self.buffer_manager.save_lv_data()
-      
-    def lv_data(self):
+
+#    def get_data(self):
+#        lv_channel_data = []
+#        lv_channel_data.append(adc2mv(self.))
+
+    def lv_data_0(self):
+        print("Number 0")
+        self.buffer_manager.save_lv_data()
+        array = []
+        if self.buffer_manager.lv_active_channels[0] == True:
+            array = self.buffer_manager.lv_channel_arrays[0]
+        return array
+
+    def lv_data(self, channel):
         """Returns array of the last captured trace, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
 
         #return self.buffer_manager.lv_channel_arrays
@@ -330,16 +350,35 @@ class PicoController():
 #        print(self.buffer_manager.lv_active_channels)
 #        print(self.buffer_manager.lv_channel_arrays)
 #        print(zip(self.buffer_manager.lv_active_channels, self.buffer_manager.lv_channel_arrays))
- 
-        array = None
 
-        for c, b in zip(self.buffer_manager.lv_active_channels, self.buffer_manager.lv_channel_arrays):
-            if c:
-                array = (b[lambda: self.dev_conf.capture.post_trig_samples] + " channel " + b)
-        if array is None:
-            return []
+        print("This function has been called")
+        print(channel)
+        array = []
+        samples = int(self.dev_conf.capture.post_trig_samples)
+        print(samples)
+        samples = samples - 1
+        samples = int(round(samples,0))
+        print(samples)
+
+        if self.buffer_manager.lv_active_channels[channel] == True:
+            print("Collecting data")
+            data = self.buffer_manager.lv_channel_arrays[channel]
+            array = data[samples]
         else:
-            return array
+            print("Nope")
+            array = []
+        return array
+
+
+#        for c, b in zip(self.buffer_manager.lv_active_channels, self.buffer_manager.lv_channel_arrays):
+#            if c:
+#                print(len(b))
+#                print(b[samples])
+#                array = (b[0])
+#        if array is None:
+#            return []
+#        else:
+#            return array
 
 #            logging.debug("lv_data, channel = %s lv_active = %s", c, self.lv_active_channels[c])
 #            if (c == self.dev_conf.preview_channel):
