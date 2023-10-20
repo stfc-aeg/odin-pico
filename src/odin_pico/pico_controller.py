@@ -16,7 +16,7 @@ from odin_pico.analysis import PicoAnalysis
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.DataClasses.device_status import DeviceStatus
 
-#from picosdk.functions import adc2mv
+#from picosdk.functions import adc2mV
 
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
@@ -126,9 +126,9 @@ class PicoController():
 
         lv_data_tree = ParameterTree({
              'lv_data_a': (self.lv_data_0, None),
-             'lv_data_b': (self.lv_data(1), None),
-             'lv_data_c': (self.lv_data(2), None),
-             'lv_data_d': (self.lv_data(3), None),
+             'lv_data_b': (self.lv_data_1, None),
+             'lv_data_c': (self.lv_data_2, None),
+             'lv_data_d': (self.lv_data_3, None),
         })
 
         live_view = ParameterTree({
@@ -167,6 +167,11 @@ class PicoController():
         # Set initial state of the verification system
         self.verify_settings()
         print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
+
+#        names = ["channel_a", "channel_b", "channel_c", "channel_d"]
+#        for name in names:
+#            if (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'active') == True):
+#                self.start_data_checks(name)
 
 
     # Series of functions allowing changing of activating channels
@@ -215,14 +220,18 @@ class PicoController():
             self.buffer_manager.lv_active_channels[2] = value
         else:
             self.buffer_manager.lv_active_channels[3] = value
-
-        print(self.buffer_manager.lv_active_channels)
+#       print(self.buffer_manager.lv_active_channels)
 
         try:
             channel_dc = getattr(obj, chan_name)
             setattr(channel_dc, attr_name, value)
         except AttributeError:
             pass
+
+#        if chan_name.active == True:
+#            self.start_data_checks(channel_dc)
+#        else:
+#            self.stop_data_checks(channel_dc)
    
     def verify_settings(self):
         """Verifies all picoscope settings, sets status of individual groups of settings"""
@@ -334,13 +343,26 @@ class PicoController():
 #        lv_channel_data = []
 #        lv_channel_data.append(adc2mv(self.))
 
+#    def lv_data_0(self):
+#        print("Number 0")
+#        self.buffer_manager.save_lv_data()
+#        array = []
+#        if self.buffer_manager.lv_active_channels[0] == True:
+#            array = self.buffer_manager.lv_channel_arrays[0]
+#        return array
+
     def lv_data_0(self):
-        print("Number 0")
-        self.buffer_manager.save_lv_data()
-        array = []
-        if self.buffer_manager.lv_active_channels[0] == True:
-            array = self.buffer_manager.lv_channel_arrays[0]
-        return array
+        return (self.lv_data(0))
+    
+    def lv_data_1(self):
+        return(self.lv_data(1))
+
+    def lv_data_2(self):
+        return(self.lv_data(2))
+
+    def lv_data_3(self):
+        return(self.lv_data(3))
+        
 
     def lv_data(self, channel):
         """Returns array of the last captured trace, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
@@ -351,22 +373,21 @@ class PicoController():
 #        print(self.buffer_manager.lv_channel_arrays)
 #        print(zip(self.buffer_manager.lv_active_channels, self.buffer_manager.lv_channel_arrays))
 
-        print("This function has been called")
-        print(channel)
+#        print("This function has been called")
         array = []
-        samples = int(self.dev_conf.capture.post_trig_samples)
-        print(samples)
-        samples = samples - 1
-        samples = int(round(samples,0))
-        print(samples)
+#        samples = int(self.dev_conf.capture.post_trig_samples)
+#        print(samples)
+#        samples = samples - 1
+#        samples = int(round(samples,0))
+#        print(samples)
 
         if self.buffer_manager.lv_active_channels[channel] == True:
             print("Collecting data")
-            data = self.buffer_manager.lv_channel_arrays[channel]
-            array = data[samples]
-        else:
-            print("Nope")
-            array = []
+            data = self.buffer_manager.lv_channel_arrays[(2*channel)]
+            array = data
+#        else:
+#            print("Nope")
+#            array = []
         return array
 
 

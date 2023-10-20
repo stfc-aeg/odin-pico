@@ -44,7 +44,7 @@ class PicoAdapter(ApiAdapter):
 
         try:
             data = json_decode(request.body)
-            logging.debug(data)
+#            logging.debug(data)
             self.pico_controller.set(path, data)
             response = self.pico_controller.get(path)
             status_code = 200
@@ -55,7 +55,7 @@ class PicoAdapter(ApiAdapter):
             response = {'error': 'Failed to decode PUT request body: {}'.format(str(e))}
             status_code = 400
 
-        logging.debug(response)
+#        logging.debug(response)
 
         return ApiAdapterResponse(response, content_type=content_type, 
                                     status_code=status_code)
