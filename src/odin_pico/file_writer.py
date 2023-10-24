@@ -61,7 +61,7 @@ class FileWriter():
                 for key, value in metadata.items():
                     metadata_group.attrs[key] = value
             
-                for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
+                for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
                     f.create_dataset(('adc_counts_'+str(c)), data = b)
                     logging.debug(f'Creating dataset: adc_counts_{str(c)} with data : {b}')
                 for c, p in zip(self.buffer_manager.active_channels, self.buffer_manager.pha_arrays):
@@ -115,7 +115,7 @@ class FileWriter():
     #             for key, value in metadata.items():
     #                 metadata_group.attrs[key] = value
             
-    #             for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
+    #             for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
     #                 f.create_dataset(('adc_counts_'+str(c)), data = b)
     #                 logging.debug(f'Creating dataset: adc_counts_{str(c)} with data : {b}')
     #     except Exception as e: 

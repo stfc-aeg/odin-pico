@@ -29,7 +29,7 @@ class PicoAnalysis():
         self.buffer_manager.lv_pha.clear()
         self.pico_status.flags.system_state = "Connected to Picoscope, calculating PHA"
 
-        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
+        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
             peak_values = []
             # Iterate through the channel array to expose each capture as b[i]
             for i in range(len(b)):

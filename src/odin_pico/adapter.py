@@ -64,7 +64,7 @@ class PicoAdapter(ApiAdapter):
         response = 'PicoAdapter: DELETE on path {}'.format(path)
         status_code =200
 
-        logging.debug(response)
+#        logging.debug(response)
 
         return ApiAdapterResponse(response, status_code=status_code)
 

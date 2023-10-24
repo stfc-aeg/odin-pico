@@ -67,7 +67,7 @@ class PicoDevice():
             ps.ps5000aSetNoOfCaptures(self.dev_conf.mode.handle, n_captures)
             samples=(self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples)
 
-            for c,b in zip(self.buffer_manager.active_channels, self.buffer_manager.channel_arrays):
+            for c,b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
                 for i in range(self.dev_conf.capture_run.caps_comp, self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run):
                     buff = b[i]
                     ps.ps5000aSetDataBuffer(self.dev_conf.mode.handle, c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), samples, i-self.dev_conf.capture_run.caps_comp, 0)
