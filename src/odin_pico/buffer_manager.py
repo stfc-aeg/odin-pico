@@ -47,7 +47,6 @@ class BufferManager():
             if (self.channels[chan].live_view is True):
                 self.lv_channels_active.append(chan)
         
-        ### There needs to be something here to not assign if value is [(0 * samples)]
         samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
         for i in range(len(self.lv_active_channels)):
             if self.lv_active_channels[i] == True:
@@ -66,15 +65,14 @@ class BufferManager():
             self.lv_pha.append(b)
 
         for item in self.lv_active_channels:
-            if self.lv_active_channels[item] == True:
-                self.chan_range[item] = self.channels[item].range
+            self.chan_range[item] = self.channels[item].range
 
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
-            ### Need to remove if statement once it is replaced
-            if str(sum(b)) != "[0 0 0 0 0]":
+            if all(adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)) == 0:
+                self.lv_channel_arrays[(2 * c)] = 69
+            else:
                 self.lv_channel_arrays[(2 * c)] = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
-                self.lv_channel_arrays[((2 * c)+1)] = c
-    #            if (adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc) != 0):
+            self.lv_channel_arrays[((2 * c)+1)] = c
 
 
     def clear_arrays(self):

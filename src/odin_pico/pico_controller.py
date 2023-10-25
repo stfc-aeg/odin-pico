@@ -16,8 +16,6 @@ from odin_pico.analysis import PicoAnalysis
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.DataClasses.device_status import DeviceStatus
 
-#from picosdk.functions import adc2mV
-
 class PicoController():
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
@@ -106,13 +104,6 @@ class PicoController():
             'pha': pico_pha
         })
 
-        # active_channels = ParameterTree({
-        #     'a': (lambda: self.buffer_manager.lv_active_channels[0], partial(self.set_lv_active_channel, 0)),
-        #     'b': (lambda: self.buffer_manager.lv_active_channels[1], partial(self.set_lv_active_channel, 1)),
-        #     'c': (lambda: self.buffer_manager.lv_active_channels[2], partial(self.set_lv_active_channel, 2)),
-        #     'd': (lambda: self.buffer_manager.lv_active_channels[3], partial(self.set_lv_active_channel, 3)),
-        # })
-
         lv_data_tree = ParameterTree({
              'lv_data_a': (partial(self.lv_data, 0), None),
              'lv_data_b': (partial(self.lv_data, 1), None),
@@ -156,15 +147,6 @@ class PicoController():
         # Set initial state of the verification system
         self.verify_settings()
         print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
-
-    # def set_lv_active_channel(self, channel, enable):
-    #     print("In set_lv_active_channel", channel, enable)
-    #     if self.buffer_manager.lv_active_channels[channel] != enable:
-    #         self.buffer_manager.lv_active_channels[channel] = enable
-    #         print("Channel changed to", enable)
-    #     if self.buffer_manager.lv_active_channels[channel] != enable:
-    #         self.buffer_manager.lv_active_channels[channel] = enable  
-    #         print("Channel changed to", enable)
 
     def get_dc_value(self, obj, chan_name, attr_name):
         try:
@@ -314,32 +296,9 @@ class PicoController():
 
         data = []
 
-#        if (partial(self.get_dc_value, self.dev_conf, f'channel_{channel}', 'live_view')) == True:
-#            data = self.buffer_manager.lv_channel_arrays[(2*channel)]
-
         if self.buffer_manager.lv_active_channels[channel] == True:
             data = self.buffer_manager.lv_channel_arrays[(2*channel)]
-        return data
-
-#        for c, b in zip(self.buffer_manager.lv_active_channels, self.buffer_manager.lv_channel_arrays):
-#            if c:
-#                print(len(b))
-#                print(b[samples])
-#                array = (b[0])
-#        if array is None:
-#            return []
-#        else:
-#            return array
-
-#            logging.debug("lv_data, channel = %s lv_active = %s", c, self.lv_active_channels[c])
-#            if (c == self.dev_conf.preview_channel):
-#                array = b[:10]
-#        if array is None:
-#            return []
-#        else:
-#            return array
-#
-      
+        return data     
 
     def pha_data(self):
         """ Returns array of the last calculated PHA, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
