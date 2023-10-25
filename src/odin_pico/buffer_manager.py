@@ -24,6 +24,7 @@ class BufferManager():
         self.lv_channel_arrays = [0] * 8
         self.chan_range = [0] * 4
         self.lv_pha = []
+        self.lv_channels_active = []
 
     def generate_arrays(self, *args):
         """
@@ -41,9 +42,13 @@ class BufferManager():
         for chan in self.channels:
             if (chan.active is True):
                 self.active_channels.append(chan.channel_id)
+
+        for chan in range(4):
+            if (self.channels[chan].live_view is True):
+                self.lv_channels_active.append(chan)
         
-        ### There needs to be something here to not assign if value is [0 0 0 0 0]
-        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples     
+        ### There needs to be something here to not assign if value is [(0 * samples)]
+        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
         for i in range(len(self.lv_active_channels)):
             if self.lv_active_channels[i] == True:
                 self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
@@ -64,33 +69,20 @@ class BufferManager():
             if self.lv_active_channels[item] == True:
                 self.chan_range[item] = self.channels[item].range
 
-        
-        ### Find better way of finding items in list rather than temp
-        
-        temp = 0
-        
-        for channel in range(4):
-#            print("Beginning channel loop")
-#            print(self.np_channel_arrays[temp])
-            if self.lv_active_channels[channel]:
-                print(self.lv_active_channels[channel])
+        for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
+            ### Need to remove if statement once it is replaced
+            if str(sum(b)) != "[0 0 0 0 0]":
+                self.lv_channel_arrays[(2 * c)] = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
+                self.lv_channel_arrays[((2 * c)+1)] = c
+    #            if (adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc) != 0):
 
-                if str(sum(self.np_channel_arrays[temp])) != "[0 0 0 0 0]":
-                    self.lv_channel_arrays[(2 * channel)] = adc2mV(self.np_channel_arrays[temp][-1], self.chan_range[channel],
-                                                                   self.dev_conf.meta_data.max_adc)
-                       
-                temp += 1
-
-
-            self.lv_channel_arrays[((2 * channel)+1)] = (channel)
-        print(self.lv_channel_arrays)
-        
 
     def clear_arrays(self):
         """
             Removes previously created buffers from the buffer_manager.
         """
-        arrays = [self.active_channels, self.pha_arrays, self.trigger_times,self.np_channel_arrays]#, self.lv_pha]
+        arrays = [self.active_channels, self.pha_arrays, self.trigger_times, self.np_channel_arrays, 
+                  self.lv_channels_active]#, self.lv_pha]
         for array in arrays:
             array.clear()
         self.lv_channel_arrays = [0] * 8
