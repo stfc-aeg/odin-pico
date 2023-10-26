@@ -475,3 +475,7 @@ function ajax_put(path,key,value){
         data: JSON.stringify(data),
     });
 }
+
+function ajax_get(path,key){
+
+}

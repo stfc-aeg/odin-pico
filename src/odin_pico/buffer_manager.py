@@ -69,7 +69,7 @@ class BufferManager():
 
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
             if all(adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)) == 0:
-                self.lv_channel_arrays[(2 * c)] = 69
+                self.lv_channel_arrays[(2 * c)] = [None]
             else:
                 self.lv_channel_arrays[(2 * c)] = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
             self.lv_channel_arrays[((2 * c)+1)] = c
