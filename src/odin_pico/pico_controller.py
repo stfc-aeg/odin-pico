@@ -104,12 +104,12 @@ class PicoController():
             'pha': pico_pha
         })
 
-        lv_data_tree = ParameterTree({
-             'lv_data_a': (partial(self.lv_data, 0), None),
-             'lv_data_b': (partial(self.lv_data, 1), None),
-             'lv_data_c': (partial(self.lv_data, 2), None),
-             'lv_data_d': (partial(self.lv_data, 3), None),
-        })
+        # lv_data_tree = ParameterTree({
+        #      'lv_data_a': (self.lv_data, None),
+        #      'lv_data_b': (self.lv_data, None),
+        #      'lv_data_c': (self.lv_data, None),
+        #      'lv_data_d': (self.lv_data, None),
+        # })
 
         live_view = ParameterTree({
             'active_channels': (lambda: self.buffer_manager.lv_active_channels, None),
@@ -117,7 +117,7 @@ class PicoController():
             'pha_data': (self.pha_data, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
-            'lv_data_tree': lv_data_tree,
+            'lv_data': (self.lv_data, None),
         })
 
         pico_commands = ParameterTree({
@@ -291,14 +291,15 @@ class PicoController():
             self.pico.run_block()
             self.buffer_manager.save_lv_data()
 
-    def lv_data(self, channel):
+    def lv_data(self):
         """Returns array of the last captured trace, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
 
         data = []
 
-        if self.buffer_manager.lv_active_channels[channel] == True:
-            data = self.buffer_manager.lv_channel_arrays[(2*channel)]
-        return data     
+        for channel in range(4):
+            if self.buffer_manager.lv_active_channels[channel] == True:
+                data.append(self.buffer_manager.lv_channel_arrays[(2 * channel)])
+        return data    
 
     def pha_data(self):
         """ Returns array of the last calculated PHA, that has been stored in the buffer manager, for a channel selected by the user in the UI"""

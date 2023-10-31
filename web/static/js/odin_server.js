@@ -139,20 +139,111 @@ function plotly_liveview(ranges){
     }
 
     if (play_button){
-        scope_lv = document.getElementById('scope_lv');
-        Plotly.newPlot( scope_lv, [{
-            x: x = data_array.map((value, index) => index),                
-            y: data_array }], {
+        lv_data = []
+        sample_list = update_samples()
+        console.log(data_array)
+        console.log(data_array.length)
+        if (data_array.length > 0) {
+            var trace_one = {
+                x: sample_list,                
+                y: data_array[0],
+                name: (data_array[1], 'Data'),
+                type: 'scatter',   
+            }
+            layout = {
                 title: 'Live view of PicoScope traces',
-                margin: { t: 40, b: 40 },
-                xaxis: { title: 'Sample Interval' },
-                yaxis: { title: 'Voltage (mV)',
-                        range: [-range, range],
-                        tickvals: tickVals,
-                        ticktext: tickText },
-                height: 300,
-                autosize: true                    
-                });
+                yaxis: {
+                    title: ('Channel', data_array[1], 'Voltage (mV)'),
+                    titlefront: {color: 'rgb(70, 250, 0)'},
+                    tickfont: {color: 'rgb(70, 250, 0'},
+                },
+            }
+                lv_data.push(trace_one)
+            if (data_array.length > 2) {
+                var trace_two = {
+                    x: x = sample_list,
+                    y: data_array[2],
+                    name: 'Channel B Data',
+                    yaxis: 'y2',
+                    type: 'scatter',
+                }
+                lv_data.push(trace_two)
+                layout = {
+                    title: 'Live view of PicoScope traces',
+                    yaxis: {
+                        title: 'Channel A Voltage (mV)',
+                        titlefront: {color: 'rgb(70, 250, 0)'},
+                        tickfont: {color: 'rgb(70, 250, 0'},
+                    },
+                    yaxis2: {
+                        title: 'Channel B Voltage (mV)',
+                        margin: { t: 40, b: 40 },
+                        titlefront: {color: 'rgb(250, 0, 0)'},
+                        tickfont: {color: 'rgb(250, 0, 0)'},
+                        overlaying: 'y',
+                        side: 'right',
+                        height: 500,
+        //                autosize: false
+                        autosize: true
+                    }
+                };               
+            }
+        }
+        else {
+            layout = {
+                title: 'Live view of PicoScope traces',
+                yaxis: {
+                    title: ('Channel Voltage (mV)'),
+                    titlefront: {color: 'rgb(70, 250, 0)'},
+                    tickfont: {color: 'rgb(70, 250, 0'},
+                },
+            }
+        }
+        // console.log("data array", data_array)
+        // console.log("map", (data_array[0].map((value, index) => index)))
+        scope_lv = document.getElementById('scope_lv');
+        // var trace_one = {
+        //     x: x = data_array[0].map((value, index) => index),                
+        //     y: data_array[0],
+        //     name: 'Channel A Data',
+        //     type: 'scatter',
+        // };
+
+//         layout = {
+//             title: 'Live view of PicoScope traces',
+//             yaxis: {
+//                 title: 'Channel A Voltage (mV)',
+//                 titlefront: {color: 'rgb(70, 250, 0)'},
+//                 tickfont: {color: 'rgb(70, 250, 0'},
+//             },
+//             yaxis2: {
+//                 title: 'Channel B Voltage (mV)',
+//                 margin: { t: 40, b: 40 },
+//                 titlefront: {color: 'rgb(250, 0, 0)'},
+//                 tickfont: {color: 'rgb(250, 0, 0)'},
+//                 overlaying: 'y',
+//                 side: 'right',
+//                 height: 500,
+// //                autosize: false
+//                 autosize: true
+//             }
+//         };
+
+        // Plotly.newPlot( scope_lv, [{
+        //     x: x = data_array[0].map((value, index) => index),                
+        //     y: data_array[0] }], {
+        //         title: 'Live view of PicoScope traces',
+        //         margin: { t: 40, b: 40 },
+        //         xaxis: { title: 'Sample Interval' },
+        //         yaxis: { title: 'Voltage (mV)',
+        //                 range: [-range, range],
+        //                 tickvals: tickVals,
+        //                 ticktext: tickText },
+        //         height: 300,
+        //         autosize: true                    
+        //         });
+
+        Plotly.newPlot(scope_lv, lv_data, layout)
 
         scope_pha = document.getElementById('scope_pha');
         Plotly.newPlot( scope_pha, [{
@@ -190,6 +281,18 @@ function get_range_value_mv(key) {
 
     if (key in range_values) {
         return range_values[key];
+    }
+}
+
+function update_samples(){
+    return function(response){
+        pre_trig_samples = response.device.settings.capture.pre_trig_samples
+        post_trig_samples = response.device.settings.capture.post_trig_samples
+        samples = pre_trig_samples+post_trig_samples
+        sample_list = []
+        for (let i = 0; i < 4; i++) {
+            sample_list.push(i)
+        }
     }
 }
 
@@ -243,11 +346,24 @@ function sync_with_adapter(){
 
         // Check the lv_data array contains data, if it does, assign the data locally
         try{
-            if ((response.device.live_view.lv_data).length != 0) {
-                data_array = response.device.live_view.lv_data
-            } else {
-                console.log("\n\nEmpty LV Array not updating graph")
+            all_lv_data = response.device.live_view.lv_data
+            data_array = []
+            temp = 0
+            lv_active = response.device.live_view.active_channels
+            console.log("lv_active", lv_active)
+            for (let chan = 0; chan < 4; chan++) {
+                if (lv_active[chan] == true) {
+                    data_array.push(all_lv_data[temp])
+                    data_array.push(chan)
+                    temp += 1
+                }
+            console.log("Before plotly", data_array)
             }
+//            if ((response.device.live_view.lv_data).length != 0) {
+//                data_array = response.device.live_view.lv_data
+//           } else {
+//                console.log("\n\nEmpty LV Array not updating graph")
+//            }
         } catch {
                 console.log("Error in assigning LV values")
             }
