@@ -21,7 +21,7 @@ class BufferManager():
         self.trigger_times = []
         
         self.lv_active_channels = [False] * 4
-        self.lv_channel_arrays = [0] * 8
+        self.lv_channel_arrays = []
         self.chan_range = [0] * 4
         self.lv_pha = []
         self.lv_channels_active = []
@@ -66,13 +66,54 @@ class BufferManager():
 
         for item in self.lv_active_channels:
             self.chan_range[item] = self.channels[item].range
+        
+        temp = []
 
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
-            if all(adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)) == 0:
-                self.lv_channel_arrays[(2 * c)] = [None]
+            values = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
+            if all(values) != 0:
+                if (values) != [0]:
+                    if (values) != []:
+                        temp.append(values)
+                        print("Values", values)
+                        # print(adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc))                                        
+                    #     self.lv_channel_arrays.append("Error")
+                    else:
+                        temp.append("Error")
+                        # print("Error")
+                else:
+                    temp.append("Error")
+                    # print("Error")
             else:
-                self.lv_channel_arrays[(2 * c)] = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
-            self.lv_channel_arrays[((2 * c)+1)] = c
+                # print("Error")
+                temp.append("Error")
+            # else:
+                # self.lv_channel_arrays.append(adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc))
+        found = False
+        for i in range(len(temp)):
+            if temp[i] == "Error":
+                found = True
+
+        if found == False:
+            if len(temp) != 0:
+                ("Appending")
+                print(self.lv_channel_arrays)
+                print(temp)
+                self.lv_channel_arrays = temp
+
+            # if "Error" in temp:
+            #     self.lv_channel_arrays = self.lv_channel_arrays
+            # else:
+            #     self.lv_channel_arrays = temp
+
+        # for i in range(4):
+        #     if self.lv_active_channels[i]:
+        #         if all(adc2mV(self.np_channel_arrays[i][-1], self.chan_range[i], self.dev_conf.meta_data.max_adc)) == 0:
+        #             self.lv_channel_arrays[(2 * c)] = ["Error"]
+        #         else:
+        #             self.lv_channel_arrays[(2 * c)] = adc2mV(self.np_channel_arrays[i][-1], self.chan_range[i], self.dev_conf.meta_data.max_adc)
+        #     self.lv_channel_arrays[((2 * c) + 1)] = 
+
 
 
     def clear_arrays(self):
@@ -83,5 +124,4 @@ class BufferManager():
                   self.lv_channels_active]#, self.lv_pha]
         for array in arrays:
             array.clear()
-        self.lv_channel_arrays = [0] * 8
         self.chan_range = [0] * 4

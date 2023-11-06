@@ -141,64 +141,77 @@ function plotly_liveview(ranges){
     if (play_button){
         lv_data = []
         sample_list = update_samples()
-        console.log(data_array)
-        console.log(data_array.length)
+        console.log("data array", data_array)
         if (data_array.length > 0) {
+            // if (((data_array[0])[0]) != 0) {
             var trace_one = {
                 x: sample_list,                
                 y: data_array[0],
                 name: (data_array[1], 'Data'),
                 type: 'scatter',   
-            }
+                }
             layout = {
                 title: 'Live view of PicoScope traces',
+                margin: { t: 50, b: 60 },
+                xaxis: { title: 'Sample Interval'},
                 yaxis: {
                     title: ('Channel', data_array[1], 'Voltage (mV)'),
-                    titlefront: {color: 'rgb(70, 250, 0)'},
-                    tickfont: {color: 'rgb(70, 250, 0'},
-                },
-            }
-                lv_data.push(trace_one)
-            if (data_array.length > 2) {
-                var trace_two = {
-                    x: x = sample_list,
-                    y: data_array[2],
-                    name: 'Channel B Data',
-                    yaxis: 'y2',
-                    type: 'scatter',
+                    // titlefront: {color: 'rgb(70, 250, 0)'},
+                    // tickfont: {color: 'rgb(70, 250, 0'},
                 }
-                lv_data.push(trace_two)
-                layout = {
-                    title: 'Live view of PicoScope traces',
-                    yaxis: {
-                        title: 'Channel A Voltage (mV)',
-                        titlefront: {color: 'rgb(70, 250, 0)'},
-                        tickfont: {color: 'rgb(70, 250, 0'},
-                    },
-                    yaxis2: {
-                        title: 'Channel B Voltage (mV)',
-                        margin: { t: 40, b: 40 },
-                        titlefront: {color: 'rgb(250, 0, 0)'},
-                        tickfont: {color: 'rgb(250, 0, 0)'},
-                        overlaying: 'y',
-                        side: 'right',
-                        height: 500,
-        //                autosize: false
-                        autosize: true
+            }
+            lv_data.push(trace_one)
+                if (data_array.length > 2) {
+                    // if ((data_array[2])[0] != 0) {
+                    var trace_two = {
+                        x: x = sample_list,
+                        y: data_array[2],
+                        name: 'Channel B Data',
+                        yaxis: 'y2',
+                        type: 'scatter',
                     }
-                };               
+                    lv_data.push(trace_two)
+                    layout = {
+                        title: 'Live view of PicoScope traces',
+                        autosize: true,
+                        xaxis: { title: 'Sample Interval'},
+                        yaxis: {
+                            title: 'Channel A Voltage (mV)',
+                            // titlefront: {color: 'rgb(70, 250, 0)'},
+                            // tickfont: {color: 'rgb(70, 250, 0'},
+                        },
+                        yaxis2: {
+                            title: 'Channel B Voltage (mV)',
+                            margin: { t: 50, b: 60 },
+                            // titlefront: {color: 'rgb(250, 0, 0)'},
+                            // tickfont: {color: 'rgb(250, 0, 0)'},
+                            overlaying: 'y',
+                            side: 'right',
+                            // autosize: false,
+                            autosize: true
+                        }
+//                        }    
+                    }           
+                }
             }
+            Plotly.newPlot(scope_lv, lv_data, layout)
+
         }
-        else {
-            layout = {
-                title: 'Live view of PicoScope traces',
-                yaxis: {
-                    title: ('Channel Voltage (mV)'),
-                    titlefront: {color: 'rgb(70, 250, 0)'},
-                    tickfont: {color: 'rgb(70, 250, 0'},
-                },
-            }
-        }
+        // else {
+        //     layout = {
+        //         title: 'Live view of PicoScope traces',
+        //         autosize: true,
+        //         // width: 1100,
+        //         // height: 350,
+        //         margin: { t: 50, b: 60 },
+        //         xaxis: { title: 'Sample Interval'},
+        //         yaxis: {
+        //             title: ('Channel Voltage (mV)'),
+        //             // titlefront: {color: 'rgb(70, 250, 0)'},
+        //             // tickfont: {color: 'rgb(70, 250, 0'},
+        //         },
+        //     }
+        // }
         // console.log("data array", data_array)
         // console.log("map", (data_array[0].map((value, index) => index)))
         scope_lv = document.getElementById('scope_lv');
@@ -243,21 +256,19 @@ function plotly_liveview(ranges){
         //         autosize: true                    
         //         });
 
-        Plotly.newPlot(scope_lv, lv_data, layout)
-
         scope_pha = document.getElementById('scope_pha');
         Plotly.newPlot( scope_pha, [{
             x: bin_edges,
             y: counts }], {
                 title: 'Last PHA from recorded traces',
-                margin: { t: 40, b: 40 },
+                margin: { t: 50, b: 60 },
                 yaxis: { title: 'Counts'},
                 xaxis: { title: 'Energy level (ADC_Counts)'} });
-    }
-    else {
-        return;
-    }
-}
+        }
+//     else {
+//         return;
+//     }
+// }
 
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
@@ -289,10 +300,7 @@ function update_samples(){
         pre_trig_samples = response.device.settings.capture.pre_trig_samples
         post_trig_samples = response.device.settings.capture.post_trig_samples
         samples = pre_trig_samples+post_trig_samples
-        sample_list = []
-        for (let i = 0; i < 4; i++) {
-            sample_list.push(i)
-        }
+        sample_list = Array.from({length: samples}, (_,index) => index + 1);
     }
 }
 
@@ -354,10 +362,30 @@ function sync_with_adapter(){
             for (let chan = 0; chan < 4; chan++) {
                 if (lv_active[chan] == true) {
                     data_array.push(all_lv_data[temp])
-                    data_array.push(chan)
+                    string = ("Channel", chan)
+                    data_array.push(string)
                     temp += 1
                 }
             console.log("Before plotly", data_array)
+            layout = {
+                title: 'Live view of PicoScope traces',
+                autosize: true,
+                // width: 1100,
+                // height: 350,
+                margin: { t: 50, b: 60 },
+                xaxis: { title: 'Sample Interval'},
+                yaxis: {
+                    title: ('Channel Voltage (mV)'),
+                    // titlefront: {color: 'rgb(70, 250, 0)'},
+                    // tickfont: {color: 'rgb(70, 250, 0'},
+                },
+            }
+            console.log("Sync with adapter")
+            // var data_test = {
+            //     x: [0, 1, 2, 3, 4, 5, 6],                
+            //     y: [6, 5, 4, 3, 2, 1, 0],
+            // }
+            Plotly.newPlot(scope_lv, data_test, layout)
             }
 //            if ((response.device.live_view.lv_data).length != 0) {
 //                data_array = response.device.live_view.lv_data
@@ -455,7 +483,7 @@ function sync_with_adapter(){
                 document.getElementById("capture-row").className ="danger";
 
             }
-            console.log("open_unit:",response.device.status.open_unit)
+//            console.log("open_unit:",response.device.status.open_unit)
 
             if (response.device.status.open_unit == 0){
                 document.getElementById("connection_status").textContent = "True"
