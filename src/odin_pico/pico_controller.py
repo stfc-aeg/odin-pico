@@ -294,13 +294,6 @@ class PicoController():
     def lv_data(self):
         """Returns array of the last captured trace, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
 
-        # data = []
-
-        # for channel in range(4):
-        #     if self.buffer_manager.lv_active_channels[channel] == True:
-        #         data.append(self.buffer_manager.lv_channel_arrays[(2 * channel)])
-        #         data.append(channel)
-        print(self.buffer_manager.lv_channel_arrays)
         return self.buffer_manager.lv_channel_arrays    
 
     def pha_data(self):

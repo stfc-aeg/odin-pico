@@ -67,54 +67,18 @@ class BufferManager():
         for item in self.lv_active_channels:
             self.chan_range[item] = self.channels[item].range
         
-        temp = []
+        current_lv_array = []
 
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
             values = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
-            if all(values) != 0:
-                if (values) != [0]:
-                    if (values) != []:
-                        temp.append(values)
-                        print("Values", values)
-                        # print(adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc))                                        
-                    #     self.lv_channel_arrays.append("Error")
-                    else:
-                        temp.append("Error")
-                        # print("Error")
-                else:
-                    temp.append("Error")
-                    # print("Error")
-            else:
-                # print("Error")
-                temp.append("Error")
+            # if (all(values) != 0) and (values != [0] and values !=[]):
+            #     current_lv_array.append(values)
             # else:
-                # self.lv_channel_arrays.append(adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc))
-        found = False
-        for i in range(len(temp)):
-            if temp[i] == "Error":
-                found = True
+            #     current_lv_array.append("Error")
+            current_lv_array.append(values)
+            current_lv_array.append(c)
 
-        if found == False:
-            if len(temp) != 0:
-                ("Appending")
-                print(self.lv_channel_arrays)
-                print(temp)
-                self.lv_channel_arrays = temp
-
-            # if "Error" in temp:
-            #     self.lv_channel_arrays = self.lv_channel_arrays
-            # else:
-            #     self.lv_channel_arrays = temp
-
-        # for i in range(4):
-        #     if self.lv_active_channels[i]:
-        #         if all(adc2mV(self.np_channel_arrays[i][-1], self.chan_range[i], self.dev_conf.meta_data.max_adc)) == 0:
-        #             self.lv_channel_arrays[(2 * c)] = ["Error"]
-        #         else:
-        #             self.lv_channel_arrays[(2 * c)] = adc2mV(self.np_channel_arrays[i][-1], self.chan_range[i], self.dev_conf.meta_data.max_adc)
-        #     self.lv_channel_arrays[((2 * c) + 1)] = 
-
-
+        self.lv_channel_arrays = current_lv_array
 
     def clear_arrays(self):
         """
