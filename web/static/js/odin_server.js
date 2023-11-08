@@ -124,7 +124,7 @@ function toggle_play() {
     }
   }
 
-function plotly_liveview(chan_ranges, chan_offsets){
+function plotly_liveview(){
 
     // Create variables for values on graph axes
     var tickVals = [];
@@ -134,10 +134,10 @@ function plotly_liveview(chan_ranges, chan_offsets){
 
     if (play_button){
         lv_data = []
-        if (data_array.length > 0) {
+        if (active_channels.length > 0) {
 
             // Fetch channel range for first LV channel
-            let range1 = get_range_value_mv(chan_ranges[(data_array[1])])
+            let range1 = get_range_value_mv(chan_ranges[(active_channels[0])])
 
             // Adjust the data considering the offset entered
             // data_offset_1 = []
@@ -149,9 +149,9 @@ function plotly_liveview(chan_ranges, chan_offsets){
             var trace_one = {
                 x: x = data_array[0].map((value, index)=> index),
                 y: y = data_array[0],
-                name: (data_array[1], 'Data'),
+                name: ('Data 1'),
                 type: 'scatter',
-                }
+            }
 
             // Create the values to go on graph axes
             var stepSize = 2 * range1 / 8
@@ -171,16 +171,15 @@ function plotly_liveview(chan_ranges, chan_offsets){
                     tickvals: tickVals,
                     ticktext: tickText,
                 },
-                height: 300,
                 autosize: true
             }
 
             // Push the data from trace_one into the lv_data list
             lv_data.push(trace_one)
-                if (data_array.length > 2) {
+                if (active_channels.length > 1) {
 
                     // Fetch channel range for second LV channel
-                    let range2 = get_range_value_mv(chan_ranges[(data_array[3])])
+                    let range2 = get_range_value_mv(chan_ranges[(active_channels[1])])
 
                     // Adjust data to consider offset requested
                     // data_offset_2 = []
@@ -253,7 +252,6 @@ function plotly_liveview(chan_ranges, chan_offsets){
             }
         }
         Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout)
-        scope_lv = document.getElementById('scope_lv');
         // var trace_one = {
         //     x: x = data_array[0].map((value, index) => index),                
         //     y: data_array[0],
@@ -512,11 +510,19 @@ function sync_with_adapter(){
             }
             document.getElementById("system-state").textContent = response.device.flags.system_state
 
+            channels_active = response.device.live_view.active_channels
+            active_channels = []
+            for (let chan = 0; chan < 4; chan++) {
+                if (channels_active[chan] == true) {
+                    active_channels.push(chan)
+                }
+            }
+
             chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
                 response.device.settings.channels.c.range, response.device.settings.channels.d.range]
             chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
                 response.device.settings.channels.b.offset, response.device.settings.channels.b.offset]
-            plotly_liveview(chan_ranges, chan_offsets);
+            plotly_liveview();
     }
 }
 

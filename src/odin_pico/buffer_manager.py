@@ -76,7 +76,7 @@ class BufferManager():
             # else:
             #     current_lv_array.append("Error")
             current_lv_array.append(values)
-            current_lv_array.append(c)
+            # current_lv_array.append(c)
 
         self.lv_channel_arrays = current_lv_array
 
