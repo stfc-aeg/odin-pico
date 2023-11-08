@@ -1,6 +1,5 @@
 """ Top level Adapter for Odin Control to interface with a picoscope 5444D"""
 
-import logging
 import threading
 
 from tornado.escape import json_decode

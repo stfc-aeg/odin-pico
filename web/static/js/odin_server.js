@@ -124,90 +124,123 @@ function toggle_play() {
     }
   }
 
-function plotly_liveview(ranges){
-    channel = parseInt(document.getElementById('lv-source').value)
-    let range = get_range_value_mv(channel)
+function plotly_liveview(chan_ranges, chan_offsets){
 
+    // Create variables for values on graph axes
     var tickVals = [];
     var tickText = [];
-    var stepSize = 2 * range / 8;
-
-    for (var i = -range; i <= range; i += stepSize) {
-        tickVals.push(i);
-        tickText.push(i.toFixed(2)); 
-    }
+    var tickVals2 = [];
+    var tickText2 = [];
 
     if (play_button){
         lv_data = []
-        // console.log("data array", data_array)
         if (data_array.length > 0) {
+
+            // Fetch channel range for first LV channel
+            let range1 = get_range_value_mv(chan_ranges[(data_array[1])])
+
+            // Adjust the data considering the offset entered
+            // data_offset_1 = []
+            // for (let a = 0; a < data_array[0].length; i++) {
+            //     data_offset_1.push(((data_array[0])[a]) * (1 + (chan_offsets[(data_array[1])])/100))
+            // }
+
+            // Create first data line
             var trace_one = {
                 x: x = data_array[0].map((value, index)=> index),
-                y: data_array[0],
+                y: y = data_array[0],
                 name: (data_array[1], 'Data'),
-                type: 'scatter',   
+                type: 'scatter',
                 }
+
+            // Create the values to go on graph axes
+            var stepSize = 2 * range1 / 8
+            for (var i = -range1; i <= range1; i += stepSize) {
+                tickVals.push(i);
+                tickText.push(i.toFixed(2)); 
+            }
+
+            // Create the layout for the graph
             layout = {
                 title: 'Live view of PicoScope traces',
                 margin: { t: 50, b: 60 },
                 xaxis: { title: 'Sample Interval'},
                 yaxis: {
                     title: (data_array[1], 'Voltage (mV)'),
-                    // titlefront: {color: 'rgb(70, 250, 0)'},
-                    // tickfont: {color: 'rgb(70, 250, 0'},
-                    range: [-range, range],
+                    range: [-range1, range1],
                     tickvals: tickVals,
-                    ticktext: tickText
+                    ticktext: tickText,
                 },
                 height: 300,
                 autosize: true
             }
+
+            // Push the data from trace_one into the lv_data list
             lv_data.push(trace_one)
                 if (data_array.length > 2) {
-                    // if ((data_array[2])[0] != 0) {
+
+                    // Fetch channel range for second LV channel
+                    let range2 = get_range_value_mv(chan_ranges[(data_array[3])])
+
+                    // Adjust data to consider offset requested
+                    // data_offset_2 = []
+                    // for (let a = 0; a < data_array[2].length; i++) {
+                    //     data_offset_2.push(((data_array[2])[a]) * (1 + (chan_offsets[(data_array[3])])/100))
+                    // }
+
+                    // Create the second data line for the graph
                     var trace_two = {
                         x: x = data_array[2].map((value, index) => index),
                         y: data_array[2],
-                        name: 'Channel B Data',
+                        name: 'Data',
                         yaxis: 'y2',
                         type: 'scatter',
                     }
+
+                    // Create labels for graph axes
+                    var stepSize2 = 2 * range2 / 8
+                    for (var i = -range2; i <= range2; i += stepSize2) {
+                        tickVals2.push(i);
+                        tickText2.push(i.toFixed(2)); 
+                    }
+
+                    // Add second data line to lv_data
                     lv_data.push(trace_two)
+
+                    // Create layout for plotly graph, with two axes
                     layout = {
                         title: 'Live view of PicoScope traces',
-                        autosize: true,
+                        margin: { t: 50, b: 60 },
                         xaxis: { title: 'Sample Interval'},
                         yaxis: {
                             title: 'Channel A Voltage (mV)',
-                            margin: { t: 50, b: 20 },
-                            range: [-range, range],
+                            automargin: true,
+                            range: [-range1, range1],
                             tickvals: tickVals,
                             ticktext: tickText,
-                            // titlefront: {color: 'rgb(70, 250, 0)'},
-                            // tickfont: {color: 'rgb(70, 250, 0'},
                         },
                         yaxis2: {
                             title: 'Channel B Voltage (mV)',
-                            margin: { t: 50, b: 20 },
-                            // titlefront: {color: 'rgb(250, 0, 0)'},
-                            // tickfont: {color: 'rgb(250, 0, 0)'},
-                            range:[-range, range],
+                            range:[-range2, range2],
                             overlaying: 'y',
                             side: 'right',
-                            tickvals: tickVals,
-                            ticktext: tickText,
-                            // autosize: false,
-//                            autosize: true
-                        height: 500,
+                            tickvals: tickVals2,
+                            ticktext: tickText2,
                         autosize: true,
                         }
-//                        }    
                     }           
                 }
+            
+            // Create the plotly graph
             Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout)
-            }
         }
         else {
+            let range = 10
+            var stepSize = 2 * range / 8
+            for (var i = -range; i <= range; i += stepSize) {
+                tickVals.push(i);
+                tickText.push(i.toFixed(2)); 
+            }   
             layout = {
                 title: 'Live view of PicoScope traces',
                 autosize: true,
@@ -215,13 +248,11 @@ function plotly_liveview(ranges){
                 xaxis: { title: 'Sample Interval'},
                 yaxis: {
                     title: ('Channel Voltage (mV)'),
-                    // titlefront: {color: 'rgb(70, 250, 0)'},
-                    // tickfont: {color: 'rgb(70, 250, 0'},
+                    range:[-range, range],
                 },
             }
         }
-        // console.log("data array", data_array)
-        // console.log("map", (data_array[0].map((value, index) => index)))
+        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout)
         scope_lv = document.getElementById('scope_lv');
         // var trace_one = {
         //     x: x = data_array[0].map((value, index) => index),                
@@ -272,6 +303,7 @@ function plotly_liveview(ranges){
                 margin: { t: 50, b: 60 },
                 yaxis: { title: 'Counts'},
                 xaxis: { title: 'Energy level (ADC_Counts)'} });
+        }
         }
 //     else {
 //         return;
@@ -480,9 +512,11 @@ function sync_with_adapter(){
             }
             document.getElementById("system-state").textContent = response.device.flags.system_state
 
-            ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
+            chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
                 response.device.settings.channels.c.range, response.device.settings.channels.d.range]
-            plotly_liveview(ranges);
+            chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
+                response.device.settings.channels.b.offset, response.device.settings.channels.b.offset]
+            plotly_liveview(chan_ranges, chan_offsets);
     }
 }
 

@@ -177,7 +177,7 @@ class PicoController():
         else:
             self.buffer_manager.lv_active_channels[3] = value
 
-        print("Channel", chan_name)
+#        print("Channel", chan_name)
 
         try:
             channel_dc = getattr(obj, chan_name)
