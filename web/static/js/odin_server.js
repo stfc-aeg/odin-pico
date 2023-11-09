@@ -139,34 +139,35 @@ function plotly_liveview(){
             // Fetch channel range for first LV channel
             let range1 = get_range_value_mv(chan_ranges[(active_channels[0])])
 
-            // Adjust the data considering the offset entered
-            // data_offset_1 = []
-            // for (let a = 0; a < data_array[0].length; i++) {
-            //     data_offset_1.push(((data_array[0])[a]) * (1 + (chan_offsets[(data_array[1])])/100))
-            // }
+            // Consider offset and apply it to data
+            if (chan_offsets[(active_channels[0])] != 0) {
+                offset_key = range1 * (chan_offsets[(active_channels[0])] / 100)
+                for (let data = 0; data < data_array[0].length; data++) {
+                    ((data_array[0])[data]) += offset_key
+                }
+            }
 
             // Create first data line
             var trace_one = {
                 x: x = data_array[0].map((value, index)=> index),
                 y: y = data_array[0],
-                name: ('Data 1'),
+                name: ('Channel ' + active_channels_letters[0]),
                 type: 'scatter',
             }
 
             // Create the values to go on graph axes
-            var stepSize = 2 * range1 / 8
+            var stepSize = range1 / 4
             for (var i = -range1; i <= range1; i += stepSize) {
                 tickVals.push(i);
                 tickText.push(i.toFixed(2)); 
             }
-
             // Create the layout for the graph
             layout = {
                 title: 'Live view of PicoScope traces',
                 margin: { t: 50, b: 60 },
                 xaxis: { title: 'Sample Interval'},
                 yaxis: {
-                    title: (data_array[1], 'Voltage (mV)'),
+                    title: ('Channel ' + active_channels_letters[0] + ' Voltage (mV)'),
                     range: [-range1, range1],
                     tickvals: tickVals,
                     ticktext: tickText,
@@ -181,23 +182,25 @@ function plotly_liveview(){
                     // Fetch channel range for second LV channel
                     let range2 = get_range_value_mv(chan_ranges[(active_channels[1])])
 
-                    // Adjust data to consider offset requested
-                    // data_offset_2 = []
-                    // for (let a = 0; a < data_array[2].length; i++) {
-                    //     data_offset_2.push(((data_array[2])[a]) * (1 + (chan_offsets[(data_array[3])])/100))
-                    // }
+                    // Consider offset and apply it to data
+                    if (chan_offsets[(active_channels[1])] != 0) {
+                        offset_key = range2 * (chan_offsets[(active_channels[1])] / 100)
+                        for (let data = 0; data < data_array[1].length; data++) {
+                            ((data_array[1])[data]) += offset_key
+                        }
+                    }
 
                     // Create the second data line for the graph
                     var trace_two = {
-                        x: x = data_array[2].map((value, index) => index),
-                        y: data_array[2],
-                        name: 'Data',
+                        x: x = data_array[1].map((value, index) => index),
+                        y: data_array[1],
+                        name: ('Channel ' + active_channels_letters[1]),
                         yaxis: 'y2',
                         type: 'scatter',
                     }
 
                     // Create labels for graph axes
-                    var stepSize2 = 2 * range2 / 8
+                    var stepSize2 = range2 / 4
                     for (var i = -range2; i <= range2; i += stepSize2) {
                         tickVals2.push(i);
                         tickText2.push(i.toFixed(2)); 
@@ -212,14 +215,14 @@ function plotly_liveview(){
                         margin: { t: 50, b: 60 },
                         xaxis: { title: 'Sample Interval'},
                         yaxis: {
-                            title: 'Channel A Voltage (mV)',
+                            title: ('Channel ' + active_channels_letters[0] +  ' Voltage (mV)'),
                             automargin: true,
                             range: [-range1, range1],
                             tickvals: tickVals,
                             ticktext: tickText,
                         },
                         yaxis2: {
-                            title: 'Channel B Voltage (mV)',
+                            title: ('Channel ' + active_channels_letters[1] + ' Voltage (mV)'),
                             range:[-range2, range2],
                             overlaying: 'y',
                             side: 'right',
@@ -234,12 +237,19 @@ function plotly_liveview(){
             Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout)
         }
         else {
-            let range = 10
-            var stepSize = 2 * range / 8
+            console.log("Empty", empty_array)
+            console.log("Sample", sample_list)
+            let range = get_range_value_mv(chan_ranges[0])
+            trace_1 = {
+                x: x = sample_list,
+                y: y = empty_array,
+                type: "scatter"
+            }
+            var stepSize = range / 4
             for (var i = -range; i <= range; i += stepSize) {
                 tickVals.push(i);
                 tickText.push(i.toFixed(2)); 
-            }   
+            }
             layout = {
                 title: 'Live view of PicoScope traces',
                 autosize: true,
@@ -248,8 +258,11 @@ function plotly_liveview(){
                 yaxis: {
                     title: ('Channel Voltage (mV)'),
                     range:[-range, range],
+                    tickvals: tickVals,
+                    ticktext: tickText,
                 },
             }
+            lv_data.push(trace_1)
         }
         Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout)
         // var trace_one = {
@@ -332,15 +345,6 @@ function get_range_value_mv(key) {
         return range_values[key];
     }
 }
-
-// function update_samples(){
-//     return function(response){
-//         pre_trig_samples = response.device.settings.capture.pre_trig_samples
-//         post_trig_samples = response.device.settings.capture.post_trig_samples
-//         samples = pre_trig_samples+post_trig_samples
-//         sample_list = Array.from({length: samples}, (_,index) => index + 1);
-//     }
-// }
 
 function sync_with_adapter(){
     return function(response){
@@ -512,16 +516,30 @@ function sync_with_adapter(){
 
             channels_active = response.device.live_view.active_channels
             active_channels = []
+            active_channels_letters = []
+            letters = ['A', 'B', 'C', 'D']
             for (let chan = 0; chan < 4; chan++) {
                 if (channels_active[chan] == true) {
                     active_channels.push(chan)
+                    active_channels_letters.push(letters[chan])
+                }
+            }
+
+            if (active_channels.length == 0) {
+                pre_trig_samples = response.device.settings.capture.pre_trig_samples
+                post_trig_samples = response.device.settings.capture.post_trig_samples
+                samples = pre_trig_samples+post_trig_samples
+                sample_list = Array.from({length: samples}, (_,index) => index + 1);
+                empty_array = [0]
+                for (let item = 1; item < samples; item++) {
+                    empty_array.push(0)
                 }
             }
 
             chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
                 response.device.settings.channels.c.range, response.device.settings.channels.d.range]
             chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
-                response.device.settings.channels.b.offset, response.device.settings.channels.b.offset]
+                response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
             plotly_liveview();
     }
 }
@@ -565,7 +583,6 @@ function commit_str_adapter(id,path,key){
 
 function commit_float_adapter(id,path,key){
     var input = parseFloat(document.getElementById(id).value)
-    console.log(input)
     if (isNaN(input)){
         console.log("Invalid")
     } else {

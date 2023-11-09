@@ -96,7 +96,7 @@ class PicoDevice():
                 offset = self.util.calc_offset(chan.range, chan.offset)
 
 #                logging.debug(f'calculated offset value: {offset} based on percentage of {chan.offset}')
-                ps.ps5000aSetChannel(self.dev_conf.mode.handle, chan.channel_id, int(chan.active), chan.coupling, chan.range, offset)
+                ps.ps5000aSetChannel(self.dev_conf.mode.handle, chan.channel_id, int(chan.active), chan.coupling, chan.range, chan.offset)
 
     def run_setup(self, *args):
         """

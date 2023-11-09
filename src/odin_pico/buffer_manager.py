@@ -5,8 +5,6 @@ import logging
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.pico_util import PicoUtil
 
-from functools import partial
-
 from picosdk.functions import adc2mV
 
 class BufferManager():
@@ -68,7 +66,7 @@ class BufferManager():
             self.chan_range[item] = self.channels[item].range
         
         current_lv_array = []
-
+        print("Channels active", self.lv_channels_active)
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
             values = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
             # if (all(values) != 0) and (values != [0] and values !=[]):
