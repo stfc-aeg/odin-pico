@@ -131,6 +131,7 @@ function plotly_liveview(){
     var tickText = [];
     var tickVals2 = [];
     var tickText2 = [];
+    channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 
     if (play_button){
         lv_data = []
@@ -139,27 +140,20 @@ function plotly_liveview(){
             // Fetch channel range for first LV channel
             let range1 = get_range_value_mv(chan_ranges[(active_channels[0])])
 
-            // Consider offset and apply it to data
-            if (chan_offsets[(active_channels[0])] != 0) {
-                offset_key = range1 * (chan_offsets[(active_channels[0])] / 100)
-                for (let data = 0; data < data_array[0].length; data++) {
-                    ((data_array[0])[data]) += offset_key
-                }
-            }
-
             // Create first data line
             var trace_one = {
                 x: x = data_array[0].map((value, index)=> index),
                 y: y = data_array[0],
                 name: ('Channel ' + active_channels_letters[0]),
                 type: 'scatter',
+                line: {color: channel_colours[active_channels[0]]}
             }
 
             // Create the values to go on graph axes
             var stepSize = range1 / 4
             for (var i = -range1; i <= range1; i += stepSize) {
                 tickVals.push(i);
-                tickText.push(i.toFixed(2)); 
+                tickText.push(i.toFixed(1)); 
             }
             // Create the layout for the graph
             layout = {
@@ -177,84 +171,80 @@ function plotly_liveview(){
 
             // Push the data from trace_one into the lv_data list
             lv_data.push(trace_one)
-                if (active_channels.length > 1) {
+            if (active_channels.length > 1) {
 
-                    // Fetch channel range for second LV channel
-                    let range2 = get_range_value_mv(chan_ranges[(active_channels[1])])
+                // Fetch channel range for second LV channel
+                let range2 = get_range_value_mv(chan_ranges[(active_channels[1])])
 
-                    // Consider offset and apply it to data
-                    if (chan_offsets[(active_channels[1])] != 0) {
-                        offset_key = range2 * (chan_offsets[(active_channels[1])] / 100)
-                        for (let data = 0; data < data_array[1].length; data++) {
-                            ((data_array[1])[data]) += offset_key
-                        }
-                    }
-
-                    // Create the second data line for the graph
-                    var trace_two = {
-                        x: x = data_array[1].map((value, index) => index),
-                        y: data_array[1],
-                        name: ('Channel ' + active_channels_letters[1]),
-                        yaxis: 'y2',
-                        type: 'scatter',
-                    }
-
-                    // Create labels for graph axes
-                    var stepSize2 = range2 / 4
-                    for (var i = -range2; i <= range2; i += stepSize2) {
-                        tickVals2.push(i);
-                        tickText2.push(i.toFixed(2)); 
-                    }
-
-                    // Add second data line to lv_data
-                    lv_data.push(trace_two)
-
-                    // Create layout for plotly graph, with two axes
-                    layout = {
-                        title: 'Live view of PicoScope traces',
-                        margin: { t: 50, b: 60 },
-                        xaxis: { title: 'Sample Interval'},
-                        yaxis: {
-                            title: ('Channel ' + active_channels_letters[0] +  ' Voltage (mV)'),
-                            automargin: true,
-                            range: [-range1, range1],
-                            tickvals: tickVals,
-                            ticktext: tickText,
-                        },
-                        yaxis2: {
-                            title: ('Channel ' + active_channels_letters[1] + ' Voltage (mV)'),
-                            range:[-range2, range2],
-                            overlaying: 'y',
-                            side: 'right',
-                            tickvals: tickVals2,
-                            ticktext: tickText2,
-                        autosize: true,
-                        }
-                    }           
+                // Create the second data line for the graph
+                var trace_two = {
+                    x: x = data_array[1].map((value, index) => index),
+                    y: data_array[1],
+                    name: ('Channel ' + active_channels_letters[1]),
+                    yaxis: 'y2',
+                    type: 'scatter',
+                    line: {color: channel_colours[active_channels[1]]}
                 }
-            
-            // Create the plotly graph
-            Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout)
-        }
-        else {
-            console.log("Empty", empty_array)
-            console.log("Sample", sample_list)
-            let range = get_range_value_mv(chan_ranges[0])
-            trace_1 = {
-                x: x = sample_list,
-                y: y = empty_array,
-                type: "scatter"
+
+                // Create labels for graph axes
+                var stepSize2 = range2 / 4
+                for (var i = -range2; i <= range2; i += stepSize2) {
+                    tickVals2.push(i);
+                    tickText2.push(i.toFixed(1)); 
+                }
+
+                // Add second data line to lv_data
+                lv_data.push(trace_two)
+
+                // Create layout for plotly graph, with two axes
+                layout = {
+                    title: 'Live view of PicoScope traces',
+                    margin: { t: 50, b: 60},
+                    xaxis: { title: 'Sample Interval'},
+                    yaxis: {
+                        title: ('Channel ' + active_channels_letters[0] +  ' Voltage (mV)'),
+                        automargin: true,
+                        range: [-range1, range1],
+                        tickvals: tickVals,
+                        ticktext: tickText,
+                    },
+                    yaxis2: {
+                        title: ('Channel ' + active_channels_letters[1] + ' Voltage (mV)'),
+                        range:[-range2, range2],
+                        overlaying: 'y',
+                        side: 'right',
+                        tickvals: tickVals2,
+                        ticktext: tickText2,
+                    autosize: true,
+                    },
+                    legend: {
+                        orientation: "h",
+                    }
+                }           
             }
+        }
+        // If no data is passed through, a graph should still be shown
+        else {
+
+            // Use range from channel a
+            let range = get_range_value_mv(chan_ranges[0])
+
+            // Create the gaps between each axis label
             var stepSize = range / 4
             for (var i = -range; i <= range; i += stepSize) {
                 tickVals.push(i);
                 tickText.push(i.toFixed(2)); 
             }
+
+            // Create layout for empty graph
             layout = {
                 title: 'Live view of PicoScope traces',
                 autosize: true,
-                margin: { t: 50, b: 60 },
-                xaxis: { title: 'Sample Interval'},
+                margin: { t: 50, b: 60},
+                xaxis: {
+                    title: 'Sample Interval',
+                    range: [0, samples],
+                },
                 yaxis: {
                     title: ('Channel Voltage (mV)'),
                     range:[-range, range],
@@ -262,49 +252,9 @@ function plotly_liveview(){
                     ticktext: tickText,
                 },
             }
-            lv_data.push(trace_1)
         }
-        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout)
-        // var trace_one = {
-        //     x: x = data_array[0].map((value, index) => index),                
-        //     y: data_array[0],
-        //     name: 'Channel A Data',
-        //     type: 'scatter',
-        // };
-
-//         layout = {
-//             title: 'Live view of PicoScope traces',
-//             yaxis: {
-//                 title: 'Channel A Voltage (mV)',
-//                 titlefront: {color: 'rgb(70, 250, 0)'},
-//                 tickfont: {color: 'rgb(70, 250, 0'},
-//             },
-//             yaxis2: {
-//                 title: 'Channel B Voltage (mV)',
-//                 margin: { t: 40, b: 40 },
-//                 titlefront: {color: 'rgb(250, 0, 0)'},
-//                 tickfont: {color: 'rgb(250, 0, 0)'},
-//                 overlaying: 'y',
-//                 side: 'right',
-//                 height: 500,
-// //                autosize: false
-//                 autosize: true
-//             }
-//         };
-
-        // Plotly.newPlot( scope_lv, [{
-        //     x: x = data_array[0].map((value, index) => index),                
-        //     y: data_array[0] }], {
-        //         title: 'Live view of PicoScope traces',
-        //         margin: { t: 40, b: 40 },
-        //         xaxis: { title: 'Sample Interval' },
-        //         yaxis: { title: 'Voltage (mV)',
-        //                 range: [-range, range],
-        //                 tickvals: tickVals,
-        //                 ticktext: tickText },
-        //         height: 300,
-        //         autosize: true                    
-        //         });
+        // Create the plotly graph
+        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true, displaylogo: false})
 
         scope_pha = document.getElementById('scope_pha');
         Plotly.newPlot( scope_pha, [{
@@ -316,10 +266,6 @@ function plotly_liveview(){
                 xaxis: { title: 'Energy level (ADC_Counts)'} });
         }
         }
-//     else {
-//         return;
-//     }
-// }
 
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());

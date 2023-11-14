@@ -143,7 +143,7 @@ class PicoDevice():
                 if (time.time() - start_time >= 0.25):
                     start_time = time.time()
                     self.get_cap_count()
-                    print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
+#                    print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
 
                     if (self.prev_seg_caps == self.seg_caps):
                         self.pico_status.flags.system_state = "Waiting for trigger"

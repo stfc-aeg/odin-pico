@@ -146,7 +146,7 @@ class PicoController():
             self.update_loop()
         # Set initial state of the verification system
         self.verify_settings()
-        print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
+        # print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
 
     def get_dc_value(self, obj, chan_name, attr_name):
         try:

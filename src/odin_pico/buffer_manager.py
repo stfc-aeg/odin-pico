@@ -21,6 +21,7 @@ class BufferManager():
         self.lv_active_channels = [False] * 4
         self.lv_channel_arrays = []
         self.chan_range = [0] * 4
+        self.chan_offsets = [0] * 4
         self.lv_pha = []
         self.lv_channels_active = []
 
@@ -62,21 +63,30 @@ class BufferManager():
             #self.lv_pha.append(adc2mV(b[0], chan_range, self.dev_conf.meta_dat.max_adc))
             self.lv_pha.append(b)
 
-        for item in self.lv_active_channels:
-            self.chan_range[item] = self.channels[item].range
-        
-        current_lv_array = []
-        print("Channels active", self.lv_channels_active)
-        for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
-            values = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
-            # if (all(values) != 0) and (values != [0] and values !=[]):
-            #     current_lv_array.append(values)
-            # else:
-            #     current_lv_array.append("Error")
-            current_lv_array.append(values)
-            # current_lv_array.append(c)
+        # Find ranges and offsets for channels
+        for channel in range(4):
+            self.chan_range[channel] = self.channels[channel].range
+            self.chan_offsets[channel] = self.channels[channel].offset
 
-        self.lv_channel_arrays = current_lv_array
+        current_lv_array = []
+        for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
+
+            # Find current data, along with channel range and offset
+            values = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
+            current_offset = self.chan_offsets[c]
+            current_range = self.util.get_range_value_mv(self.chan_range[c])
+            offset_key = ((current_offset/100) * current_range)
+
+            # Adjust values for offset, unless offset is 0
+            if current_offset != 0:
+                for value in range(len(values)):
+                    values[value] = values[value] + offset_key
+
+            current_lv_array.append(values)
+
+        # Replaces current data as long as new data is not blank
+        if current_lv_array != []:
+            self.lv_channel_arrays = current_lv_array
 
     def clear_arrays(self):
         """
@@ -87,3 +97,4 @@ class BufferManager():
         for array in arrays:
             array.clear()
         self.chan_range = [0] * 4
+        self.chan_offsets = [0] * 4
