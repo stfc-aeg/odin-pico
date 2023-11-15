@@ -25,12 +25,14 @@ class PicoAnalysis():
             traces and saves the information into a np.array in a dataset inside the file
             containing the raw adc_counts dataset
         """
-                
-        self.buffer_manager.lv_pha.clear()
+        
+        logging.debug("Analysis thingy has been called")
+        # self.buffer_manager.lv_pha.clear()
         self.pico_status.flags.system_state = "Connected to Picoscope, calculating PHA"
 
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
             peak_values = []
+            print("Len(b)", len(b))
             # Iterate through the channel array to expose each capture as b[i]
             for i in range(len(b)):
                 data = b[i]
@@ -41,3 +43,5 @@ class PicoAnalysis():
             counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range,self.dev_conf.pha.upper_range))
             # Combine the bin_edge's and counts into one np.array
             self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
+            # print("Pha arrays 0", self.buffer_manager.pha_arrays[0])
+            # print("Pha arrays 1", self.buffer_manager.pha_arrays[1])

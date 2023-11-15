@@ -11,6 +11,7 @@ class ChannelConfig:
     offset: float = 0.0
     _coupling: int = 0
     _range: int = 0    
+    pha_active: bool = False
 
     util: PicoUtil = field(default_factory=PicoUtil)
 

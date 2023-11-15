@@ -144,7 +144,16 @@ div.content-container {
     align-items: center;
 }
 
+#pha-active-channels {
+    display: flex;
+    align-items: center;
+}
+
 #live-view-form {
+  padding-left: 8px;
+}
+
+#pha-active-form {
   padding-left: 8px;
 }
 

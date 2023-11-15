@@ -57,7 +57,8 @@ class PicoController():
                 'live_view': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'live_view'), partial(self.set_lv_channel_active, self.dev_conf, f'channel_{name}', 'live_view')),
                 'coupling': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'coupling'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'coupling')),
                 'range': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'range'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'range')),
-                'offset': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'offset'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'offset'))
+                'offset': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'offset'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'offset')),
+                'pha_active': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'pha_active'), partial(self.set_pha_channel_active, self.dev_conf, f'channel_{name}', 'pha_active'))
                 })
 
         pico_trigger = ParameterTree({
@@ -104,20 +105,14 @@ class PicoController():
             'pha': pico_pha
         })
 
-        # lv_data_tree = ParameterTree({
-        #      'lv_data_a': (self.lv_data, None),
-        #      'lv_data_b': (self.lv_data, None),
-        #      'lv_data_c': (self.lv_data, None),
-        #      'lv_data_d': (self.lv_data, None),
-        # })
-
         live_view = ParameterTree({
             'active_channels': (lambda: self.buffer_manager.lv_active_channels, None),
+            'pha_active_channels': (lambda: self.buffer_manager.pha_active_channels, None),
             'preview_channel': (lambda: self.dev_conf.preview_channel, partial(self.set_dc_value, self.dev_conf, "preview_channel")),
             'pha_data': (self.pha_data, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
-            'lv_data': (self.lv_data, None),
+            'lv_data': (lambda: self.buffer_manager.lv_channel_arrays, None),
         })
 
         pico_commands = ParameterTree({
@@ -177,14 +172,29 @@ class PicoController():
         else:
             self.buffer_manager.lv_active_channels[3] = value
 
-#        print("Channel", chan_name)
-
         try:
             channel_dc = getattr(obj, chan_name)
             setattr(channel_dc, attr_name, value)
         except AttributeError:
             pass
    
+    def set_pha_channel_active(self, obj, chan_name, attr_name, value):
+        
+        if chan_name == 'channel_a':
+            self.buffer_manager.pha_active_channels[0] = value
+        elif chan_name == 'channel_b':
+            self.buffer_manager.pha_active_channels[1] = value
+        elif chan_name == 'channel_c':
+            self.buffer_manager.pha_active_channels[2] = value
+        else:
+            self.buffer_manager.pha_active_channels[3] = value
+
+        try:
+            channel_dc = getattr(obj, chan_name)
+            setattr(channel_dc, attr_name, value)
+        except AttributeError:
+            pass
+
     def verify_settings(self):
         """Verifies all picoscope settings, sets status of individual groups of settings"""
 
@@ -290,11 +300,7 @@ class PicoController():
             self.pico.assign_pico_memory()
             self.pico.run_block()
             self.buffer_manager.save_lv_data()
-
-    def lv_data(self):
-        """Returns array of the last captured trace, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
-
-        return self.buffer_manager.lv_channel_arrays    
+            # self.analysis.PHA_one_peak()
 
     def pha_data(self):
         """ Returns array of the last calculated PHA, that has been stored in the buffer manager, for a channel selected by the user in the UI"""

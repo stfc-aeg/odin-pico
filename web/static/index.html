@@ -373,7 +373,7 @@
                         <div class="panel-body">
                               <div class="row">
                                 <div class="col-sm-5" id="live-view-channels">
-                                <span>Select channels for Live View: </span>
+                                <span>Select Live View Channels: </span>
                                 <form class="custom-form" id="live-view-form">
                                   <fieldset class="custom-fieldset">
                                     <div class="custom-div-a">
@@ -395,23 +395,35 @@
                                   </fieldset>
                                 </form>
                                 </div>
-                                <div class="col-sm-5">
-                                  <span>Select channel to view PHA for: </span>
-                                  <select id="lv-source" onchange="commit_int_adapter('lv-source','live_view','preview_channel')">
-                                    <option value="" selected disabled hidden> </option>
-                                    <option valueA="True">Channel A</option>
-                                    <option valueB="True">Channel B</option>
-                                    <option valueC="True">Channel C</option>
-                                    <option valueD="True">Channel D</option>
-                                  </select>
+                                <div class="col-sm-5" id="pha-active-channels">
+                                <span>Select PHA Channels:</span>
+                                <form class="custom-form" id="pha-active-form">
+                                  <fieldset class="custom-fieldset">
+                                    <div class = "custom-div-a">
+                                      <input type="checkbox" id="pha-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('pha-a-active','settings/channels/a/','pha_active')">
+                                      <label for="channel-a" class="custom-label">A</label>
+                                    </div>
+                                    <div class = "custom-div-b">
+                                      <input type="checkbox" id="pha-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('pha-b-active','settings/channels/b/','pha_active')">
+                                      <label for="channel-b" class="custom-label">B</label>
+                                    </div>
+                                    <div class = "custom-div-c">
+                                      <input type="checkbox" id="pha-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('pha-c-active','settings/channels/c/','pha_active')">
+                                      <label for="channel-c" class="custom-label">C</label>
+                                    <div class = "custom-div-d">
+                                    </div>
+                                      <input type="checkbox" id="pha-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('pha-d-active','settings/channels/d/','pha_active')">
+                                      <label for="channel-d" class="custom-label">D</label>
+                                    </div>
+                                  </fieldset>
+                                </form>
                                 </div>
-                                  <div class="col-sm-2">
-                                <button id="p_p_button" class="icon-button" onclick="toggle_play()">
-                                  <span class="material-icons">pause</span>
-                                </button>
+                                <td class="toggle-container">
+                                  <button id="p_p_button" class="icon-button" onclick="toggle_play()">
+                                    <span class="material-icons">pause</span>
+                                  </button>
+                                </td>
                               </div>
-
-                            </div>
                             <table class="table table-borderless">
                             <tr>
                               <td colspan="2">

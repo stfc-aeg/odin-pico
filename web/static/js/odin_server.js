@@ -20,6 +20,14 @@ var focusFlags = {
   "channel-b-offset": false,
   "channel-c-offset": false,
   "channel-d-offset": false,
+  "liveview-a-active": false,
+  "liveview-b-active": false,
+  "liveview-c-active": false,
+  "liveview-d-active": false,
+  "pha-a-active": false,
+  "pha-b-active": false,
+  "pha-c-active": false,
+  "pha-d-active": false,
   "trigger-enable": false,
   "trigger-source": false,
   "trigger-direction": false,
@@ -34,7 +42,6 @@ var focusFlags = {
   "pha-num-bins": false,
   "pha-lower-range": false,
   "pha-upper-range": false,
-  "lv-source": false,
 };
 // Initialize a timers object to keep track of the timers for each field
 var timers = {};
@@ -263,7 +270,8 @@ function plotly_liveview(){
                 title: 'Last PHA from recorded traces',
                 margin: { t: 50, b: 60 },
                 yaxis: { title: 'Counts'},
-                xaxis: { title: 'Energy level (ADC_Counts)'} });
+                xaxis: { title: 'Energy level (ADC_Counts)'} },
+                {scrollZoom: true});
         }
         }
 
@@ -317,6 +325,16 @@ function sync_with_adapter(){
         if (!focusFlags["channel-b-offset"]) {$("#channel-b-offset").val(response.device.settings.channels.b.offset)}
         if (!focusFlags["channel-c-offset"]) {$("#channel-c-offset").val(response.device.settings.channels.c.offset)}
         if (!focusFlags["channel-d-offset"]) {$("#channel-d-offset").val(response.device.settings.channels.d.offset)}
+
+        if (!focusFlags["liveview-a-active"]) {document.getElementById("liveview-a-active").checked=(response.device.settings.channels.a.live_view)}
+        if (!focusFlags["liveview-b-active"]) {document.getElementById("liveview-b-active").checked=(response.device.settings.channels.b.live_view)}
+        if (!focusFlags["liveview-c-active"]) {document.getElementById("liveview-c-active").checked=(response.device.settings.channels.c.live_view)}
+        if (!focusFlags["liveview-d-active"]) {document.getElementById("liveview-d-active").checked=(response.device.settings.channels.d.live_view)}
+
+        if (!focusFlags["pha-a-active"]) {document.getElementById("pha-a-active").checked=(response.device.settings.channels.a.pha_active)}
+        if (!focusFlags["pha-b-active"]) {document.getElementById("pha-b-active").checked=(response.device.settings.channels.b.pha_active)}
+        if (!focusFlags["pha-c-active"]) {document.getElementById("pha-c-active").checked=(response.device.settings.channels.c.pha_active)}
+        if (!focusFlags["pha-d-active"]) {document.getElementById("pha-d-active").checked=(response.device.settings.channels.d.pha_active)}
         
         if (!focusFlags["trigger-enable"]) {
             if (response.device.settings.trigger.active == true){$("#trigger-enable").val("true")}
@@ -379,8 +397,6 @@ function sync_with_adapter(){
 
         
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
-
-        document.getElementById('lv-source').value = response.device.live_view.preview_channel
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"

@@ -24,6 +24,7 @@ class BufferManager():
         self.chan_offsets = [0] * 4
         self.lv_pha = []
         self.lv_channels_active = []
+        self.pha_active_channels = [False] * 4
 
     def generate_arrays(self, *args):
         """
@@ -54,14 +55,18 @@ class BufferManager():
     def save_lv_data(self):
         """
             Return a live view of traces being captured.
-        """
+            """
 
+        temp = []
         for c, b in zip(self.active_channels, self.pha_arrays):
             for chan in self.channels:
                 if chan.channel_id == c:
                     chan_range = chan.range
-            #self.lv_pha.append(adc2mV(b[0], chan_range, self.dev_conf.meta_dat.max_adc))
-            self.lv_pha.append(b)
+            temp.append(adc2mV(b[0], chan_range, self.dev_conf.meta_dat.max_adc))
+            # self.lv_pha.append(b)
+            # if temp [0] != 0:
+            print("Temp", temp)
+            self.lv_pha = temp
 
         # Find ranges and offsets for channels
         for channel in range(4):
