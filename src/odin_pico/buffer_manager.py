@@ -13,7 +13,7 @@ class BufferManager():
         self.util = PicoUtil()
         self.overflow = None
         self.channels = [self.dev_conf.channel_a, self.dev_conf.channel_b, self.dev_conf.channel_c, self.dev_conf.channel_d]
-        self.active_channels = [False] * 4
+        self.active_channels = []
         self.np_channel_arrays = []
         self.pha_arrays = []
         self.trigger_times = []
@@ -24,7 +24,8 @@ class BufferManager():
         self.chan_offsets = [0] * 4
         self.lv_pha = []
         self.lv_channels_active = []
-        self.pha_active_channels = [False] * 4
+        self.pha_channels_active = [False] * 4
+        self.pha_active_channels = []
 
     def generate_arrays(self, *args):
         """
@@ -42,36 +43,45 @@ class BufferManager():
         for chan in self.channels:
             if (chan.active is True):
                 self.active_channels.append(chan.channel_id)
-
-        for chan in range(4):
-            if (self.channels[chan].live_view is True):
-                self.lv_channels_active.append(chan)
+                if (chan.live_view is True):
+                    self.lv_channels_active.append(chan.channel_id)
+                if (chan.pha_active is True):
+                    self.pha_channels_active[chan.channel_id] = True
+                    self.pha_active_channels.append(chan.channel_id)
         
         samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
-        for i in range(len(self.lv_active_channels)):
-            if self.lv_active_channels[i] == True:
-                self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
 
+        for i in range(len(self.lv_channels_active)):
+            if self.channels[self.lv_channels_active[i]].active == True:
+                self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
+                
     def save_lv_data(self):
         """
             Return a live view of traces being captured.
             """
 
-        temp = []
-        for c, b in zip(self.active_channels, self.pha_arrays):
-            for chan in self.channels:
-                if chan.channel_id == c:
-                    chan_range = chan.range
-            temp.append(adc2mV(b[0], chan_range, self.dev_conf.meta_dat.max_adc))
-            # self.lv_pha.append(b)
-            # if temp [0] != 0:
-            print("Temp", temp)
-            self.lv_pha = temp
-
         # Find ranges and offsets for channels
         for channel in range(4):
             self.chan_range[channel] = self.channels[channel].range
             self.chan_offsets[channel] = self.channels[channel].offset
+
+        current_pha_data = []
+        # print("Buffer BM", len(self.pha_arrays))
+
+        for c, b in zip(self.pha_active_channels, self.pha_arrays):
+            # temp.append(adc2mV(b[0], chan_range, self.dev_conf.meta_data.max_adc))
+            current_pha_data.append(b.tolist())
+            # self.lv_pha.append(b)
+            # if temp [0] != 0:
+            # self.lv_pha = temp[0]
+
+        # if current_pha_data != self.lv_pha:
+        #     self.lv_pha = current_pha_data
+
+        self.lv_pha = current_pha_data
+
+        # if self.pha_arrays != []:
+        #     print("After SLVD", self.lv_pha)
 
         current_lv_array = []
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
@@ -97,9 +107,10 @@ class BufferManager():
         """
             Removes previously created buffers from the buffer_manager.
         """
-        arrays = [self.active_channels, self.pha_arrays, self.trigger_times, self.np_channel_arrays, 
-                  self.lv_channels_active]#, self.lv_pha]
+        arrays = [self.active_channels, self.trigger_times, self.np_channel_arrays, 
+                  self.lv_channels_active, self.pha_active_channels]#, self.lv_pha]
         for array in arrays:
             array.clear()
         self.chan_range = [0] * 4
         self.chan_offsets = [0] * 4
+        self.pha_channels_active = [False] * 4

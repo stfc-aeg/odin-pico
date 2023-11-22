@@ -54,11 +54,11 @@ class PicoController():
                 'channel_id': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'channel_id'), None),
                 'active': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'active'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'active')),
                 'verified': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'verified'), None),
-                'live_view': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'live_view'), partial(self.set_lv_channel_active, self.dev_conf, f'channel_{name}', 'live_view')),
+                'live_view': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'live_view'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'live_view')),
                 'coupling': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'coupling'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'coupling')),
                 'range': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'range'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'range')),
                 'offset': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'offset'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'offset')),
-                'pha_active': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'pha_active'), partial(self.set_pha_channel_active, self.dev_conf, f'channel_{name}', 'pha_active'))
+                'pha_active': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'pha_active'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'pha_active'))
                 })
 
         pico_trigger = ParameterTree({
@@ -106,10 +106,10 @@ class PicoController():
         })
 
         live_view = ParameterTree({
-            'active_channels': (lambda: self.buffer_manager.lv_active_channels, None),
-            'pha_active_channels': (lambda: self.buffer_manager.pha_active_channels, None),
+            'active_channels': (lambda: self.buffer_manager.lv_channels_active, None),
+            'pha_active_channels': (lambda: self.buffer_manager.pha_channels_active, None),
             'preview_channel': (lambda: self.dev_conf.preview_channel, partial(self.set_dc_value, self.dev_conf, "preview_channel")),
-            'pha_data': (self.pha_data, None),
+            'pha_data': (lambda: self.buffer_manager.lv_pha, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
             'lv_data': (lambda: self.buffer_manager.lv_channel_arrays, None),
@@ -154,40 +154,6 @@ class PicoController():
         setattr(obj, attr_name, value)
     
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
-
-        try:
-            channel_dc = getattr(obj, chan_name)
-            setattr(channel_dc, attr_name, value)
-        except AttributeError:
-            pass
-
-    def set_lv_channel_active(self, obj, chan_name, attr_name, value):
-
-        if chan_name == 'channel_a':
-            self.buffer_manager.lv_active_channels[0] = value
-        elif chan_name == 'channel_b':
-            self.buffer_manager.lv_active_channels[1] = value
-        elif chan_name == 'channel_c':
-            self.buffer_manager.lv_active_channels[2] = value
-        else:
-            self.buffer_manager.lv_active_channels[3] = value
-
-        try:
-            channel_dc = getattr(obj, chan_name)
-            setattr(channel_dc, attr_name, value)
-        except AttributeError:
-            pass
-   
-    def set_pha_channel_active(self, obj, chan_name, attr_name, value):
-        
-        if chan_name == 'channel_a':
-            self.buffer_manager.pha_active_channels[0] = value
-        elif chan_name == 'channel_b':
-            self.buffer_manager.pha_active_channels[1] = value
-        elif chan_name == 'channel_c':
-            self.buffer_manager.pha_active_channels[2] = value
-        else:
-            self.buffer_manager.pha_active_channels[3] = value
 
         try:
             channel_dc = getattr(obj, chan_name)
@@ -302,18 +268,6 @@ class PicoController():
             self.buffer_manager.save_lv_data()
             # self.analysis.PHA_one_peak()
 
-    def pha_data(self):
-        """ Returns array of the last calculated PHA, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
-
-        array = None
-
-        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.lv_pha):
-            if (c == self.dev_conf.preview_channel):
-                array = b.tolist()
-        if array is None:
-            return []
-        else:
-            return array
 
 ##### Adapter specific functions below #####
 

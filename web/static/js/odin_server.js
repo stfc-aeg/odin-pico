@@ -261,19 +261,28 @@ function plotly_liveview(){
             }
         }
         // Create the plotly graph
-        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true, displaylogo: false})
+        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
+
+        pha_data = []
+
 
         scope_pha = document.getElementById('scope_pha');
-        Plotly.newPlot( scope_pha, [{
-            x: bin_edges,
-            y: counts }], {
-                title: 'Last PHA from recorded traces',
-                margin: { t: 50, b: 60 },
-                yaxis: { title: 'Counts'},
-                xaxis: { title: 'Energy level (ADC_Counts)'} },
-                {scrollZoom: true});
+        if (pha_data.length != 0) {
+            console.log("First bit", pha_array[0])
+            console.log("Next bit", pha_array[1])
+            Plotly.newPlot( scope_pha, [{
+                x: (pha_array[0]),
+                y: (pha_array[1]) }], {
+                    title: 'Last PHA from recorded traces',
+                    margin: { t: 50, b: 60 },
+                    yaxis: { title: 'Counts'},
+                    xaxis: { title: 'Energy level (ADC_Counts)'} },
+                    {scrollZoom: true});
+                }
+            }
         }
-        }
+
+        Plotly.newPlot((document.getElementById('scope_pha')), pha_data)
 
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
@@ -358,24 +367,23 @@ function sync_with_adapter(){
         if (!focusFlags["pha-lower-range"]) {$("#pha-lower-range").val(response.device.settings.pha.lower_range)}
         if (!focusFlags["pha-upper-range"]) {$("#pha-upper-range").val(response.device.settings.pha.upper_range)}
 
-        // Check the lv_data array contains data, if it does, assign the data locally
+        // Assign LV data locally
         try{
             data_array = response.device.live_view.lv_data
-//            if ((response.device.live_view.lv_data).length != 0) {
-//                data_array = response.device.live_view.lv_data
-//           } else {
-//                console.log("\n\nEmpty LV Array not updating graph")
-//            }
+
         } catch {
                 console.log("Error in assigning LV values")
             }
-
+        
+        pha_data = []
         try{   
             if ((response.device.live_view.pha_data).length != 0){
-                bin_edges = response.device.live_view.pha_data[0]
-                counts = response.device.live_view.pha_data[1]
-                console.log("PHA DATA:",bin_edges[50], counts[50])
-                console.log("pha response: ", response.device.live_view.pha_data)
+                pha_array = (response.device.live_view.pha_data)[0]
+
+                // bin_edges = response.device.live_view.pha_data[0]
+                // counts = response.device.live_view.pha_data[1]
+                // console.log("PHA DATA:",bin_edges[50], counts[50])
+                // console.log("pha response: ", response.device.live_view.pha_data)
             } else {
                 console.log("\n\nEmpty PHA Array not updating graph")
             }
@@ -476,15 +484,11 @@ function sync_with_adapter(){
             }
             document.getElementById("system-state").textContent = response.device.flags.system_state
 
-            channels_active = response.device.live_view.active_channels
-            active_channels = []
+            active_channels = response.device.live_view.active_channels
             active_channels_letters = []
             letters = ['A', 'B', 'C', 'D']
-            for (let chan = 0; chan < 4; chan++) {
-                if (channels_active[chan] == true) {
-                    active_channels.push(chan)
-                    active_channels_letters.push(letters[chan])
-                }
+            for (let chan = 0; chan < active_channels.length; chan++) {
+                active_channels_letters.push(letters[active_channels[chan]])
             }
 
             if (active_channels.length == 0) {

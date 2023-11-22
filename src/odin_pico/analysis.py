@@ -26,22 +26,59 @@ class PicoAnalysis():
             containing the raw adc_counts dataset
         """
         
-        logging.debug("Analysis thingy has been called")
-        # self.buffer_manager.lv_pha.clear()
+        self.buffer_manager.pha_arrays.clear()
         self.pico_status.flags.system_state = "Connected to Picoscope, calculating PHA"
 
+        # for item in self.buffer_manager.active_channels:
+        #     for chan in self.buffer_manager.pha_active_channels:
+        #         if chan == item:
+                    
+        # If chan is pha active, it will definitely be active                
+
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
-            peak_values = []
-            print("Len(b)", len(b))
-            # Iterate through the channel array to expose each capture as b[i]
-            for i in range(len(b)):
-                data = b[i]
-                # Find the peaks in each capture, using bin_width for grouping peaks
-                peak_pos = np.argmax(data)
-                peak_values.append(data[peak_pos])
-            # Use np.histogram to calculate the counts for each bin, based on the peak_values data
-            counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range,self.dev_conf.pha.upper_range))
-            # Combine the bin_edge's and counts into one np.array
-            self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
-            # print("Pha arrays 0", self.buffer_manager.pha_arrays[0])
-            # print("Pha arrays 1", self.buffer_manager.pha_arrays[1])
+            if self.buffer_manager.pha_channels_active[c] == True:
+                print("Doing it for channel", c)
+                peak_values = []
+                for i in range(len(b)):
+                    data = b[i]
+                    peak_pos = np.argmax(data)
+                    peak_values.append(data[peak_pos])
+                counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range, self.dev_conf.pha.upper_range))
+                self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
+        # print("After analysis", self.buffer_manager.pha_arrays)
+        # print("Before BM", len(self.buffer_manager.pha_arrays))
+
+
+
+
+        # for chan in self.buffer_manager.pha_channels_active:
+        #     peak_values = []
+        #     print(("All", self.buffer_manager.np_channel_arrays))
+        #     print("Chan", self.buffer_manager.np_channel_arrays[chan])
+        #     # Iterate through the channel array to expose each capture as b[i]
+        #     for i in range(len(self.buffer_manager.np_channel_arrays)):
+        #         if (self.buffer_manager.np_channel_arrays != []):
+        #             data = self.buffer_manager.np_channel_arrays[i]
+        #             # Find the peaks in each capture, using bin_width for grouping peaks
+        #         peak_pos = np.argmax(data)
+        #         peak_values.append(data[peak_pos])
+        #     # Use np.histogram to calculate the counts for each bin, based on the peak_values data
+        #     counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range,self.dev_conf.pha.upper_range))
+        #     # Combine the bin_edge's and counts into one np.array
+        #     self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
+
+
+
+        # for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
+        #     peak_values = []
+        #     # Iterate through the channel array to expose each capture as b[i]
+        #     for i in range(len(b)):
+        #         data = b[i]
+        #         # Find the peaks in each capture, using bin_width for grouping peaks
+        #         peak_pos = np.argmax(data)
+        #         peak_values.append(data[peak_pos])
+        #     # Use np.histogram to calculate the counts for each bin, based on the peak_values data
+        #     counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range,self.dev_conf.pha.upper_range))
+        #     # Combine the bin_edge's and counts into one np.array
+        #     self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
+        #     # print("PHA Array", self.buffer_manager.pha_arrays)
