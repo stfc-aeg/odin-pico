@@ -107,7 +107,7 @@ class PicoController():
 
         live_view = ParameterTree({
             'active_channels': (lambda: self.buffer_manager.lv_channels_active, None),
-            'pha_active_channels': (lambda: self.buffer_manager.pha_channels_active, None),
+            'pha_active_channels': (lambda: self.buffer_manager.current_pha_channels, None),
             'preview_channel': (lambda: self.dev_conf.preview_channel, partial(self.set_dc_value, self.dev_conf, "preview_channel")),
             'pha_data': (lambda: self.buffer_manager.lv_pha, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),

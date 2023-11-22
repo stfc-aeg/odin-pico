@@ -26,6 +26,7 @@ class BufferManager():
         self.lv_channels_active = []
         self.pha_channels_active = [False] * 4
         self.pha_active_channels = []
+        self.current_pha_channels = []
 
     def generate_arrays(self, *args):
         """
@@ -66,22 +67,11 @@ class BufferManager():
             self.chan_offsets[channel] = self.channels[channel].offset
 
         current_pha_data = []
-        # print("Buffer BM", len(self.pha_arrays))
 
         for c, b in zip(self.pha_active_channels, self.pha_arrays):
-            # temp.append(adc2mV(b[0], chan_range, self.dev_conf.meta_data.max_adc))
             current_pha_data.append(b.tolist())
-            # self.lv_pha.append(b)
-            # if temp [0] != 0:
-            # self.lv_pha = temp[0]
-
-        # if current_pha_data != self.lv_pha:
-        #     self.lv_pha = current_pha_data
 
         self.lv_pha = current_pha_data
-
-        # if self.pha_arrays != []:
-        #     print("After SLVD", self.lv_pha)
 
         current_lv_array = []
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
