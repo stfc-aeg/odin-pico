@@ -49,13 +49,14 @@ var timers = {};
 // Time limit (in milliseconds) after which to blur the input
 var timeLimit = 10000; // 5 seconds
 
-counts = new Int16Array()
-bin_edges = new Int16Array()
-play_button = true;
+var pha_array = []
+
+play_button_lv = true;
 
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
+    create_empty_pha_graph();
     run_sync();
 });
 
@@ -120,236 +121,252 @@ Object.keys(focusFlags).forEach(function(key) {
     });
   });
 
-function toggle_play() {
-    const button = document.getElementById('p_p_button');
-    play_button = !play_button;
+function toggle_play_lv() {
+    const button_lv = document.getElementById('p_p_button_lv');
+    play_button_lv = !play_button_lv;
     
-    if (play_button) {
-      button.innerHTML = '<span class="material-icons">pause</span>'; 
+    if (play_button_lv) {
+      button_lv.innerHTML = '<span class="material-icons">pause</span>'; 
     } else {
-      button.innerHTML = '<span class="material-icons">play_arrow</span>';
+      button_lv.innerHTML = '<span class="material-icons">play_arrow</span>';
     }
   }
 
+function toggle_play_pha() {
+    const button_pha = document.getElementById('p_p_button_pha');
+    play_button_pha = !play_button_pha;
+
+    if (play_button_pha) {
+        button_pha.innerHTML = '<span class="material-icons">pause</span>';
+    } else {
+        button_pha.innerHTML = '<span class="material-icons">play_arrow</span>';
+    }
+}
+
 function plotly_liveview(){
 
-    // Create variables for values on graph axes
-    var tickVals = [];
-    var tickText = [];
-    var tickVals2 = [];
-    var tickText2 = [];
     channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 
-    if (play_button){
+    if (play_button_lv){
+        // Create variables for values on graph axes
+        var tickVals = [];
+        var tickText = [];
+
         lv_data = []
-        if (active_channels_lv.length > 0) {
+        try {
+            if (active_channels_lv.length > 0) {
 
-            // Fetch channel range for first LV channel
-            let range1 = get_range_value_mv(chan_ranges[(active_channels_lv[0])])
+                // Fetch channel range for first LV channel
+                let range1 = get_range_value_mv(chan_ranges[(active_channels_lv[0])])
 
-            // Create first data line
-            var trace_one = {
-                x: x = data_array[0].map((value, index)=> index),
-                y: y = data_array[0],
-                name: ('Channel ' + active_channels_lv_letters[0]),
-                type: 'scatter',
-                line: {color: channel_colours[active_channels_lv[0]]}
-            }
-
-            // Create the values to go on graph axes
-            var stepSize = range1 / 4
-            for (var i = -range1; i <= range1; i += stepSize) {
-                tickVals.push(i);
-                tickText.push(i.toFixed(1)); 
-            }
-
-            // Create the layout for the graph
-            layout = {
-                title: 'Live view of PicoScope traces',
-                margin: { t: 50, b: 60 },
-                xaxis: { title: 'Sample Interval'},
-                yaxis: {
-                    title: ('Channel ' + active_channels_lv_letters[0] + ' Voltage (mV)'),
-                    range: [-range1, range1],
-                    tickvals: tickVals,
-                    ticktext: tickText,
-                },
-                autosize: true
-            }
-
-            // Push the data from trace_one into the lv_data list
-            lv_data.push(trace_one)
-            if (active_channels_lv.length > 1) {
-
-                // Fetch channel range for second LV channel
-                let range2 = get_range_value_mv(chan_ranges[(active_channels_lv[1])])
-
-                // Create the second data line for the graph
-                var trace_two = {
-                    x: x = data_array[1].map((value, index) => index),
-                    y: data_array[1],
-                    name: ('Channel ' + active_channels_lv_letters[1]),
-                    yaxis: 'y2',
+                // Create first data line
+                var trace_one = {
+                    x: x = data_array[0].map((value, index)=> index),
+                    y: y = data_array[0],
+                    name: ('Channel ' + active_channels_lv_letters[0]),
                     type: 'scatter',
-                    line: {color: channel_colours[active_channels_lv[1]]}
+                    line: {color: channel_colours[active_channels_lv[0]]}
                 }
 
-                // Create labels for graph axes
-                var stepSize2 = range2 / 4
-                for (var i = -range2; i <= range2; i += stepSize2) {
-                    tickVals2.push(i);
-                    tickText2.push(i.toFixed(1)); 
+                // Create the values to go on graph axes
+                var stepSize = range1 / 4
+                for (var i = -range1; i <= range1; i += stepSize) {
+                    tickVals.push(i);
+                    tickText.push(i.toFixed(1)); 
                 }
 
-                // Add second data line to lv_data
-                lv_data.push(trace_two)
-
-                // Create layout for plotly graph, with two axes
+                // Create the layout for the graph
                 layout = {
                     title: 'Live view of PicoScope traces',
-                    margin: { t: 50, b: 60},
+                    margin: { t: 50, b: 60 },
                     xaxis: { title: 'Sample Interval'},
                     yaxis: {
-                        title: ('Channel ' + active_channels_lv_letters[0] +  ' Voltage (mV)'),
-                        automargin: true,
+                        title: ('Channel ' + active_channels_lv_letters[0] + ' Voltage (mV)'),
                         range: [-range1, range1],
                         tickvals: tickVals,
                         ticktext: tickText,
                     },
-                    yaxis2: {
-                        title: ('Channel ' + active_channels_lv_letters[1] + ' Voltage (mV)'),
-                        range:[-range2, range2],
-                        overlaying: 'y',
-                        side: 'right',
-                        tickvals: tickVals2,
-                        ticktext: tickText2,
-                    autosize: true,
-                    },
-                    legend: {
-                        orientation: "h",
+                    autosize: true
+                }
+
+                // Push the data from trace_one into the lv_data list
+                lv_data.push(trace_one)
+                if (active_channels_lv.length > 1) {
+
+                    var tickVals2 = [];
+                    var tickText2 = [];           
+
+                    // Fetch channel range for second LV channel
+                    let range2 = get_range_value_mv(chan_ranges[(active_channels_lv[1])])
+
+                    // Create the second data line for the graph
+                    var trace_two = {
+                        x: x = data_array[1].map((value, index) => index),
+                        y: data_array[1],
+                        name: ('Channel ' + active_channels_lv_letters[1]),
+                        yaxis: 'y2',
+                        type: 'scatter',
+                        line: {color: channel_colours[active_channels_lv[1]]}
                     }
-                }           
+
+                    // Create labels for graph axes
+                    var stepSize2 = range2 / 4
+                    for (var i = -range2; i <= range2; i += stepSize2) {
+                        tickVals2.push(i);
+                        tickText2.push(i.toFixed(1)); 
+                    }
+
+                    // Add second data line to lv_data
+                    lv_data.push(trace_two)
+
+                    // Create layout for plotly graph, with two axes
+                    layout = {
+                        title: 'Live view of PicoScope traces',
+                        margin: { t: 50, b: 60},
+                        xaxis: { title: 'Sample Interval'},
+                        yaxis: {
+                            title: ('Channel ' + active_channels_lv_letters[0] +  ' Voltage (mV)'),
+                            automargin: true,
+                            range: [-range1, range1],
+                            tickvals: tickVals,
+                            ticktext: tickText,
+                        },
+                        yaxis2: {
+                            title: ('Channel ' + active_channels_lv_letters[1] + ' Voltage (mV)'),
+                            range:[-range2, range2],
+                            overlaying: 'y',
+                            side: 'right',
+                            tickvals: tickVals2,
+                            ticktext: tickText2,
+                        autosize: true,
+                        },
+                        legend: {
+                            orientation: "h",
+                        }
+                    }           
+                }
             }
+            // If no data is passed through, a graph should still be shown
+            else {
+
+                // Use range from channel a
+                let range = get_range_value_mv(chan_ranges[0])
+
+                // Create the gaps between each axis label
+                var stepSize = range / 4
+                for (var i = -range; i <= range; i += stepSize) {
+                    tickVals.push(i);
+                    tickText.push(i.toFixed(2)); 
+                }
+
+                // Create layout for empty graph
+                layout = {
+                    title: 'Live view of PicoScope traces',
+                    autosize: true,
+                    margin: { t: 50, b: 60},
+                    xaxis: {
+                        title: 'Sample Interval',
+                        range: [0, samples],
+                    },
+                    yaxis: {
+                        title: ('Channel Voltage (mV)'),
+                        range:[-range, range],
+                        tickvals: tickVals,
+                        ticktext: tickText,
+                    },
+                }
+            }
+            // Create the plotly graph
+            Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
+        } catch (TypeError) {
+            console.log("Type error identified")
         }
-        // If no data is passed through, a graph should still be shown
-        else {
+    }
+}
 
-            // Use range from channel a
-            let range = get_range_value_mv(chan_ranges[0])
+function update_pha_graph() {
+    console.log("Doing this!")
+    pha_data = []
 
-            // Create the gaps between each axis label
-            var stepSize = range / 4
-            for (var i = -range; i <= range; i += stepSize) {
-                tickVals.push(i);
-                tickText.push(i.toFixed(2)); 
-            }
+    scope_pha = document.getElementById('scope_pha');
 
-            // Create layout for empty graph
-            layout = {
-                title: 'Live view of PicoScope traces',
-                autosize: true,
-                margin: { t: 50, b: 60},
-                xaxis: {
-                    title: 'Sample Interval',
-                    range: [0, samples],
-                },
-                yaxis: {
-                    title: ('Channel Voltage (mV)'),
-                    range:[-range, range],
-                    tickvals: tickVals,
-                    ticktext: tickText,
-                },
-            }
+    if (pha_array.length > 0) {
+        var trace_one = {
+            x: x = bin_edges,
+            y: y = pha_array[0],
+            name: ('Channel ' + active_channels_pha_letters[0]),
+            type: 'scatter',
+            line: {color: channel_colours[active_channels_pha[0]]}
         }
-        // Create the plotly graph
-        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
 
-        pha_data = []
-
-        scope_pha = document.getElementById('scope_pha');
-
-        if (pha_array.length > 0) {
-            console.log("Channel colours", channel_colours)
-            console.log("PHA channels active", active_channels_pha)
-            var trace_one = {
-                x: x = (pha_array[0])[0],
-                y: y = (pha_array[0])[1],
-                name: ('Channel ' + active_channels_pha_letters[0]),
+        layout = {
+            title: 'Last PHA from recorded traces',
+            margin: { t: 50, b: 60 },
+            xaxis: { title: 'Energy Level (ADC_Counts)'},
+            yaxis: {
+                title: ('Channel ' + active_channels_pha_letters[0] + ' Counts'),
+                // range: [-range1, range1],
+                // tickvals: tickVals,
+                // ticktext: tickText,
+            },
+            autosize: true
+        }
+        pha_data.push(trace_one)
+        
+        if (pha_array.length > 1) {
+            var trace_two = {
+                x: x = bin_edges,
+                y: y = pha_array[1],
+                name: ('Channel ' + active_channels_pha_letters[1]),
                 type: 'scatter',
-                line: {color: channel_colours[active_channels_pha[0]]}
+                line: {color: channel_colours[active_channels_pha[1]]}
             }
+            pha_data.push(trace_two)
 
             layout = {
                 title: 'Last PHA from recorded traces',
-                margin: { t: 50, b: 60 },
-                xaxis: { title: 'Energy Level (ADC_Counts)'},
+                margin: { t: 50, b: 60},
+                xaxis: { title: 'Energy Level (ADC_Counts'},
                 yaxis: {
-                    title: ('Channel ' + active_channels_pha_letters[0] + ' Counts'),
+                    title: ('Channel ' + active_channels_pha_letters[0] +  ' Counts'),
+                    // automargin: true,
                     // range: [-range1, range1],
                     // tickvals: tickVals,
                     // ticktext: tickText,
                 },
-                autosize: true
-            }
-            pha_data.push(trace_one)
-            
-            if (pha_array.length > 1) {
-                var trace_two = {
-                    x: x = (pha_array[1])[0],
-                    y: y = (pha_array[1])[1],
-                    name: ('Channel ' + active_channels_pha_letters[1]),
-                    type: 'scatter',
-                    line: {color: channel_colours[active_channels_pha[1]]}
-                }
-                pha_data.push(trace_two)
-
-                layout = {
-                    title: 'Last PHA from recorded traces',
-                    margin: { t: 50, b: 60},
-                    xaxis: { title: 'Energy Level (ADC_Counts'},
-                    yaxis: {
-                        title: ('Channel ' + active_channels_pha_letters[0] +  ' Counts'),
-                        // automargin: true,
-                        // range: [-range1, range1],
-                        // tickvals: tickVals,
-                        // ticktext: tickText,
-                    },
-                    yaxis2: {
-                        title: ('Channel ' + active_channels_pha_letters[1] + ' Counts'),
-                        // range:[-range2, range2],
-                        overlaying: 'y',
-                        side: 'right',
-                        // tickvals: tickVals2,
-                        // ticktext: tickText2,
-                    autosize: true,
-                    },
-                    legend: {
-                        orientation: "h",
-                    }
-                }  
-            }
-        } else {
-            layout = {
-                title: 'Last PHA from recorded traces',
+                yaxis2: {
+                    title: ('Channel ' + active_channels_pha_letters[1] + ' Counts'),
+                    // range:[-range2, range2],
+                    overlaying: 'y',
+                    side: 'right',
+                    // tickvals: tickVals2,
+                    // ticktext: tickText2,
                 autosize: true,
-                margin: { t: 50, b: 60},
-                xaxis: {
-                    title: 'Energy Level (ADC_Counts)',
-                    range: [min_adc, max_adc],
                 },
-                yaxis: {
-                    title: ('Channel Counts'),
-                    // range:[-range, range],
-                    // tickvals: tickVals,
-                    // ticktext: tickText,
-                },
-            }
+                legend: {
+                    orientation: "h",
+                }
+            }  
         }
-
-        Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
-
     }
-    }            
+    Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
+}
+    
+function create_empty_pha_graph() {    
+    layout = {
+        title: 'Last PHA from recorded traces',
+        autosize: true,
+        margin: { t: 50, b: 60},
+        xaxis: {
+            title: 'Energy Level (ADC_Counts)',
+            range: [0, 10000],
+        },
+        yaxis: {
+            title: ('Channel Counts'),
+        },
+    }
+    Plotly.newPlot((document.getElementById('scope_pha')), [], layout, {scrollZoom: true})
+}           
 
 
 function run_sync(){
@@ -379,17 +396,13 @@ function get_range_value_mv(key) {
 
 function sync_with_adapter(){
     return function(response){
+
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
         
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
-        
-        if (!focusFlags["channel-a-active"]) {document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)}
-        if (!focusFlags["channel-b-active"]) {document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)}
-        if (!focusFlags["channel-c-active"]) {document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)}
-        if (!focusFlags["channel-d-active"]) {document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)}
-        
+               
         if (!focusFlags["channel-a-coupl"]) {$("#channel-a-coupl").val(response.device.settings.channels.a.coupling)}
-        if (!focusFlags["channel-b-coupl"]) {$("#channel-b-coupl").val(response.device.settings.channels.b.coupling)}
+        if (!focusFlags["channel-b-couple"]) {$("#channel-b-coupl").val(response.device.settings.channels.b.coupling)}
         if (!focusFlags["channel-c-coupl"]) {$("#channel-c-coupl").val(response.device.settings.channels.c.coupling)}
         if (!focusFlags["channel-d-coupl"]) {$("#channel-d-coupl").val(response.device.settings.channels.d.coupling)}
         
@@ -397,11 +410,16 @@ function sync_with_adapter(){
         if (!focusFlags["channel-b-range"]) {$("#channel-b-range").val(response.device.settings.channels.b.range)}
         if (!focusFlags["channel-c-range"]) {$("#channel-c-range").val(response.device.settings.channels.c.range)}
         if (!focusFlags["channel-d-range"]) {$("#channel-d-range").val(response.device.settings.channels.d.range)}
-        
+       
         if (!focusFlags["channel-a-offset"]) {$("#channel-a-offset").val(response.device.settings.channels.a.offset)}
         if (!focusFlags["channel-b-offset"]) {$("#channel-b-offset").val(response.device.settings.channels.b.offset)}
         if (!focusFlags["channel-c-offset"]) {$("#channel-c-offset").val(response.device.settings.channels.c.offset)}
         if (!focusFlags["channel-d-offset"]) {$("#channel-d-offset").val(response.device.settings.channels.d.offset)}
+
+        if (!focusFlags["channel-a-active"]) {document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)}
+        if (!focusFlags["channel-b-active"]) {document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)}
+        if (!focusFlags["channel-c-active"]) {document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)}
+        if (!focusFlags["channel-d-active"]) {document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)}
 
         if (!focusFlags["liveview-a-active"]) {document.getElementById("liveview-a-active").checked=(response.device.settings.channels.a.live_view)}
         if (!focusFlags["liveview-b-active"]) {document.getElementById("liveview-b-active").checked=(response.device.settings.channels.b.live_view)}
@@ -412,10 +430,15 @@ function sync_with_adapter(){
         if (!focusFlags["pha-b-active"]) {document.getElementById("pha-b-active").checked=(response.device.settings.channels.b.pha_active)}
         if (!focusFlags["pha-c-active"]) {document.getElementById("pha-c-active").checked=(response.device.settings.channels.c.pha_active)}
         if (!focusFlags["pha-d-active"]) {document.getElementById("pha-d-active").checked=(response.device.settings.channels.d.pha_active)}
-        
+
+        activate_buttons('a', response.device.settings.channels.a.active)
+        activate_buttons('b', response.device.settings.channels.b.active)
+        activate_buttons('c', response.device.settings.channels.c.active)
+        activate_buttons('d', response.device.settings.channels.d.active)
+
         if (!focusFlags["trigger-enable"]) {
-            if (response.device.settings.trigger.active == true){$("#trigger-enable").val("true")}
-            if (response.device.settings.trigger.active == false){$("#trigger-enable").val("false")}
+            if (response.device.settings.trigger.active == true) {$("#trigger-enable").val("true")}
+            if (response.device.settings.trigger.active == false) {$("#trigger-enable").val("false")}
         }
         
         if (!focusFlags["trigger-source"]) {$("#trigger-source").val(response.device.settings.trigger.source)}
@@ -442,24 +465,23 @@ function sync_with_adapter(){
         } catch {
                 console.log("Error in assigning LV values")
             }
-        pha_array = []
-        try{   
-            // if ((response.device.live_view.pha_data).length != 0){
-            if (response.device.live_view.pha_data == []) {
-                pha_array = []
+        if (pha_array != undefined) {
+            console.log("array", pha_array)
+            console.log("Response", response.device.live_view.pha_counts)
+        }
+        try{
+            if (response.device.live_view.pha_counts != undefined) {
+                console.log("Here!")
+                if ((response.device.live_view.pha_counts.toString()) != (pha_array.toString())) {
+                    console.log("Modifying data")
+                    pha_array = response.device.live_view.pha_counts
+                    bin_edges = response.device.live_view.bin_edges
+                    update_pha_graph()
+                }
             }
-            else {
-                pha_array = (response.device.live_view.pha_data)
+            else{
+                console.log("Undefined!")
             }
-
-                // bin_edges = response.device.live_view.pha_data[0]
-                // counts = response.device.live_view.pha_data[1]
-                // console.log("PHA DATA:",bin_edges[50], counts[50])
-                // console.log("pha response: ", response.device.live_view.pha_data)
-            // } else {
-            //     console.log("\n\nEmpty PHA Array not updating graph")
-            // }
-
         } catch (err){
             console.log("Error in assigning PHA values, error: ",err.message)
         }
@@ -639,6 +661,18 @@ function commit_float_adapter(id,path,key){
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
     ajax_put(path,key,checked)
+    // if (key == 'active') {
+    //     var channel = id
+    //     channel = channel.replace('channel-', '')
+    //     channel = channel.replace('-active', '')
+    //     console.log("channel", channel)
+    //     activate_buttons(channel, checked)
+    // }
+}
+
+function activate_buttons(channel, checked) {
+    document.getElementById("liveview-"+channel+"-active").disabled = !checked
+    document.getElementById("pha-"+channel+"-active").disabled = !checked
 }
 
 function verify_int(id){

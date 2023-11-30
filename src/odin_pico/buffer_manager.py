@@ -17,16 +17,20 @@ class BufferManager():
         self.np_channel_arrays = []
         self.pha_arrays = []
         self.trigger_times = []
-        
-        self.lv_active_channels = [False] * 4
+
+        # Holds currrent PHA and LV data        
+        self.pha_counts = []
         self.lv_channel_arrays = []
+
+        # Holds ranges and offsets for active channels
         self.chan_range = [0] * 4
         self.chan_offsets = [0] * 4
-        self.lv_pha = []
+
         self.lv_channels_active = []
         self.pha_channels_active = [False] * 4
         self.pha_active_channels = []
         self.current_pha_channels = []
+        self.bin_edges = []
 
     def generate_arrays(self, *args):
         """
@@ -41,21 +45,18 @@ class BufferManager():
         self.overflow = (ctypes.c_int16 * n_captures)()
         self.clear_arrays()
 
+        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
+
         for chan in self.channels:
             if (chan.active is True):
                 self.active_channels.append(chan.channel_id)
+                self.np_channel_arrays.append(np.zerod(shape=(n_captures, samples), dtype=np.int16))
                 if (chan.live_view is True):
                     self.lv_channels_active.append(chan.channel_id)
                 if (chan.pha_active is True):
                     self.pha_channels_active[chan.channel_id] = True
                     self.pha_active_channels.append(chan.channel_id)
-        
-        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
-
-        for i in range(len(self.lv_channels_active)):
-            if self.channels[self.lv_channels_active[i]].active == True:
-                self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
-                
+               
     def save_lv_data(self):
         """
             Return a live view of traces being captured.
@@ -66,12 +67,22 @@ class BufferManager():
             self.chan_range[channel] = self.channels[channel].range
             self.chan_offsets[channel] = self.channels[channel].offset
 
-        current_pha_data = []
+        all_current_pha_data = []
+        current_pha_counts = []
 
         for c, b in zip(self.pha_active_channels, self.pha_arrays):
-            current_pha_data.append(b.tolist())
+            all_current_pha_data.append(b.tolist())
+        # print(len(all_current_pha_data))
+        
 
-        self.lv_pha = current_pha_data
+        if len(all_current_pha_data) > 0:
+            self.bin_edges = ((all_current_pha_data[0])[0])
+
+        self.pha_counts.clear()
+        for array in range((len(all_current_pha_data))):
+            self.pha_counts.append((all_current_pha_data[array])[1])
+
+        # self.pha_counts = current_pha_counts
 
         current_lv_array = []
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
@@ -98,7 +109,7 @@ class BufferManager():
             Removes previously created buffers from the buffer_manager.
         """
         arrays = [self.active_channels, self.trigger_times, self.np_channel_arrays, 
-                  self.lv_channels_active, self.pha_active_channels]#, self.lv_pha]
+                  self.lv_channels_active, self.pha_active_channels]
         for array in arrays:
             array.clear()
         self.chan_range = [0] * 4

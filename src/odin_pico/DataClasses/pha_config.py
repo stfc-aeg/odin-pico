@@ -4,4 +4,4 @@ from dataclasses import dataclass
 class PHAConfig:
     num_bins: int = 1024
     lower_range: int = 0
-    upper_range: int = 0
+    upper_range: int = 10000

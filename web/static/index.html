@@ -30,10 +30,8 @@
     </nav>
 
     <div class = "container-fluid">
-    <div class ="page-wrapper">
-    <!-- -->
-
-      <div class="content-container">
+      <div class ="page-wrapper">
+        <div class="content-container">
           <div class="panel panel-default">
             <div class="panel-heading panel-heading-nav">
               <ul class="nav nav-tabs">
@@ -48,490 +46,480 @@
             <div class="panel-body" id="main-body">
               <div class="tab-content">
                 <div role="tabpanel" class="tab-pane fade in active" id="one">
-
                   <div class="container-fluid">
                     <div class="grid-row">
                       <!-- Setting Rows -->
                       <div class="fixed-width" id="left-panel">
                         <div class="row">
                           <div class="col-sm-12" id="pico-6-div">
-                          <div id = "setup-2" class="panel panel-default">
-                            <div class="panel-heading">Picoscope Setup</div>
-                            <div class="panel-body">
-                              <table class="table table-striped">
-                                
-                                <thead>
-                                  <tr>
-                                    <th>Resolution</th>
-                                    <th>Timebase</th>
-                                    <th>Channels</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr class ="default" id= "pico-setup-row">
-                                    <th>
-                                      <form>
-                                        <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
-                                          <option value="" selected disable hidden> </option>
-                                          <option value = "0">8 Bit Mode</option>
-                                          <option value = "1">12 Bit Mode</option>
-                                        </select>
-                                      </form>
-                                    </th>
-                                    <th>
-                                      <form>
-                                        <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
-                                      </form>
-                                      <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
-                                    </th>
-                                    <th>
-                                      <form class="custom-form">
-                                        <fieldset class="custom-fieldset">
-                                          <div class="custom-div-a">
-                                            <input type="checkbox" id="channel-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-active','settings/channels/a/','active')">
-                                            <label for="channel-a" class="custom-label">A</label>
-                                          </div>
-                                          <div class="custom-div-b">
-                                            <input type="checkbox" id="channel-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-active','settings/channels/b/','active')">
-                                            <label for="channel-b" class="custom-label">B</label>
-                                          </div>
-                                          <div class="custom-div-c">
-                                            <input type="checkbox" id="channel-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-active','settings/channels/c/','active')">
-                                            <label for="channel-c" class="custom-label">C</label>
-                                          </div>
-                                          <div class="custom-div-d">
-                                            <input type="checkbox" id="channel-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-active','settings/channels/d/','active')">
-                                            <label for="channel-d" class="custom-label">D</label>
-                                          </div>
-                                        </fieldset>
-                                      </form>
-                                    </th>
-                                    </tr>
-                                </tbody>
-                              </table>
-                    
-                            </div>
-                          
-                          </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-sm-12" id="chan-6-div">
-                            <div id = "setup-3" class="panel panel-default">
-                              <div class="panel-heading" >Channel Setup</div>
-                              <div class="panel-body">
-                                <table class="table table-striped">
-                                  <thead>
-                                    <tr class="responsive-row">
-                                      <th>Channel: </th>
-                                      <th>Channel Coupling</th>
-                                      <th>Channel Range</th>
-                                      <th>Offset (%)</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                    
-                                    <tr class="default responsive-row" id = 'channel-a-set'>
-                                      <th>A</th>
-                                      <th>
-                                        <select id = "channel-a-coupl" onchange="commit_int_adapter('channel-a-coupl','settings/channels/a/','coupling')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "1">DC</option>
-                                          <option value = "0">AC</option> 
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <select id = "channel-a-range" onchange="commit_int_adapter('channel-a-range','settings/channels/a/','range')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "0">10 mV</option>
-                                          <option value = "1">20 mV</option> 
-                                          <option value = "2">50 mV</option>
-                                          <option value = "3">100 mV</option>
-                                          <option value = "4">200 mV</option>
-                                          <option value = "5">500 mV</option>
-                                          <option value = "6">1 V</option>
-                                          <option value = "7">2 V</option> 
-                                          <option value = "8">5 V</option>
-                                          <option value = "9">10 V</option>
-                                          <option value = "10">20 V</option>
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <form>
-                                          <input id="channel-a-offset" type="text" oninput="commit_float_adapter('channel-a-offset','settings/channels/a/','offset')"  />
-                                        </form>
-                                      </th>
-                                    </tr>
-                    
-                                    <tr class="default responsive-row" id = 'channel-b-set'>
-                                      <th>B</th>
-                                      <th>
-                                        <select id = "channel-b-coupl" onchange="commit_int_adapter('channel-b-coupl','settings/channels/b/','coupling')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "1">DC</option>
-                                          <option value = "0">AC</option> 
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <select id = "channel-b-range" onchange="commit_int_adapter('channel-b-range','settings/channels/b/','range')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "0">10 mV</option>
-                                          <option value = "1">20 mV</option> 
-                                          <option value = "2">50 mV</option>
-                                          <option value = "3">100 mV</option>
-                                          <option value = "4">200 mV</option>
-                                          <option value = "5">500 mV</option>
-                                          <option value = "6">1 V</option>
-                                          <option value = "7">2 V</option> 
-                                          <option value = "8">5 V</option>
-                                          <option value = "9">10 V</option>
-                                          <option value = "10">20 V</option>
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <form>
-                                          <input id="channel-b-offset" type="text" oninput="commit_float_adapter('channel-b-offset','settings/channels/b/','offset')" />
-                                        </form>
-                                      </th>
-                                    </tr>
-                    
-                                    <tr class="default responsive-row" id = 'channel-c-set'>
-                                      <th>C</th>
-                                      <th>
-                                        <select id = "channel-c-coupl" onchange="commit_int_adapter('channel-c-coupl','settings/channels/c/','coupling')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "1">DC</option>
-                                          <option value = "0">AC</option> 
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <select id = "channel-c-range" onchange="commit_int_adapter('channel-c-range','settings/channels/c/','range')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "0">10 mV</option>
-                                          <option value = "1">20 mV</option> 
-                                          <option value = "2">50 mV</option>
-                                          <option value = "3">100 mV</option>
-                                          <option value = "4">200 mV</option>
-                                          <option value = "5">500 mV</option>
-                                          <option value = "6">1 V</option>
-                                          <option value = "7">2 V</option> 
-                                          <option value = "8">5 V</option>
-                                          <option value = "9">10 V</option>
-                                          <option value = "10">20 V</option>
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <form>
-                                          <input id="channel-c-offset" type="text" oninput="commit_float_adapter('channel-c-offset','settings/channels/c/','offset')" />
-                                        </form>
-                                      </th>
-                                    </tr>
-                    
-                                    <tr class="default responsive-row" id = 'channel-d-set'>
-                                      <th>D</th>
-                                      <th>
-                                        <select id = "channel-d-coupl" onchange="commit_int_adapter('channel-d-coupl','settings/channels/d/','coupling')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "1">DC</option>
-                                          <option value = "0">AC</option> 
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <select id = "channel-d-range" onchange="commit_int_adapter('channel-d-range','settings/channels/d/','range')"  >
-                                          <option value="" selected disabled hidden> </option>
-                                          <option value = "0">10 mV</option>
-                                          <option value = "1">20 mV</option> 
-                                          <option value = "2">50 mV</option>
-                                          <option value = "3">100 mV</option>
-                                          <option value = "4">200 mV</option>
-                                          <option value = "5">500 mV</option>
-                                          <option value = "6">1 V</option>
-                                          <option value = "7">2 V</option> 
-                                          <option value = "8">5 V</option>
-                                          <option value = "9">10 V</option>
-                                          <option value = "10">20 V</option>
-                                        </select>
-                                      </th>
-                                      <th>
-                                        <form>
-                                          <input id="channel-d-offset" type="text" oninput="commit_float_adapter('channel-d-offset','settings/channels/d/','offset')" />
-                                        </form>
-                                      </th>
-                                    </tr>
-                    
-                                  </tbody>
-                                </table>
-                    
+                            <div id = "setup-2" class="panel panel-default">
+                              <div class="panel-heading">Picoscope Setup</div>
+                                <div class="panel-body">
+                                  <table class="table table-striped">
+                                    <thead>
+                                      <tr>
+                                        <th>Resolution</th>
+                                        <th>Timebase</th>
+                                        <th>Channels</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr class ="default" id= "pico-setup-row">
+                                        <th>
+                                          <form>
+                                            <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
+                                              <option value="" selected disable hidden> </option>
+                                              <option value = "0">8 Bit Mode</option>
+                                              <option value = "1">12 Bit Mode</option>
+                                            </select>
+                                          </form>
+                                        </th>
+                                        <th>
+                                          <form>
+                                            <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
+                                          </form>
+                                          <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
+                                        </th>
+                                        <th>
+                                          <form class="custom-form">
+                                            <fieldset class="custom-fieldset">
+                                              <div class="custom-div-a">
+                                                <input type="checkbox" id="channel-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-active','settings/channels/a/','active')">
+                                                <label for="channel-a" class="custom-label">A</label>
+                                              </div>
+                                              <div class="custom-div-b">
+                                                <input type="checkbox" id="channel-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-active','settings/channels/b/','active')">
+                                                <label for="channel-b" class="custom-label">B</label>
+                                              </div>
+                                              <div class="custom-div-c">
+                                                <input type="checkbox" id="channel-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-active','settings/channels/c/','active')">
+                                                <label for="channel-c" class="custom-label">C</label>
+                                              </div>
+                                              <div class="custom-div-d">
+                                                <input type="checkbox" id="channel-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-active','settings/channels/d/','active')">
+                                                <label for="channel-d" class="custom-label">D</label>
+                                              </div>
+                                            </fieldset>
+                                          </form>
+                                        </th>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
                               </div>
                             </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-sm-12">
-                          <div id = "setup-4" class="panel panel-default">
-                            <div class="panel-heading">Trigger Setup</div>
-                            <div class="panel-body">
-                              <table class="table table-striped custom-responsive-table">
-                
-                                <tr id="trigger-row1">
-                                  <th>Enable:&nbsp;               
-                                    <select id = "trigger-enable" onchange="commit_to_adapter('trigger-enable','settings/trigger/','active')"   >
-                                      <option value="" selected disabled hidden> </option>
-                                      <option value = "true" >True</option>
-                                      <option value = "false" >False</option>
-                                    </select>
-                                  </th>
-                                  <th>Source:&nbsp;
-                                    <select id = "trigger-source" onchange="commit_int_adapter('trigger-source','settings/trigger/','source')"   >
-                                      <option value="" selected disabled hidden> </option>
-                                      <option value = "0" >Channel A</option> 
-                                      <option value = "1" >Channel B</option>
-                                      <option value = "2" >Channel C</option>
-                                      <option value = "3" >Channel D</option>
-                                    </select>
-                                  </th>
-                                  <th>Signal Direction:&nbsp;
-                                    <select id = "trigger-direction" onchange="commit_int_adapter('trigger-direction','settings/trigger/','direction')"  >
-                                      <option value="" selected disabled hidden> </option>
-                                      <option value = "0">Above</option> 
-                                      <option value = "1">Below</option>
-                                      <option value = "2">Rising Edge</option>
-                                      <option value = "3">Falling Edge</option>
-                                      <option value = "4">Rising or Falling Edge</option>
-                                    </select>
-                                  </th>
-                                </tr>             
-                                <tr id="trigger-row2">
-                                  <th>
-                                    <form>
-                                      <label for="trigger-threshold">Threshold (mV):</label>
-                                      <input id="trigger-threshold" type="text" oninput="commit_int_adapter('trigger-threshold','settings/trigger/','threshold')"  />
-                                    </form>
-                                  </th>
-                                  <th>
-                                    <form>
-                                      <label for="trigger-delay">Delay (ms):</label>
-                                      <input id="trigger-delay" type="text" oninput="commit_int_adapter('trigger-delay','settings/trigger/','delay')"  />
-                                    </form>
-                                  </th>
-                                  <th>
-                                    <form>
-                                      <label for="trigger-auto">Trigger After (ms):</label>
-                                      <input id="trigger-auto" type="text" oninput="commit_int_adapter('trigger-auto','settings/trigger/','auto_trigger')"  />
-                                    </form>
-                                  </th>
-                                </tr>
-                              </table>
-                            </div>
-                          
                           </div>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-sm-12">
-                          <div id = "setup-5" class="panel panel-default">
-                            <div class="panel-heading">Capture Setup</div>
-                            <div class="panel-body">
-                              <table class="table table-striped">            
-                                <tr id ="capture-row">
-                                  <th>
-                                    <form>
-                                      <label for="capture-pretrig-samples">Pre-Trigger Samples:</label>
-                                      <input id="capture-pretrig-samples" type="text" oninput="commit_int_adapter('capture-pretrig-samples','settings/capture/','pre_trig_samples')" />
-                                    </form>
-                                  </th>
-                                  <th>
-                                    <form>
-                                      <label for="capture-posttrig-samples">Post-Trigger Samples:</label>
-                                      <input id="capture-posttrig-samples" type="text" oninput="commit_int_adapter('capture-posttrig-samples','settings/capture/','post_trig_samples')" />
-                                    </form>
-                                  </th>
-                                  <th>
-                                    <form>
-                                      <label for="capture-count">Number of captures:</label>
-                                      <input id="capture-count" type="text" oninput="commit_int_adapter('capture-count','settings/capture/','n_captures')" />
-                                    </form>
-                                  </th>
-                                </tr>
-                                <tr>
-                              </table>
-                            
-                            </div>
-                           
-                          </div>
-                          </div>
-                        </div>
-                      </div>
-                    
-                      
-                      <!-- Graph Rows -->
-                      <div class="flex-width">
-                      <div class="row">
-                      <div class="col-sm-12">
-                      <div id = "setup-6" class="panel panel-default">
-                        <div class="panel-heading">Live View and PHA preview:</div>
-                        <div class="panel-body">
-                              <div class="row">
-                                <div class="col-sm-5" id="live-view-channels">
-                                <span>Select Live View Channels: </span>
-                                <form class="custom-form" id="live-view-form">
-                                  <fieldset class="custom-fieldset">
-                                    <div class="custom-div-a">
-                                      <input type="checkbox" id="liveview-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('liveview-a-active','settings/channels/a/','live_view')">
-                                      <label for="channel-a" class="custom-label">A</label>
-                                    </div>
-                                    <div class="custom-div-b">
-                                      <input type="checkbox" id="liveview-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('liveview-b-active','settings/channels/b/','live_view')">
-                                      <label for="channel-b" class="custom-label">B</label>
-                                    </div>
-                                    <div class="custom-div-c">
-                                      <input type="checkbox" id="liveview-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('liveview-c-active','settings/channels/c/','live_view')">
-                                      <label for="channel-c" class="custom-label">C</label>
-                                    </div>
-                                    <div class="custom-div-d">
-                                      <input type="checkbox" id="liveview-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('liveview-d-active','settings/channels/d/','live_view')">
-                                      <label for="channel-d" class="custom-label">D</label>
-                                    </div>
-                                  </fieldset>
-                                </form>
+                          <div class="row">
+                            <div class="col-sm-12" id="chan-6-div">
+                              <div id = "setup-3" class="panel panel-default">
+                                <div class="panel-heading" >Channel Setup</div>
+                                  <div class="panel-body">
+                                    <table class="table table-striped">
+                                      <thead>
+                                        <tr class="responsive-row">
+                                          <th>Channel: </th>
+                                          <th>Channel Coupling</th>
+                                          <th>Channel Range</th>
+                                          <th>Offset (%)</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr class="default responsive-row" id = 'channel-a-set'>
+                                        <th>A</th>
+                                        <th>
+                                          <select id = "channel-a-coupl" onchange="commit_int_adapter('channel-a-coupl','settings/channels/a/','coupling')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "1">DC</option>
+                                            <option value = "0">AC</option> 
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <select id = "channel-a-range" onchange="commit_int_adapter('channel-a-range','settings/channels/a/','range')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "0">10 mV</option>
+                                            <option value = "1">20 mV</option> 
+                                            <option value = "2">50 mV</option>
+                                            <option value = "3">100 mV</option>
+                                            <option value = "4">200 mV</option>
+                                            <option value = "5">500 mV</option>
+                                            <option value = "6">1 V</option>
+                                            <option value = "7">2 V</option> 
+                                            <option value = "8">5 V</option>
+                                            <option value = "9">10 V</option>
+                                            <option value = "10">20 V</option>
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <form>
+                                            <input id="channel-a-offset" type="text" oninput="commit_float_adapter('channel-a-offset','settings/channels/a/','offset')"  />
+                                          </form>
+                                        </th>
+                                      </tr>
+                                      <tr class="default responsive-row" id = 'channel-b-set'>
+                                        <th>B</th>
+                                        <th>
+                                          <select id = "channel-b-coupl" onchange="commit_int_adapter('channel-b-coupl','settings/channels/b/','coupling')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "1">DC</option>
+                                            <option value = "0">AC</option> 
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <select id = "channel-b-range" onchange="commit_int_adapter('channel-b-range','settings/channels/b/','range')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "0">10 mV</option>
+                                            <option value = "1">20 mV</option> 
+                                            <option value = "2">50 mV</option>
+                                            <option value = "3">100 mV</option>
+                                            <option value = "4">200 mV</option>
+                                            <option value = "5">500 mV</option>
+                                            <option value = "6">1 V</option>
+                                            <option value = "7">2 V</option> 
+                                            <option value = "8">5 V</option>
+                                            <option value = "9">10 V</option>
+                                            <option value = "10">20 V</option>
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <form>
+                                            <input id="channel-b-offset" type="text" oninput="commit_float_adapter('channel-b-offset','settings/channels/b/','offset')" />
+                                          </form>
+                                        </th>
+                                      </tr>
+                                      <tr class="default responsive-row" id = 'channel-c-set'>
+                                        <th>C</th>
+                                        <th>
+                                          <select id = "channel-c-coupl" onchange="commit_int_adapter('channel-c-coupl','settings/channels/c/','coupling')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "1">DC</option>
+                                            <option value = "0">AC</option> 
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <select id = "channel-c-range" onchange="commit_int_adapter('channel-c-range','settings/channels/c/','range')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "0">10 mV</option>
+                                            <option value = "1">20 mV</option> 
+                                            <option value = "2">50 mV</option>
+                                            <option value = "3">100 mV</option>
+                                            <option value = "4">200 mV</option>
+                                            <option value = "5">500 mV</option>
+                                            <option value = "6">1 V</option>
+                                            <option value = "7">2 V</option> 
+                                            <option value = "8">5 V</option>
+                                            <option value = "9">10 V</option>
+                                            <option value = "10">20 V</option>
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <form>
+                                            <input id="channel-c-offset" type="text" oninput="commit_float_adapter('channel-c-offset','settings/channels/c/','offset')" />
+                                          </form>
+                                        </th>
+                                      </tr>
+                                      <tr class="default responsive-row" id = 'channel-d-set'>
+                                        <th>D</th>
+                                        <th>
+                                          <select id = "channel-d-coupl" onchange="commit_int_adapter('channel-d-coupl','settings/channels/d/','coupling')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "1">DC</option>
+                                            <option value = "0">AC</option> 
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <select id = "channel-d-range" onchange="commit_int_adapter('channel-d-range','settings/channels/d/','range')"  >
+                                            <option value="" selected disabled hidden> </option>
+                                            <option value = "0">10 mV</option>
+                                            <option value = "1">20 mV</option> 
+                                            <option value = "2">50 mV</option>
+                                            <option value = "3">100 mV</option>
+                                            <option value = "4">200 mV</option>
+                                            <option value = "5">500 mV</option>
+                                            <option value = "6">1 V</option>
+                                            <option value = "7">2 V</option> 
+                                            <option value = "8">5 V</option>
+                                            <option value = "9">10 V</option>
+                                            <option value = "10">20 V</option>
+                                          </select>
+                                        </th>
+                                        <th>
+                                          <form>
+                                            <input id="channel-d-offset" type="text" oninput="commit_float_adapter('channel-d-offset','settings/channels/d/','offset')" />
+                                          </form>
+                                        </th>
+                                      </tr>
+                                    </tbody>
+                                  </table>
                                 </div>
-                                <div class="col-sm-5" id="pha-active-channels">
-                                <span>Select PHA Channels:</span>
-                                <form class="custom-form" id="pha-active-form">
-                                  <fieldset class="custom-fieldset">
-                                    <div class = "custom-div-a">
-                                      <input type="checkbox" id="pha-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('pha-a-active','settings/channels/a/','pha_active')">
-                                      <label for="channel-a" class="custom-label">A</label>
-                                    </div>
-                                    <div class = "custom-div-b">
-                                      <input type="checkbox" id="pha-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('pha-b-active','settings/channels/b/','pha_active')">
-                                      <label for="channel-b" class="custom-label">B</label>
-                                    </div>
-                                    <div class = "custom-div-c">
-                                      <input type="checkbox" id="pha-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('pha-c-active','settings/channels/c/','pha_active')">
-                                      <label for="channel-c" class="custom-label">C</label>
-                                    <div class = "custom-div-d">
-                                    </div>
-                                      <input type="checkbox" id="pha-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('pha-d-active','settings/channels/d/','pha_active')">
-                                      <label for="channel-d" class="custom-label">D</label>
-                                    </div>
-                                  </fieldset>
-                                </form>
-                                </div>
-                                <td class="toggle-container">
-                                  <button id="p_p_button" class="icon-button" onclick="toggle_play()">
-                                    <span class="material-icons">pause</span>
-                                  </button>
-                                </td>
                               </div>
-                            <table class="table table-borderless">
-                            <tr>
-                              <td colspan="2">
-                                <div class="plot-container" id="scope_lv"></div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td colspan="2">
-                                <div class="plot-container" id="scope_pha"></div>
-                              </td>
-                            </tr>
-                          </table>
-                        </div>
-                      </div>
-                      </div>
-                        </div>
-                      </div>
-                    </div>
-                    </div>
-                  </div>
-
-                  <!-- <div class="content-container"> -->
-
-                    <!-- </div> -->
-                  
-                <!--</div> -->
-                
-                <div role="tabpanel" class="tab-pane fade" id="two">
-                  <div class ="row">
-                    <div class = "col-sm-12">
-                        <div id = "setup-6" class="panel panel-default">
-                            <div class="panel-heading">PHA Settings</div>
-                            <div class="panel-body">
-                                <table class="table table-striped">            
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-sm-12">
+                              <div id = "setup-4" class="panel panel-default">
+                                <div class="panel-heading">Trigger Setup</div>
+                                <div class="panel-body">
+                                  <table class="table table-striped custom-responsive-table">
+                                    <tr id="trigger-row1">
+                                      <th>Enable:&nbsp;               
+                                        <select id = "trigger-enable" onchange="commit_to_adapter('trigger-enable','settings/trigger/','active')"   >
+                                          <option value="" selected disabled hidden> </option>
+                                          <option value = "true" >True</option>
+                                          <option value = "false" >False</option>
+                                        </select>
+                                      </th>
+                                      <th>Source:&nbsp;
+                                        <select id = "trigger-source" onchange="commit_int_adapter('trigger-source','settings/trigger/','source')"   >
+                                          <option value="" selected disabled hidden> </option>
+                                          <option value = "0" >Channel A</option> 
+                                          <option value = "1" >Channel B</option>
+                                          <option value = "2" >Channel C</option>
+                                          <option value = "3" >Channel D</option>
+                                        </select>
+                                      </th>
+                                      <th>Signal Direction:&nbsp;
+                                        <select id = "trigger-direction" onchange="commit_int_adapter('trigger-direction','settings/trigger/','direction')"  >
+                                          <option value="" selected disabled hidden> </option>
+                                          <option value = "0">Above</option> 
+                                          <option value = "1">Below</option>
+                                          <option value = "2">Rising Edge</option>
+                                          <option value = "3">Falling Edge</option>
+                                          <option value = "4">Rising or Falling Edge</option>
+                                        </select>
+                                      </th>
+                                    </tr>             
+                                    <tr id="trigger-row2">
+                                      <th>
+                                        <form>
+                                        <label for="trigger-threshold">Threshold (mV):</label>
+                                        <input id="trigger-threshold" type="text" oninput="commit_int_adapter('trigger-threshold','settings/trigger/','threshold')"  />
+                                        </form>
+                                      </th>
+                                      <th>
+                                        <form>
+                                          <label for="trigger-delay">Delay (ms):</label>
+                                          <input id="trigger-delay" type="text" oninput="commit_int_adapter('trigger-delay','settings/trigger/','delay')"  />
+                                        </form>
+                                      </th>
+                                      <th>
+                                        <form>
+                                          <label for="trigger-auto">Trigger After (ms):</label>
+                                          <input id="trigger-auto" type="text" oninput="commit_int_adapter('trigger-auto','settings/trigger/','auto_trigger')"  />
+                                        </form>
+                                      </th>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-sm-12">
+                              <div id = "setup-5" class="panel panel-default">
+                                <div class="panel-heading">Capture Setup</div>
+                                <div class="panel-body">
+                                  <table class="table table-striped">
                                     <tr id ="capture-row">
-                                    <th>
+                                      <th>
                                         <form>
+                                          <label for="capture-pretrig-samples">Pre-Trigger Samples:</label>
+                                          <input id="capture-pretrig-samples" type="text" oninput="commit_int_adapter('capture-pretrig-samples','settings/capture/','pre_trig_samples')" />
+                                        </form>
+                                      </th>
+                                      <th>
+                                        <form>
+                                          <label for="capture-posttrig-samples">Post-Trigger Samples:</label>
+                                          <input id="capture-posttrig-samples" type="text" oninput="commit_int_adapter('capture-posttrig-samples','settings/capture/','post_trig_samples')" />
+                                        </form>
+                                      </th>
+                                      <th>
+                                        <form>
+                                          <label for="capture-count">Number of captures:</label>
+                                          <input id="capture-count" type="text" oninput="commit_int_adapter('capture-count','settings/capture/','n_captures')" />
+                                        </form>
+                                      </th>
+                                    </tr>
+                                  </table>                           
+                                </div>  
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                                          
+                      <!-- Graph Rows -->
+                        <div class="flex-width">
+                          <div class="row">
+                            <div class="col-sm-12">
+                              <div id = "setup-6" class="panel panel-default">
+                                <div class="panel-heading">Live View and PHA Data:</div>
+                                  <div class="panel-body">
+                                    <div class="row">
+                                      <div class="col-sm-5" id="live-view-channels">
+                                        <span>&nbsp;&nbsp;Select Live View Channels: </span>
+                                        <form class="custom-form" id="live-view-form">
+                                          <fieldset class="custom-fieldset">
+                                            <div class="custom-div-a">
+                                              <input type="checkbox" id="liveview-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('liveview-a-active','settings/channels/a/','live_view')">
+                                              <label for="channel-a" class="custom-label">A</label>
+                                            </div>
+                                            <div class="custom-div-b">
+                                              <input type="checkbox" id="liveview-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('liveview-b-active','settings/channels/b/','live_view')">
+                                              <label for="channel-b" class="custom-label">B</label>
+                                            </div>
+                                            <div class="custom-div-c">
+                                              <input type="checkbox" id="liveview-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('liveview-c-active','settings/channels/c/','live_view')">
+                                              <label for="channel-c" class="custom-label">C</label>
+                                            </div>
+                                            <div class="custom-div-d">
+                                              <input type="checkbox" id="liveview-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('liveview-d-active','settings/channels/d/','live_view')">
+                                              <label for="channel-d" class="custom-label">D</label>
+                                            </div>
+                                          </fieldset>
+                                        </form>
+                                      </div>
+                                      <td class="toggle-container">
+                                        <button id="p_p_button_lv" class="icon-button-pha" onclick="toggle_play_lv()">
+                                        <span class="material-icons">pause</span>
+                                        </button>
+                                      </td>
+                                    </div>
+                                    <table class="table table-borderless">
+                                      <tr>
+                                        <td colspan="2">
+                                          <div class="plot-container" id="scope_lv"></div>
+                                        </td>
+                                      </tr>
+                                    </table>
+                                    <div class="row">
+                                      <div class="col-sm-5" id="pha-active-channels">
+                                        <span>&nbsp;&nbsp;Select Channels for PHA: </span>
+                                        <form class="custom-form" id="pha-active-form">
+                                          <fieldset class="custom-fieldset">
+                                            <div class = "custom-div-a">
+                                              <input type="checkbox" id="pha-a-active" value="0", class="custom-checkbox" oninput="commit_checked_adapter('pha-a-active','settings/channels/a','pha_active')">
+                                              <label for="channel-a" class="custom-label">A</label>
+                                            </div>
+                                            <div class = "custom-div-b">
+                                              <input type="checkbox" id="pha-b-active" value="1", class="custom-checkbox" onclick="commit_checked_adapter('pha-b-active','settings/channels/b','pha_active')">
+                                              <label for="channel-b" class="custom-label">B</label>
+                                            </div>
+                                            <div class="custom-div-c">
+                                              <input type="checkbox" id="pha-c-active" value="2", class="custom-checkbox" onclick="commit_checked_adapter('pha-c-active','settings/channels/c','pha_active')">
+                                              <label for="channel-c" class="custom-label">C</label>
+                                            </div>
+                                            <div class="custom-div-d">
+                                              <input type="checkbox" id="pha-d-active" value="3", class="custom-checkbox" onclick="commit_checked_adapter('pha-d-active','settings/channels/d','pha_active')">
+                                              <label for="channel-d" class="custom-label">D</label>
+                                            </div>
+                                          </fieldset>
+                                        </form>
+                                      </div>
+                                      <th>
+                                        <label for="save_pha_data">Save PHA Data: </label>
+                                        <button class="btn btn-default" type="button" id="save_pha_data" value="true" onclick="commit_true_adapter('commands/','run_pha_capture')" >Save</button>
+                                      </th>
+                                    </div>
+                                    <tr>
+                                      <td colspan="2">
+                                        <div class="plot-container" id="scope_pha"></div>
+                                      </td>
+                                    </tr>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- <div class="content-container"> -->
+                
+                    <div role="tabpanel" class="tab-pane fade" id="two">
+                      <div class ="row">
+                        <div class = "col-sm-12">
+                          <div id = "setup-6" class="panel panel-default">
+                              <div class="panel-heading">PHA Settings</div>
+                              <div class="panel-body">
+                                <table class="table table-striped">            
+                                  <tr id ="capture-row">
+                                    <th>
+                                      <form>
                                         <label for="pha-num-bins">Number Bins: </label>
                                         <input id="pha-num-bins" type="text" oninput="commit_int_adapter('pha-num-bins','settings/pha','num_bins')" />
-                                        </form>
+                                      </form>
                                     </th>
                                     <th>
-                                        <form>
+                                      <form>
                                         <label for="pha-lower-range">Lower range of ADC_Counts: </label>
-                                        <input id="pha-lower-range" type="text" oninput="commit_int_adapter('pha-num-bins','settings/pha','lower_range')" />
-                                        </form>
+                                        <input id="pha-lower-range" type="text" oninput="commit_int_adapter('pha-lower-range','settings/pha','lower_range')" />
+                                      </form>
                                     </th>
                                     <th>
-                                        <form>
+                                      <form>
                                         <label for="pha-upper-range">Upper Range of ADC_Counts: </label>
-                                        <input id="pha-upper-range" type="text" oninput="commit_int_adapter('pha-num-bins','settings/pha','upper_range')" />
-                                        </form>
+                                        <input id="pha-upper-range" type="text" oninput="commit_int_adapter('pha-upper-range','settings/pha','upper_range')" />
+                                      </form>
                                     </th>
-                                    </tr>
+                                  </tr>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class = "col-sm-12">
+                              </div>
+                          </div>
+                      </div>
+                      <div class = "col-sm-12">
                         <div id = "setup-6" class="panel panel-default">
-                            <div class="panel-heading">File Settings</div>
-                            <div class="panel-body">
+                          <div class="panel-heading">File Settings</div>
+                          <div class="panel-body">
                             <table class="table table-striped">            
-                                <tr id ="capture-row">
+                              <tr id ="capture-row">
                                 <th>
-                                    <form>
+                                  <form>
                                     <label for="capture-folder-name">Folder name: </label>
                                     <input id="capture-folder-name" type="text" oninput="commit_str_adapter('capture-folder-name','settings/file','folder_name')" />
-                                    </form>
+                                  </form>
                                 </th>
                                 <th>
-                                    <form>
+                                  <form>
                                     <label for="capture-file-name">File Name: </label>
                                     <input id="capture-file-name" type="text" oninput="commit_str_adapter('capture-file-name','settings/file','file_name')" />
-                                    </form>
+                                  </form>
                                 </th>
                                 <th>
-                                    <label for="save_cap_butt">Record scope traces and PHA to file: </label>
-                                    <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
+                                  <label for="save_cap_butt">Record scope traces and PHA to file: </label>
+                                  <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
                                 </th>
-                                </tr>
+                              </tr>
+                              <tr>
                                 <tr>
-                                <tr>
-                                <th><span>File : </span><span id="file-name-span"></span></th>
-                                <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
-                                <th>
+                                  <th><span>File : </span><span id="file-name-span"></span></th>
+                                  <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
+                                  <th>
                                     <label for="abort_cap_butt">Abort current capture: </label>
                                     <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
-                                </th>
+                                  </th>
                                 </tr>
                                 <tr>
-                                <th colspan="3">
+                                  <th colspan="3">
                                     <div class="progress">
-                                    <div id="capture-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                      <div id="capture-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
-                                </th>
+                                  </th>
                                 </tr>   
-                                </tr>
+                              </tr>
                             </table>
-                            </div>
+                          </div>
                         </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                </div>
+              </div>
+            </div>
           </div>
-          </div>
-          
+        </div>
+      </div>
+    </div>
+        
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="js/jquery-2.2.3.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->

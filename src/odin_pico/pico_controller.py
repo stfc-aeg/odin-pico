@@ -109,14 +109,16 @@ class PicoController():
             'active_channels': (lambda: self.buffer_manager.lv_channels_active, None),
             'pha_active_channels': (lambda: self.buffer_manager.current_pha_channels, None),
             'preview_channel': (lambda: self.dev_conf.preview_channel, partial(self.set_dc_value, self.dev_conf, "preview_channel")),
-            'pha_data': (lambda: self.buffer_manager.lv_pha, None),
+            'pha_counts': (lambda: self.buffer_manager.pha_counts, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
             'lv_data': (lambda: self.buffer_manager.lv_channel_arrays, None),
+            'pha_bin_edges': (lambda: self.buffer_manager.bin_edges, None)
         })
 
         pico_commands = ParameterTree({
-            'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture"))
+            'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
+            'run_pha_capture': (lambda: self.pico_status.flags.pha_capture, partial(self.set_dc_value, self.pico_status.flags, "pha_capture"))
         })
 
         pico_flags = ParameterTree({
@@ -155,11 +157,27 @@ class PicoController():
     
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
 
-        try:
-            channel_dc = getattr(obj, chan_name)
-            setattr(channel_dc, attr_name, value)
-        except AttributeError:
-            pass
+        if (attr_name == 'live_view') or (attr_name == 'pha_active'):
+            try:
+                channel_dc = getattr(obj, chan_name)
+                if getattr(channel_dc, 'active', None) == True:
+                    setattr(channel_dc, attr_name, value)
+            except AttributeError:
+                pass
+        elif (attr_name == 'active') and (value == False):
+            try:
+                channel_dc = getattr(obj, chan_name)
+                setattr(channel_dc, 'live_view', value)
+                setattr(channel_dc, 'pha_active', value)
+                setattr(channel_dc, attr_name, value)
+            except AttributeError:
+                pass
+        else:
+            try:
+                channel_dc = getattr(obj, chan_name)
+                setattr(channel_dc, attr_name, value)
+            except AttributeError:
+                pass
 
     def verify_settings(self):
         """Verifies all picoscope settings, sets status of individual groups of settings"""
@@ -228,6 +246,8 @@ class PicoController():
             self.check_res()
             if self.pico_status.flags.user_capture:
                 self.user_cap()
+            elif self.pico_status.flags.pha_capture:
+                self.lv_pha_cap()
             else:
                 self.lv_cap()
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
@@ -257,6 +277,21 @@ class PicoController():
             self.file_writer.writeHDF5()
         self.dev_conf.capture_run.reset()
         self.pico_status.flags.user_capture = False
+
+    def lv_pha_cap(self):
+        self.set_capture_run_limits()
+        if self.pico.run_setup():
+            while self.dev_conf.capture_run.caps_comp < self.dev_conf.capture.n_captures:
+                self.set_capture_run_length()
+                self.pico.assign_pico_memory()
+                self.pico.run_block()
+                self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
+                self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
+                self.analysis.PHA_one_peak()
+                self.buffer_manager.save_lv_data()
+        self.dev_conf.capture_run.reset()
+        self.pico_status.flags.pha_capture = False            
+
 
     def lv_cap(self):
         """Run the appropriate steps for starting a live view capture"""
