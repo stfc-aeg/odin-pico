@@ -359,29 +359,31 @@
                                         <form class="custom-form" id="live-view-form">
                                           <fieldset class="custom-fieldset">
                                             <div class="custom-div-a">
-                                              <input type="checkbox" id="liveview-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('liveview-a-active','settings/channels/a/','live_view')">
+                                              <input type="checkbox" id="channel-a-liveview" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-liveview','settings/channels/a/','live_view')">
                                               <label for="channel-a" class="custom-label">A</label>
                                             </div>
                                             <div class="custom-div-b">
-                                              <input type="checkbox" id="liveview-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('liveview-b-active','settings/channels/b/','live_view')">
+                                              <input type="checkbox" id="channel-b-liveview" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-liveview','settings/channels/b/','live_view')">
                                               <label for="channel-b" class="custom-label">B</label>
                                             </div>
                                             <div class="custom-div-c">
-                                              <input type="checkbox" id="liveview-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('liveview-c-active','settings/channels/c/','live_view')">
+                                              <input type="checkbox" id="channel-c-liveview" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-liveview','settings/channels/c/','live_view')">
                                               <label for="channel-c" class="custom-label">C</label>
                                             </div>
                                             <div class="custom-div-d">
-                                              <input type="checkbox" id="liveview-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('liveview-d-active','settings/channels/d/','live_view')">
+                                              <input type="checkbox" id="channel-d-liveview" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-liveview','settings/channels/d/','live_view')">
                                               <label for="channel-d" class="custom-label">D</label>
                                             </div>
                                           </fieldset>
                                         </form>
                                       </div>
-                                      <td class="toggle-container">
-                                        <button id="p_p_button_lv" class="icon-button-pha" onclick="toggle_play_lv()">
-                                        <span class="material-icons">pause</span>
-                                        </button>
-                                      </td>
+                                      <div class="col-sm-5">
+                                        <td class="toggle-container">
+                                          <button id="p_p_button_lv" class="icon-button" onclick="toggle_play_lv()">
+                                            <span class="material-icons">pause</span>
+                                          </button>
+                                        </td>
+                                      </div>
                                     </div>
                                     <table class="table table-borderless">
                                       <tr>
@@ -396,28 +398,24 @@
                                         <form class="custom-form" id="pha-active-form">
                                           <fieldset class="custom-fieldset">
                                             <div class = "custom-div-a">
-                                              <input type="checkbox" id="pha-a-active" value="0", class="custom-checkbox" oninput="commit_checked_adapter('pha-a-active','settings/channels/a','pha_active')">
+                                              <input type="checkbox" id="channel-a-pha" value="0", class="custom-checkbox" oninput="commit_checked_adapter('channel-a-pha','settings/channels/a','pha_active')">
                                               <label for="channel-a" class="custom-label">A</label>
                                             </div>
                                             <div class = "custom-div-b">
-                                              <input type="checkbox" id="pha-b-active" value="1", class="custom-checkbox" onclick="commit_checked_adapter('pha-b-active','settings/channels/b','pha_active')">
+                                              <input type="checkbox" id="channel-b-pha" value="1", class="custom-checkbox" onclick="commit_checked_adapter('channel-b-pha','settings/channels/b','pha_active')">
                                               <label for="channel-b" class="custom-label">B</label>
                                             </div>
                                             <div class="custom-div-c">
-                                              <input type="checkbox" id="pha-c-active" value="2", class="custom-checkbox" onclick="commit_checked_adapter('pha-c-active','settings/channels/c','pha_active')">
+                                              <input type="checkbox" id="channel-c-pha" value="2", class="custom-checkbox" onclick="commit_checked_adapter('channel-c-pha','settings/channels/c','pha_active')">
                                               <label for="channel-c" class="custom-label">C</label>
                                             </div>
                                             <div class="custom-div-d">
-                                              <input type="checkbox" id="pha-d-active" value="3", class="custom-checkbox" onclick="commit_checked_adapter('pha-d-active','settings/channels/d','pha_active')">
+                                              <input type="checkbox" id="channel-d-pha" value="3", class="custom-checkbox" onclick="commit_checked_adapter('channel-d-pha','settings/channels/d','pha_active')">
                                               <label for="channel-d" class="custom-label">D</label>
                                             </div>
                                           </fieldset>
                                         </form>
                                       </div>
-                                      <th>
-                                        <label for="save_pha_data">Save PHA Data: </label>
-                                        <button class="btn btn-default" type="button" id="save_pha_data" value="true" onclick="commit_true_adapter('commands/','run_pha_capture')" >Save</button>
-                                      </th>
                                     </div>
                                     <tr>
                                       <td colspan="2">

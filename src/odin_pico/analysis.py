@@ -28,21 +28,20 @@ class PicoAnalysis():
         self.buffer_manager.current_pha_channels.clear()
         self.buffer_manager.pha_arrays.clear()
         self.pico_status.flags.system_state = "Connected to Picoscope, calculating PHA" 
-
+        
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
-            ("This channel has gotten through the first part: ", c)
             if self.buffer_manager.pha_channels_active[c] == True:
-                print("Doing analysis for channel", c)
                 peak_values = []
+
                 # Iterate through the channel array to expose each capture
                 for i in range(len(b)):
                     data = b[i]
+
                     # Find the peaks in each capture
                     peak_pos = np.argmax(data)
                     peak_values.append(data[peak_pos])
+
                 # Use np.histogram to calculate counts for each bin, based on peak value data
                 counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range, self.dev_conf.pha.upper_range))
-                # print("counts", counts)
-                # print("bin edges", bin_edge)
                 self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
                 self.buffer_manager.current_pha_channels.append(c)

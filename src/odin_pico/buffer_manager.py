@@ -50,12 +50,17 @@ class BufferManager():
         for chan in self.channels:
             if (chan.active is True):
                 self.active_channels.append(chan.channel_id)
-                self.np_channel_arrays.append(np.zerod(shape=(n_captures, samples), dtype=np.int16))
+                # self.np_channel_arrays.append(np.zerod(shape=(n_captures, samples), dtype=np.int16))
                 if (chan.live_view is True):
                     self.lv_channels_active.append(chan.channel_id)
                 if (chan.pha_active is True):
                     self.pha_channels_active[chan.channel_id] = True
                     self.pha_active_channels.append(chan.channel_id)
+
+        for chan in self.channels:
+            if(chan.active is True):
+                if(chan.live_view == True) or (chan.pha_active == True):
+                    self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))  
                
     def save_lv_data(self):
         """
@@ -68,7 +73,6 @@ class BufferManager():
             self.chan_offsets[channel] = self.channels[channel].offset
 
         all_current_pha_data = []
-        current_pha_counts = []
 
         for c, b in zip(self.pha_active_channels, self.pha_arrays):
             all_current_pha_data.append(b.tolist())
@@ -81,8 +85,6 @@ class BufferManager():
         self.pha_counts.clear()
         for array in range((len(all_current_pha_data))):
             self.pha_counts.append((all_current_pha_data[array])[1])
-
-        # self.pha_counts = current_pha_counts
 
         current_lv_array = []
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):

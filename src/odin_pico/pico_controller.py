@@ -249,7 +249,7 @@ class PicoController():
             elif self.pico_status.flags.pha_capture:
                 self.lv_pha_cap()
             else:
-                self.lv_cap()
+                self.lv_pha_cap()
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
 
@@ -279,9 +279,12 @@ class PicoController():
         self.pico_status.flags.user_capture = False
 
     def lv_pha_cap(self):
+        captures = self.dev_conf.capture.n_captures
         self.set_capture_run_limits()
         if self.pico.run_setup():
-            while self.dev_conf.capture_run.caps_comp < self.dev_conf.capture.n_captures:
+            start_all = time.time()
+            while self.dev_conf.capture_run.caps_comp < captures:
+                print("n_capture", self.dev_conf.capture.n_captures)
                 self.set_capture_run_length()
                 self.pico.assign_pico_memory()
                 self.pico.run_block()
@@ -289,9 +292,12 @@ class PicoController():
                 self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
                 self.analysis.PHA_one_peak()
                 self.buffer_manager.save_lv_data()
+                print("caps_comp_after", self.dev_conf.capture_run.caps_comp)
+            end_all = time.time()
+            print("All captures", (end_all-start_all))
+            print("Each capture", ((end_all-start_all)/self.dev_conf.capture.n_captures))
         self.dev_conf.capture_run.reset()
         self.pico_status.flags.pha_capture = False            
-
 
     def lv_cap(self):
         """Run the appropriate steps for starting a live view capture"""

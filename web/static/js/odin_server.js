@@ -20,14 +20,14 @@ var focusFlags = {
   "channel-b-offset": false,
   "channel-c-offset": false,
   "channel-d-offset": false,
-  "liveview-a-active": false,
-  "liveview-b-active": false,
-  "liveview-c-active": false,
-  "liveview-d-active": false,
-  "pha-a-active": false,
-  "pha-b-active": false,
-  "pha-c-active": false,
-  "pha-d-active": false,
+  "channel-a-liveview": false,
+  "channel-b-liveview": false,
+  "channel-c-liveview": false,
+  "channel-d-liveview": false,
+  "channel-a-pha": false,
+  "channel-b-pha": false,
+  "channel-c-pha": false,
+  "channel-d-pha": false,
   "trigger-enable": false,
   "trigger-source": false,
   "trigger-direction": false,
@@ -400,41 +400,20 @@ function sync_with_adapter(){
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
         
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
-               
-        if (!focusFlags["channel-a-coupl"]) {$("#channel-a-coupl").val(response.device.settings.channels.a.coupling)}
-        if (!focusFlags["channel-b-couple"]) {$("#channel-b-coupl").val(response.device.settings.channels.b.coupling)}
-        if (!focusFlags["channel-c-coupl"]) {$("#channel-c-coupl").val(response.device.settings.channels.c.coupling)}
-        if (!focusFlags["channel-d-coupl"]) {$("#channel-d-coupl").val(response.device.settings.channels.d.coupling)}
-        
-        if (!focusFlags["channel-a-range"]) {$("#channel-a-range").val(response.device.settings.channels.a.range)}
-        if (!focusFlags["channel-b-range"]) {$("#channel-b-range").val(response.device.settings.channels.b.range)}
-        if (!focusFlags["channel-c-range"]) {$("#channel-c-range").val(response.device.settings.channels.c.range)}
-        if (!focusFlags["channel-d-range"]) {$("#channel-d-range").val(response.device.settings.channels.d.range)}
-       
-        if (!focusFlags["channel-a-offset"]) {$("#channel-a-offset").val(response.device.settings.channels.a.offset)}
-        if (!focusFlags["channel-b-offset"]) {$("#channel-b-offset").val(response.device.settings.channels.b.offset)}
-        if (!focusFlags["channel-c-offset"]) {$("#channel-c-offset").val(response.device.settings.channels.c.offset)}
-        if (!focusFlags["channel-d-offset"]) {$("#channel-d-offset").val(response.device.settings.channels.d.offset)}
 
-        if (!focusFlags["channel-a-active"]) {document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)}
-        if (!focusFlags["channel-b-active"]) {document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)}
-        if (!focusFlags["channel-c-active"]) {document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)}
-        if (!focusFlags["channel-d-active"]) {document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)}
+        var chan_responses = [response.device.settings.channels.a, response.device.settings.channels.b, response.device.settings.channels.c, response.device.settings.channels.d]
+        var chan_letters = ['a','b','c','d']
 
-        if (!focusFlags["liveview-a-active"]) {document.getElementById("liveview-a-active").checked=(response.device.settings.channels.a.live_view)}
-        if (!focusFlags["liveview-b-active"]) {document.getElementById("liveview-b-active").checked=(response.device.settings.channels.b.live_view)}
-        if (!focusFlags["liveview-c-active"]) {document.getElementById("liveview-c-active").checked=(response.device.settings.channels.c.live_view)}
-        if (!focusFlags["liveview-d-active"]) {document.getElementById("liveview-d-active").checked=(response.device.settings.channels.d.live_view)}
-
-        if (!focusFlags["pha-a-active"]) {document.getElementById("pha-a-active").checked=(response.device.settings.channels.a.pha_active)}
-        if (!focusFlags["pha-b-active"]) {document.getElementById("pha-b-active").checked=(response.device.settings.channels.b.pha_active)}
-        if (!focusFlags["pha-c-active"]) {document.getElementById("pha-c-active").checked=(response.device.settings.channels.c.pha_active)}
-        if (!focusFlags["pha-d-active"]) {document.getElementById("pha-d-active").checked=(response.device.settings.channels.d.pha_active)}
-
-        activate_buttons('a', response.device.settings.channels.a.active)
-        activate_buttons('b', response.device.settings.channels.b.active)
-        activate_buttons('c', response.device.settings.channels.c.active)
-        activate_buttons('d', response.device.settings.channels.d.active)
+        for (var i = 0; i < 4; i++) {
+            var channel = "channel-"+(String.fromCharCode(i + 97))
+            if (!focusFlags[channel+"-range"]) {$("#"+channel+"-range").val(chan_responses[i].range)}
+            if (!focusFlags[channel+"-coupl"]) {$("#"+channel+"-coupl").val(chan_responses[i].coupling)}
+            if (!focusFlags[channel+"-offset"]) {$("#"+channel+"-offset").val(chan_responses[i].offset)}
+            if (!focusFlags[channel+"-active"]) {document.getElementById(channel+"-active").checked=(chan_responses[i].active)}
+            if (!focusFlags[channel+"-liveview"]) {document.getElementById(channel+"-liveview").checked=(chan_responses[i].live_view)}
+            if (!focusFlags[channel+"-pha"]) {document.getElementById(channel+"-pha").checked=(chan_responses[i].pha_active)}
+            activate_buttons(chan_letters[i], chan_responses[i].active)
+        }
 
         if (!focusFlags["trigger-enable"]) {
             if (response.device.settings.trigger.active == true) {$("#trigger-enable").val("true")}
@@ -465,10 +444,6 @@ function sync_with_adapter(){
         } catch {
                 console.log("Error in assigning LV values")
             }
-        if (pha_array != undefined) {
-            console.log("array", pha_array)
-            console.log("Response", response.device.live_view.pha_counts)
-        }
         try{
             if (response.device.live_view.pha_counts != undefined) {
                 console.log("Here!")
@@ -478,9 +453,6 @@ function sync_with_adapter(){
                     bin_edges = response.device.live_view.bin_edges
                     update_pha_graph()
                 }
-            }
-            else{
-                console.log("Undefined!")
             }
         } catch (err){
             console.log("Error in assigning PHA values, error: ",err.message)
@@ -497,7 +469,6 @@ function sync_with_adapter(){
             progressBar.innerHTML = 0 + '%';
         }
 
-        
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
         if (response.device.settings.file.last_write_success == true){
@@ -506,108 +477,103 @@ function sync_with_adapter(){
             document.getElementById("file-write-succ-span").textContent = "False"
         }
 
-
         if (response.device.status.pico_setup_verify == 0){
             document.getElementById("pico-setup-row").className="success"
         }else{
             document.getElementById("pico-setup-row").className="danger"
         }
 
-            // Syncing channel setup panels
-            if (response.device.settings.channels.a.verified == true){
-                document.getElementById("channel-a-set").className ="success"
-                } else{
-                    document.getElementById("channel-a-set").className ="danger"
-                }
-            
-
-            if (response.device.settings.channels.b.verified == true){
-                document.getElementById("channel-b-set").className ="success"
-                } else{
-                    document.getElementById("channel-b-set").className ="danger";
-                }
-            
-
-            if (response.device.settings.channels.c.verified == true){
-                document.getElementById("channel-c-set").className ="success";
-                } else{
-                    document.getElementById("channel-c-set").className ="danger";
-                }
-
-            if (response.device.settings.channels.d.verified == true){
-            document.getElementById("channel-d-set").className ="success";
+        // Syncing channel setup panels
+        if (response.device.settings.channels.a.verified == true){
+            document.getElementById("channel-a-set").className ="success"
             } else{
-                document.getElementById("channel-d-set").className ="danger";
+                document.getElementById("channel-a-set").className ="danger"
             }
+        
 
-
-            if (response.device.status.channel_trigger_verify == 0){
-                document.getElementById("trigger-row1").className ="success";
-                document.getElementById("trigger-row2").className ="success";
-
-                } else{
-                    document.getElementById("trigger-row1").className ="danger";
-                    document.getElementById("trigger-row2").className ="danger";
-                }
-
-
-            if (response.device.status.capture_settings_verify == 0){
-            document.getElementById("capture-row").className ="success";
-            } else {
-                document.getElementById("capture-row").className ="danger";
-
-            }
-//            console.log("open_unit:",response.device.status.open_unit)
-
-            if (response.device.status.open_unit == 0){
-                document.getElementById("connection_status").textContent = "True"
-            } else {
-                document.getElementById("connection_status").textContent = "False"
-            }
-
-            if (response.device.commands.run_user_capture == true){
-                document.getElementById("cap_type_status").textContent = "User"
-            } else {
-                document.getElementById("cap_type_status").textContent = "LiveView"
-            }
-
-            if (response.device.status.settings_verified == true){
-                document.getElementById("settings_status").textContent = "True"
-            } else {
-                document.getElementById("settings_status").textContent = "False"
-            }
-            document.getElementById("system-state").textContent = response.device.flags.system_state
-
-            active_channels_lv = response.device.live_view.active_channels
-            active_channels_lv_letters = []
-            letters = ['A', 'B', 'C', 'D']
-            for (let chan = 0; chan < active_channels_lv.length; chan++) {
-                active_channels_lv_letters.push(letters[active_channels_lv[chan]])
-            }
-
-            if (active_channels_lv.length == 0) {
-                pre_trig_samples = response.device.settings.capture.pre_trig_samples
-                post_trig_samples = response.device.settings.capture.post_trig_samples
-                samples = pre_trig_samples+post_trig_samples
-                sample_list = Array.from({length: samples}, (_,index) => index + 1);
-                empty_array = [0]
-                for (let item = 1; item < samples; item++) {
-                    empty_array.push(0)
-                }
+        if (response.device.settings.channels.b.verified == true){
+            document.getElementById("channel-b-set").className ="success"
+            } else{
+                document.getElementById("channel-b-set").className ="danger";
             }
             
-            active_channels_pha = response.device.live_view.pha_active_channels
-            active_channels_pha_letters = []
-            for (let chan = 0; chan < active_channels_pha.length; chan++) {
-                active_channels_pha_letters.push(letters[active_channels_pha[chan]])
+        if (response.device.settings.channels.c.verified == true){
+            document.getElementById("channel-c-set").className ="success";
+            } else{
+                document.getElementById("channel-c-set").className ="danger";
             }
-            max_adc = response.device.settings.pha.upper_range
-            min_adc = response.device.settings.pha.lower_range
-            chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
-                response.device.settings.channels.c.range, response.device.settings.channels.d.range]
-            chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
-                response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
-            plotly_liveview();
+
+        if (response.device.settings.channels.d.verified == true){
+        document.getElementById("channel-d-set").className ="success";
+        } else{
+            document.getElementById("channel-d-set").className ="danger";
+        }
+
+        if (response.device.status.channel_trigger_verify == 0){
+            document.getElementById("trigger-row1").className ="success";
+            document.getElementById("trigger-row2").className ="success";
+
+        } else{
+            document.getElementById("trigger-row1").className ="danger";
+            document.getElementById("trigger-row2").className ="danger";
+        }
+
+        if (response.device.status.capture_settings_verify == 0){
+        document.getElementById("capture-row").className ="success";
+        } else {
+            document.getElementById("capture-row").className ="danger";
+
+        }
+
+        if (response.device.status.open_unit == 0){
+            document.getElementById("connection_status").textContent = "True"
+        } else {
+            document.getElementById("connection_status").textContent = "False"
+        }
+
+        if (response.device.commands.run_user_capture == true){
+            document.getElementById("cap_type_status").textContent = "User"
+        } else {
+            document.getElementById("cap_type_status").textContent = "LiveView"
+        }
+
+        if (response.device.status.settings_verified == true){
+            document.getElementById("settings_status").textContent = "True"
+        } else {
+            document.getElementById("settings_status").textContent = "False"
+        }
+        document.getElementById("system-state").textContent = response.device.flags.system_state
+
+        active_channels_lv = response.device.live_view.active_channels
+        active_channels_lv_letters = []
+        letters = ['A', 'B', 'C', 'D']
+        for (let chan = 0; chan < active_channels_lv.length; chan++) {
+            active_channels_lv_letters.push(letters[active_channels_lv[chan]])
+        }
+
+        if (active_channels_lv.length == 0) {
+            pre_trig_samples = response.device.settings.capture.pre_trig_samples
+            post_trig_samples = response.device.settings.capture.post_trig_samples
+            samples = pre_trig_samples+post_trig_samples
+            sample_list = Array.from({length: samples}, (_,index) => index + 1);
+            empty_array = [0]
+            for (let item = 1; item < samples; item++) {
+                empty_array.push(0)
+            }
+        }
+        
+        active_channels_pha = response.device.live_view.pha_active_channels
+        active_channels_pha_letters = []
+        for (let chan = 0; chan < active_channels_pha.length; chan++) {
+            active_channels_pha_letters.push(letters[active_channels_pha[chan]])
+        }
+        max_adc = response.device.settings.pha.upper_range
+        min_adc = response.device.settings.pha.lower_range
+        chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
+            response.device.settings.channels.c.range, response.device.settings.channels.d.range]
+        chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
+            response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
+        plotly_liveview();
     }
 }
 
@@ -661,18 +627,11 @@ function commit_float_adapter(id,path,key){
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
     ajax_put(path,key,checked)
-    // if (key == 'active') {
-    //     var channel = id
-    //     channel = channel.replace('channel-', '')
-    //     channel = channel.replace('-active', '')
-    //     console.log("channel", channel)
-    //     activate_buttons(channel, checked)
-    // }
 }
 
 function activate_buttons(channel, checked) {
-    document.getElementById("liveview-"+channel+"-active").disabled = !checked
-    document.getElementById("pha-"+channel+"-active").disabled = !checked
+    document.getElementById("channel-"+channel+"-liveview").disabled = !checked
+    document.getElementById("channel-"+channel+"-pha").disabled = !checked
 }
 
 function verify_int(id){
