@@ -31,6 +31,8 @@ class BufferManager():
         self.pha_active_channels = []
         self.current_pha_channels = []
         self.bin_edges = []
+        self.pha_counts = [[],[]]
+        self.pha_changed = False
 
     def generate_arrays(self, *args):
         """
@@ -50,7 +52,6 @@ class BufferManager():
         for chan in self.channels:
             if (chan.active is True):
                 self.active_channels.append(chan.channel_id)
-                # self.np_channel_arrays.append(np.zerod(shape=(n_captures, samples), dtype=np.int16))
                 if (chan.live_view is True):
                     self.lv_channels_active.append(chan.channel_id)
                 if (chan.pha_active is True):
@@ -76,15 +77,20 @@ class BufferManager():
 
         for c, b in zip(self.pha_active_channels, self.pha_arrays):
             all_current_pha_data.append(b.tolist())
-        # print(len(all_current_pha_data))
-        
 
         if len(all_current_pha_data) > 0:
             self.bin_edges = ((all_current_pha_data[0])[0])
 
-        self.pha_counts.clear()
+        pha_counts = []
         for array in range((len(all_current_pha_data))):
-            self.pha_counts.append((all_current_pha_data[array])[1])
+            pha_counts.append((all_current_pha_data[array])[1])
+
+        for data in range(len(pha_counts)):
+            if (len(self.pha_counts[data])) != 0:
+                self.pha_counts[data] = np.array(pha_counts[data]) + np.array(self.pha_counts[data])
+                self.pha_counts[data] = ((self.pha_counts[data]).tolist())
+            else:
+                self.pha_counts[data] = pha_counts[data]
 
         current_lv_array = []
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):

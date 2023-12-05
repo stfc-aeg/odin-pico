@@ -118,7 +118,6 @@ class PicoController():
 
         pico_commands = ParameterTree({
             'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
-            'run_pha_capture': (lambda: self.pico_status.flags.pha_capture, partial(self.set_dc_value, self.pico_status.flags, "pha_capture"))
         })
 
         pico_flags = ParameterTree({
@@ -246,8 +245,6 @@ class PicoController():
             self.check_res()
             if self.pico_status.flags.user_capture:
                 self.user_cap()
-            elif self.pico_status.flags.pha_capture:
-                self.lv_pha_cap()
             else:
                 self.lv_pha_cap()
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
@@ -282,32 +279,22 @@ class PicoController():
         captures = self.dev_conf.capture.n_captures
         self.set_capture_run_limits()
         if self.pico.run_setup():
-            start_all = time.time()
+            # start_all = time.time()
             while self.dev_conf.capture_run.caps_comp < captures:
-                print("n_capture", self.dev_conf.capture.n_captures)
+                # print("n_capture", self.dev_conf.capture.n_captures)
                 self.set_capture_run_length()
                 self.pico.assign_pico_memory()
                 self.pico.run_block()
                 self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
                 self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
-                self.analysis.PHA_one_peak()
                 self.buffer_manager.save_lv_data()
-                print("caps_comp_after", self.dev_conf.capture_run.caps_comp)
-            end_all = time.time()
-            print("All captures", (end_all-start_all))
-            print("Each capture", ((end_all-start_all)/self.dev_conf.capture.n_captures))
+                if len(self.buffer_manager.pha_active_channels) != 0:
+                    self.analysis.PHA_one_peak()
+            # end_all = time.time()
+            # print("All captures", (end_all-start_all))
+            # print("Each capture", ((end_all-start_all)/self.dev_conf.capture.n_captures))
         self.dev_conf.capture_run.reset()
         self.pico_status.flags.pha_capture = False            
-
-    def lv_cap(self):
-        """Run the appropriate steps for starting a live view capture"""
-
-        self.set_capture_run_lv()
-        if self.pico.run_setup(self.lv_captures):
-            self.pico.assign_pico_memory()
-            self.pico.run_block()
-            self.buffer_manager.save_lv_data()
-            # self.analysis.PHA_one_peak()
 
 
 ##### Adapter specific functions below #####

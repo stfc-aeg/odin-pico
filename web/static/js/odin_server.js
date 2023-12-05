@@ -50,12 +50,15 @@ var timers = {};
 var timeLimit = 10000; // 5 seconds
 
 var pha_array = []
+var lv_data = []
 
 play_button_lv = true;
+play_button_pha = true;
 
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
+    create_empty_lv_graph();
     create_empty_pha_graph();
     run_sync();
 });
@@ -143,7 +146,9 @@ function toggle_play_pha() {
     }
 }
 
-function plotly_liveview(){
+function update_lv_graph(){
+
+    console.log("Here!")
 
     channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 
@@ -245,111 +250,109 @@ function plotly_liveview(){
                         }
                     }           
                 }
+                Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
             }
-            // If no data is passed through, a graph should still be shown
-            else {
-
-                // Use range from channel a
-                let range = get_range_value_mv(chan_ranges[0])
-
-                // Create the gaps between each axis label
-                var stepSize = range / 4
-                for (var i = -range; i <= range; i += stepSize) {
-                    tickVals.push(i);
-                    tickText.push(i.toFixed(2)); 
-                }
-
-                // Create layout for empty graph
-                layout = {
-                    title: 'Live view of PicoScope traces',
-                    autosize: true,
-                    margin: { t: 50, b: 60},
-                    xaxis: {
-                        title: 'Sample Interval',
-                        range: [0, samples],
-                    },
-                    yaxis: {
-                        title: ('Channel Voltage (mV)'),
-                        range:[-range, range],
-                        tickvals: tickVals,
-                        ticktext: tickText,
-                    },
-                }
-            }
-            // Create the plotly graph
-            Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
         } catch (TypeError) {
-            console.log("Type error identified")
+            console.log("TypeError identified")
         }
     }
 }
 
-function update_pha_graph() {
-    console.log("Doing this!")
-    pha_data = []
+function create_empty_lv_graph() {
+    console.log("Called")
+    // try {
+        // Use range from channel a
+        let range = 10
+        console.log("Range", range)
 
-    scope_pha = document.getElementById('scope_pha');
+        var tickVals = []
+        var tickText = []
 
-    if (pha_array.length > 0) {
-        var trace_one = {
-            x: x = bin_edges,
-            y: y = pha_array[0],
-            name: ('Channel ' + active_channels_pha_letters[0]),
-            type: 'scatter',
-            line: {color: channel_colours[active_channels_pha[0]]}
+        // Create the gaps between each axis label
+        var stepSize = range / 4
+        for (var i = -range; i <= range; i += stepSize) {
+            tickVals.push(i);
+            tickText.push(i.toFixed(2)); 
         }
 
+        // Create layout for empty graph
         layout = {
-            title: 'Last PHA from recorded traces',
-            margin: { t: 50, b: 60 },
-            xaxis: { title: 'Energy Level (ADC_Counts)'},
-            yaxis: {
-                title: ('Channel ' + active_channels_pha_letters[0] + ' Counts'),
-                // range: [-range1, range1],
-                // tickvals: tickVals,
-                // ticktext: tickText,
+            title: 'Live view of PicoScope traces',
+            autosize: true,
+            margin: { t: 50, b: 60},
+            xaxis: {
+                title: 'Sample Interval',
+                // range: [0, samples],
             },
-            autosize: true
+            yaxis: {
+                title: ('Channel Voltage (mV)'),
+                range:[-range, range],
+                tickvals: tickVals,
+                ticktext: tickText,
+            },
         }
-        pha_data.push(trace_one)
-        
-        if (pha_array.length > 1) {
-            var trace_two = {
+        // Create the plotly graph
+        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
+    // } catch (TypeError) {
+    //     console.log("Type error identified")
+    // }
+}
+
+function update_pha_graph() {
+
+    if (play_button_pha) {
+
+        pha_data = []
+
+        scope_pha = document.getElementById('scope_pha');
+
+        if (pha_array.length > 0) {
+            var trace_one = {
                 x: x = bin_edges,
-                y: y = pha_array[1],
-                name: ('Channel ' + active_channels_pha_letters[1]),
+                y: y = pha_array[0],
+                name: ('Channel ' + active_channels_pha_letters[0]),
                 type: 'scatter',
-                line: {color: channel_colours[active_channels_pha[1]]}
+                line: {color: channel_colours[active_channels_pha[0]]}
             }
-            pha_data.push(trace_two)
 
             layout = {
                 title: 'Last PHA from recorded traces',
-                margin: { t: 50, b: 60},
-                xaxis: { title: 'Energy Level (ADC_Counts'},
-                yaxis: {
-                    title: ('Channel ' + active_channels_pha_letters[0] +  ' Counts'),
-                    // automargin: true,
-                    // range: [-range1, range1],
-                    // tickvals: tickVals,
-                    // ticktext: tickText,
-                },
-                yaxis2: {
-                    title: ('Channel ' + active_channels_pha_letters[1] + ' Counts'),
-                    // range:[-range2, range2],
-                    overlaying: 'y',
-                    side: 'right',
-                    // tickvals: tickVals2,
-                    // ticktext: tickText2,
-                autosize: true,
-                },
-                legend: {
-                    orientation: "h",
+                margin: { t: 50, b: 60 },
+                xaxis: { title: 'Energy Level (ADC_Counts)'},
+                yaxis: {title: ('Channel ' + active_channels_pha_letters[0] + ' Counts')},
+                autosize: true
+            }
+            pha_data.push(trace_one)
+            
+            if (pha_array.length > 1) {
+                var trace_two = {
+                    x: x = bin_edges,
+                    y: y = pha_array[1],
+                    name: ('Channel ' + active_channels_pha_letters[1]),
+                    type: 'scatter',
+                    line: {color: channel_colours[active_channels_pha[1]]}
                 }
-            }  
+                pha_data.push(trace_two)
+
+                layout = {
+                    title: 'Last PHA from recorded traces',
+                    margin: { t: 50, b: 60},
+                    xaxis: { title: 'Energy Level (ADC_Counts'},
+                    yaxis: {title: ('Channel ' + active_channels_pha_letters[0] +  ' Counts')},
+                    yaxis2: {
+                        title: ('Channel ' + active_channels_pha_letters[1] + ' Counts'),
+                        overlaying: 'y',
+                        side: 'right',
+                    autosize: true,
+                    },
+                    legend: {
+                        orientation: "h",
+                    }
+                }  
+            }
         }
+        Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
     }
-    Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
 }
     
 function create_empty_pha_graph() {    
@@ -402,17 +405,16 @@ function sync_with_adapter(){
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
 
         var chan_responses = [response.device.settings.channels.a, response.device.settings.channels.b, response.device.settings.channels.c, response.device.settings.channels.d]
-        var chan_letters = ['a','b','c','d']
 
         for (var i = 0; i < 4; i++) {
-            var channel = "channel-"+(String.fromCharCode(i + 97))
-            if (!focusFlags[channel+"-range"]) {$("#"+channel+"-range").val(chan_responses[i].range)}
-            if (!focusFlags[channel+"-coupl"]) {$("#"+channel+"-coupl").val(chan_responses[i].coupling)}
-            if (!focusFlags[channel+"-offset"]) {$("#"+channel+"-offset").val(chan_responses[i].offset)}
-            if (!focusFlags[channel+"-active"]) {document.getElementById(channel+"-active").checked=(chan_responses[i].active)}
-            if (!focusFlags[channel+"-liveview"]) {document.getElementById(channel+"-liveview").checked=(chan_responses[i].live_view)}
-            if (!focusFlags[channel+"-pha"]) {document.getElementById(channel+"-pha").checked=(chan_responses[i].pha_active)}
-            activate_buttons(chan_letters[i], chan_responses[i].active)
+            var channel = "channel-"+String.fromCharCode(i + 97)+"-"
+            if (!focusFlags[channel+"range"]) {$("#"+channel+"range").val(chan_responses[i].range)}
+            if (!focusFlags[channel+"coupl"]) {$("#"+channel+"coupl").val(chan_responses[i].coupling)}
+            if (!focusFlags[channel+"offset"]) {$("#"+channel+"offset").val(chan_responses[i].offset)}
+            if (!focusFlags[channel+"active"]) {document.getElementById(channel+"active").checked=(chan_responses[i].active)}
+            if (!focusFlags[channel+"liveview"]) {document.getElementById(channel+"liveview").checked=(chan_responses[i].live_view)}
+            if (!focusFlags[channel+"pha"]) {document.getElementById(channel+"pha").checked=(chan_responses[i].pha_active)}
+            activate_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
         }
 
         if (!focusFlags["trigger-enable"]) {
@@ -437,18 +439,47 @@ function sync_with_adapter(){
         if (!focusFlags["pha-lower-range"]) {$("#pha-lower-range").val(response.device.settings.pha.lower_range)}
         if (!focusFlags["pha-upper-range"]) {$("#pha-upper-range").val(response.device.settings.pha.upper_range)}
 
-        // Assign LV data locally
-        try{
-            data_array = response.device.live_view.lv_data
+        active_channels_lv = response.device.live_view.active_channels
+        active_channels_lv_letters = []
+        letters = ['A', 'B', 'C', 'D']
+        for (let chan = 0; chan < active_channels_lv.length; chan++) {
+            active_channels_lv_letters.push(letters[active_channels_lv[chan]])
+        }
 
-        } catch {
-                console.log("Error in assigning LV values")
+        if (active_channels_lv.length == 0) {
+            pre_trig_samples = response.device.settings.capture.pre_trig_samples
+            post_trig_samples = response.device.settings.capture.post_trig_samples
+            samples = pre_trig_samples+post_trig_samples
+            sample_list = Array.from({length: samples}, (_,index) => index + 1);
+        }
+        
+        active_channels_pha = response.device.live_view.pha_active_channels
+        active_channels_pha_letters = []
+        for (let chan = 0; chan < active_channels_pha.length; chan++) {
+            active_channels_pha_letters.push(letters[active_channels_pha[chan]])
+        }
+        max_adc = response.device.settings.pha.upper_range
+        min_adc = response.device.settings.pha.lower_range
+        chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
+            response.device.settings.channels.c.range, response.device.settings.channels.d.range]
+        chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
+            response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
+
+        // Assign LV & PHA data locally
+        // try{
+            if (response.device.live_view.lv_data != undefined) {
+                if ((response.device.live_view.lv_data.toString()) != (lv_data.toString())) {
+                    data_array = response.device.live_view.lv_data
+                    update_lv_graph()
+                }
             }
+        // } catch {
+        //     console.log("Error in assigning LV values")
+        // }
+        
         try{
             if (response.device.live_view.pha_counts != undefined) {
-                console.log("Here!")
                 if ((response.device.live_view.pha_counts.toString()) != (pha_array.toString())) {
-                    console.log("Modifying data")
                     pha_array = response.device.live_view.pha_counts
                     bin_edges = response.device.live_view.bin_edges
                     update_pha_graph()
@@ -543,37 +574,6 @@ function sync_with_adapter(){
             document.getElementById("settings_status").textContent = "False"
         }
         document.getElementById("system-state").textContent = response.device.flags.system_state
-
-        active_channels_lv = response.device.live_view.active_channels
-        active_channels_lv_letters = []
-        letters = ['A', 'B', 'C', 'D']
-        for (let chan = 0; chan < active_channels_lv.length; chan++) {
-            active_channels_lv_letters.push(letters[active_channels_lv[chan]])
-        }
-
-        if (active_channels_lv.length == 0) {
-            pre_trig_samples = response.device.settings.capture.pre_trig_samples
-            post_trig_samples = response.device.settings.capture.post_trig_samples
-            samples = pre_trig_samples+post_trig_samples
-            sample_list = Array.from({length: samples}, (_,index) => index + 1);
-            empty_array = [0]
-            for (let item = 1; item < samples; item++) {
-                empty_array.push(0)
-            }
-        }
-        
-        active_channels_pha = response.device.live_view.pha_active_channels
-        active_channels_pha_letters = []
-        for (let chan = 0; chan < active_channels_pha.length; chan++) {
-            active_channels_pha_letters.push(letters[active_channels_pha[chan]])
-        }
-        max_adc = response.device.settings.pha.upper_range
-        min_adc = response.device.settings.pha.lower_range
-        chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
-            response.device.settings.channels.c.range, response.device.settings.channels.d.range]
-        chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
-            response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
-        plotly_liveview();
     }
 }
 

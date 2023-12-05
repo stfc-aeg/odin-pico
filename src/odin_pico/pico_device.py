@@ -110,7 +110,7 @@ class PicoDevice():
             self.pico_status.flags.system_state = "Connected to Picoscope"
             self.set_channels()
             self.set_trigger()
-            print("args", args)
+            # print("args", args)
             if args:
                 self.buffer_manager.generate_arrays(args[0])
             else:
