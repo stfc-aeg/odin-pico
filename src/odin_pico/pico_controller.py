@@ -118,6 +118,7 @@ class PicoController():
 
         pico_commands = ParameterTree({
             'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
+            'clear_pha': (lambda: self.buffer_manager.clear_pha, partial(self.set_dc_value, self.buffer_manager, "clear_pha"))
         })
 
         pico_flags = ParameterTree({
@@ -163,6 +164,11 @@ class PicoController():
                     setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
+            if (value == False):
+                self.pico_status.flags.abort_cap = True
+                time.sleep(5)
+                self.pico_status.flags.abort_cap = False
+
         elif (attr_name == 'active') and (value == False):
             try:
                 channel_dc = getattr(obj, chan_name)
@@ -171,6 +177,9 @@ class PicoController():
                 setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
+            self.pico_status.flags.abort_cap = True
+            time.sleep(5)
+            self.pico_status.flags.abort_cap = False
         else:
             try:
                 channel_dc = getattr(obj, chan_name)
@@ -240,7 +249,6 @@ class PicoController():
         """Responsible for telling the picoscope to collect and return data"""
 
         self.calc_samp_time()
-        self.pico_status.flags.abort_cap = False
         if self.pico_status.flags.verify_all:
             self.check_res()
             if self.pico_status.flags.user_capture:
@@ -249,6 +257,8 @@ class PicoController():
                 self.lv_pha_cap()
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
+        # self.pico_status.flags.abort_cap = False
+
 
     def check_res(self):
         """Detect if the device resolution has been changed, if so apply to picoscope"""

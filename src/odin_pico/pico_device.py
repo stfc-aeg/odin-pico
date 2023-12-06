@@ -71,7 +71,6 @@ class PicoDevice():
                 for i in range(self.dev_conf.capture_run.caps_comp, self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run):
                     buff = b[i]
                     ps.ps5000aSetDataBuffer(self.dev_conf.mode.handle, c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), samples, i-self.dev_conf.capture_run.caps_comp, 0)
-
     def set_trigger(self):
         """
             Responsible for setting the trigger information on the picoscope
@@ -125,9 +124,8 @@ class PicoDevice():
         """
         self.prev_seg_caps = 0
         self.seg_caps = 0
-        #print(f'\n\npico_status when called: {self.pico_status.status}')
+        # print(f'\n\npico_status when called: {self.pico_status.flags.system_state}')
         if True:#self.ping_scope():
-
             start_time = time.time()
             self.pico_status.block_ready = ctypes.c_int16(0)
             self.dev_conf.meta_data.total_cap_samples = (self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples)
@@ -144,15 +142,17 @@ class PicoDevice():
                 if (time.time() - start_time >= 0.25):
                     start_time = time.time()
                     self.get_cap_count()
-#                    print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
+                    # print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
 
                     if (self.prev_seg_caps == self.seg_caps):
                         self.pico_status.flags.system_state = "Waiting for trigger"
 
                 if (self.pico_status.flags.abort_cap):
                     ps.ps5000aStop(self.dev_conf.mode.handle)
+
                 time.sleep(0.05)
                 self.prev_seg_caps = self.seg_caps
+
             self.get_cap_count()
 
             if (self.pico_status.flags.abort_cap):
@@ -160,7 +160,9 @@ class PicoDevice():
             else:
                 seg_to_indx = (self.dev_conf.capture_run.caps_in_run-1)
 
-            ps.ps5000aGetValuesBulk(self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_samples), 0, (seg_to_indx), 0, 0, ctypes.byref(self.buffer_manager.overflow))
+            if (self.pico_status.flags.abort_cap) == False:
+                ps.ps5000aGetValuesBulk(self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_samples), 0, (seg_to_indx), 0, 0, ctypes.byref(self.buffer_manager.overflow))
+            
             self.get_trigger_timing()
             
     def get_trigger_timing(self):

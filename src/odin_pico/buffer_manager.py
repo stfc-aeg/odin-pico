@@ -31,8 +31,9 @@ class BufferManager():
         self.pha_active_channels = []
         self.current_pha_channels = []
         self.bin_edges = []
-        self.pha_counts = [[],[]]
+        self.pha_counts = [[]] * 4
         self.pha_changed = False
+        self.clear_pha = False
 
     def generate_arrays(self, *args):
         """
@@ -62,7 +63,7 @@ class BufferManager():
             if(chan.active is True):
                 if(chan.live_view == True) or (chan.pha_active == True):
                     self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))  
-               
+
     def save_lv_data(self):
         """
             Return a live view of traces being captured.
@@ -74,7 +75,6 @@ class BufferManager():
             self.chan_offsets[channel] = self.channels[channel].offset
 
         all_current_pha_data = []
-
         for c, b in zip(self.pha_active_channels, self.pha_arrays):
             all_current_pha_data.append(b.tolist())
 
@@ -85,12 +85,16 @@ class BufferManager():
         for array in range((len(all_current_pha_data))):
             pha_counts.append((all_current_pha_data[array])[1])
 
-        for data in range(len(pha_counts)):
-            if (len(self.pha_counts[data])) != 0:
-                self.pha_counts[data] = np.array(pha_counts[data]) + np.array(self.pha_counts[data])
-                self.pha_counts[data] = ((self.pha_counts[data]).tolist())
+        if (self.clear_pha):
+            self.pha_counts = [[]] * 4
+            self.clear_pha = False
+
+        for channel in range(len(pha_counts)):
+            if (len(self.pha_counts[self.current_pha_channels[channel]])) != 0:
+                self.pha_counts[self.current_pha_channels[channel]] = np.array(pha_counts[channel]) + np.array(self.pha_counts[self.current_pha_channels[channel]])
+                self.pha_counts[self.current_pha_channels[channel]] = ((self.pha_counts[self.current_pha_channels[channel]]).tolist())
             else:
-                self.pha_counts[data] = pha_counts[data]
+                self.pha_counts[self.current_pha_channels[channel]] = pha_counts[channel]
 
         current_lv_array = []
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
@@ -107,7 +111,6 @@ class BufferManager():
                     values[value] = values[value] + offset_key
 
             current_lv_array.append(values)
-
         # Replaces current data as long as new data is not blank
         if current_lv_array != []:
             self.lv_channel_arrays = current_lv_array

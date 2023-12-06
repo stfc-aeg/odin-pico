@@ -27,7 +27,7 @@ class PicoAnalysis():
         """
         self.buffer_manager.current_pha_channels.clear()
         self.buffer_manager.pha_arrays.clear()
-        self.pico_status.flags.system_state = "Connected to Picoscope, calculating PHA" 
+        # self.pico_status.flags.system_state = "Connected to Picoscope, calculating PHA" 
         
         for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
             if self.buffer_manager.pha_channels_active[c] == True:

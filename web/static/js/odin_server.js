@@ -148,10 +148,6 @@ function toggle_play_pha() {
 
 function update_lv_graph(){
 
-    console.log("Here!")
-
-    channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
-
     if (play_button_lv){
         // Create variables for values on graph axes
         var tickVals = [];
@@ -306,51 +302,25 @@ function update_pha_graph() {
 
         scope_pha = document.getElementById('scope_pha');
 
-        if (pha_array.length > 0) {
-            var trace_one = {
+        for (var chan = 0; chan < pha_channels.length; chan++) {
+            pha_data.push({
                 x: x = bin_edges,
-                y: y = pha_array[0],
-                name: ('Channel ' + active_channels_pha_letters[0]),
+                y: y = pha_array[pha_channels[chan]],
+                name: ('Channel ' + active_channels_pha_letters[chan]),
                 type: 'scatter',
-                line: {color: channel_colours[active_channels_pha[0]]}
-            }
-
-            layout = {
-                title: 'Last PHA from recorded traces',
-                margin: { t: 50, b: 60 },
-                xaxis: { title: 'Energy Level (ADC_Counts)'},
-                yaxis: {title: ('Channel ' + active_channels_pha_letters[0] + ' Counts')},
-                autosize: true
-            }
-            pha_data.push(trace_one)
-            
-            if (pha_array.length > 1) {
-                var trace_two = {
-                    x: x = bin_edges,
-                    y: y = pha_array[1],
-                    name: ('Channel ' + active_channels_pha_letters[1]),
-                    type: 'scatter',
-                    line: {color: channel_colours[active_channels_pha[1]]}
-                }
-                pha_data.push(trace_two)
-
-                layout = {
-                    title: 'Last PHA from recorded traces',
-                    margin: { t: 50, b: 60},
-                    xaxis: { title: 'Energy Level (ADC_Counts'},
-                    yaxis: {title: ('Channel ' + active_channels_pha_letters[0] +  ' Counts')},
-                    yaxis2: {
-                        title: ('Channel ' + active_channels_pha_letters[1] + ' Counts'),
-                        overlaying: 'y',
-                        side: 'right',
-                    autosize: true,
-                    },
-                    legend: {
-                        orientation: "h",
-                    }
-                }  
-            }
+                line: {color: channel_colours[pha_channels[chan]]}
+            })
         }
+
+        layout = {
+            title: 'Current PHA Data',
+            margin: { t: 50, b: 60 },
+            xaxis: {title: 'Energy Level (ADC_Counts)'},
+            yaxis: {title: 'Counts'},
+            autosize: true,
+            legend: {orientation: "h"}
+        }
+
         Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
     }
 }
@@ -453,11 +423,14 @@ function sync_with_adapter(){
             sample_list = Array.from({length: samples}, (_,index) => index + 1);
         }
         
-        active_channels_pha = response.device.live_view.pha_active_channels
+        pha_channels = response.device.live_view.pha_active_channels
         active_channels_pha_letters = []
-        for (let chan = 0; chan < active_channels_pha.length; chan++) {
-            active_channels_pha_letters.push(letters[active_channels_pha[chan]])
+        for (let chan = 0; chan < pha_channels.length; chan++) {
+            active_channels_pha_letters.push(letters[pha_channels[chan]])
         }
+
+        channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
+
         max_adc = response.device.settings.pha.upper_range
         min_adc = response.device.settings.pha.lower_range
         chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
@@ -466,16 +439,16 @@ function sync_with_adapter(){
             response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
 
         // Assign LV & PHA data locally
-        // try{
+        try{
             if (response.device.live_view.lv_data != undefined) {
                 if ((response.device.live_view.lv_data.toString()) != (lv_data.toString())) {
                     data_array = response.device.live_view.lv_data
                     update_lv_graph()
                 }
             }
-        // } catch {
-        //     console.log("Error in assigning LV values")
-        // }
+        } catch {
+            console.log("Error in assigning LV values")
+        }
         
         try{
             if (response.device.live_view.pha_counts != undefined) {
@@ -626,6 +599,9 @@ function commit_float_adapter(id,path,key){
 
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
+    if (key == "pha_active") {
+        commit_true_adapter('commands/', 'clear_pha')
+    }
     ajax_put(path,key,checked)
 }
 
