@@ -107,8 +107,6 @@ class PicoController():
 
         live_view = ParameterTree({
             'active_channels': (lambda: self.buffer_manager.lv_channels_active, None),
-            'pha_active_channels': (lambda: self.buffer_manager.current_pha_channels, None),
-            'preview_channel': (lambda: self.dev_conf.preview_channel, partial(self.set_dc_value, self.dev_conf, "preview_channel")),
             'pha_counts': (lambda: self.buffer_manager.pha_counts, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
@@ -157,29 +155,22 @@ class PicoController():
     
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
 
-        if (attr_name == 'live_view') or (attr_name == 'pha_active'):
+        if (attr_name == 'live_view'): # or (attr_name == 'pha_active'):
             try:
                 channel_dc = getattr(obj, chan_name)
                 if getattr(channel_dc, 'active', None) == True:
                     setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
-            if (value == False):
-                self.pico_status.flags.abort_cap = True
-                time.sleep(5)
-                self.pico_status.flags.abort_cap = False
 
         elif (attr_name == 'active') and (value == False):
             try:
                 channel_dc = getattr(obj, chan_name)
                 setattr(channel_dc, 'live_view', value)
-                setattr(channel_dc, 'pha_active', value)
+                # setattr(channel_dc, 'pha_active', value)
                 setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
-            self.pico_status.flags.abort_cap = True
-            time.sleep(5)
-            self.pico_status.flags.abort_cap = False
         else:
             try:
                 channel_dc = getattr(obj, chan_name)
@@ -257,8 +248,6 @@ class PicoController():
                 self.lv_pha_cap()
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
-        # self.pico_status.flags.abort_cap = False
-
 
     def check_res(self):
         """Detect if the device resolution has been changed, if so apply to picoscope"""
@@ -289,22 +278,15 @@ class PicoController():
         captures = self.dev_conf.capture.n_captures
         self.set_capture_run_limits()
         if self.pico.run_setup():
-            # start_all = time.time()
             while self.dev_conf.capture_run.caps_comp < captures:
-                # print("n_capture", self.dev_conf.capture.n_captures)
                 self.set_capture_run_length()
                 self.pico.assign_pico_memory()
                 self.pico.run_block()
                 self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
                 self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
+                self.analysis.PHA_one_peak()
                 self.buffer_manager.save_lv_data()
-                if len(self.buffer_manager.pha_active_channels) != 0:
-                    self.analysis.PHA_one_peak()
-            # end_all = time.time()
-            # print("All captures", (end_all-start_all))
-            # print("Each capture", ((end_all-start_all)/self.dev_conf.capture.n_captures))
         self.dev_conf.capture_run.reset()
-        self.pico_status.flags.pha_capture = False            
 
 
 ##### Adapter specific functions below #####

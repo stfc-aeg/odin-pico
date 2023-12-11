@@ -71,6 +71,7 @@ class PicoDevice():
                 for i in range(self.dev_conf.capture_run.caps_comp, self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run):
                     buff = b[i]
                     ps.ps5000aSetDataBuffer(self.dev_conf.mode.handle, c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), samples, i-self.dev_conf.capture_run.caps_comp, 0)
+
     def set_trigger(self):
         """
             Responsible for setting the trigger information on the picoscope
@@ -162,9 +163,8 @@ class PicoDevice():
 
             if (self.pico_status.flags.abort_cap) == False:
                 ps.ps5000aGetValuesBulk(self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_samples), 0, (seg_to_indx), 0, 0, ctypes.byref(self.buffer_manager.overflow))
-            
             self.get_trigger_timing()
-            
+
     def get_trigger_timing(self):
         trigger_info = (Trigger_Info*self.dev_conf.capture_run.caps_in_run) ()
         ps.ps5000aGetTriggerInfoBulk(self.dev_conf.mode.handle, ctypes.byref(trigger_info), 0, (self.dev_conf.capture_run.caps_in_run-1))

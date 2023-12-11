@@ -61,21 +61,20 @@ class BufferManager():
 
         for chan in self.channels:
             if(chan.active is True):
-                if(chan.live_view == True) or (chan.pha_active == True):
-                    self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))  
+                self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
 
     def save_lv_data(self):
         """
             Return a live view of traces being captured.
             """
 
-        # Find ranges and offsets for channels
+        # Find ranges and offsets for all channels
         for channel in range(4):
             self.chan_range[channel] = self.channels[channel].range
             self.chan_offsets[channel] = self.channels[channel].offset
 
         all_current_pha_data = []
-        for c, b in zip(self.pha_active_channels, self.pha_arrays):
+        for c, b in zip(self.active_channels, self.pha_arrays):
             all_current_pha_data.append(b.tolist())
 
         if len(all_current_pha_data) > 0:

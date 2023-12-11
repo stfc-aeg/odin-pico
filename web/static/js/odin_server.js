@@ -256,42 +256,34 @@ function update_lv_graph(){
 
 function create_empty_lv_graph() {
     console.log("Called")
-    // try {
-        // Use range from channel a
-        let range = 10
-        console.log("Range", range)
+    let range = 10
+    console.log("Range", range)
 
-        var tickVals = []
-        var tickText = []
+    var tickVals = []
+    var tickText = []
 
-        // Create the gaps between each axis label
-        var stepSize = range / 4
-        for (var i = -range; i <= range; i += stepSize) {
-            tickVals.push(i);
-            tickText.push(i.toFixed(2)); 
-        }
+    // Create the gaps between each axis label
+    var stepSize = range / 4
+    for (var i = -range; i <= range; i += stepSize) {
+        tickVals.push(i);
+        tickText.push(i.toFixed(2));
+    }
 
-        // Create layout for empty graph
-        layout = {
-            title: 'Live view of PicoScope traces',
-            autosize: true,
-            margin: { t: 50, b: 60},
-            xaxis: {
-                title: 'Sample Interval',
-                // range: [0, samples],
-            },
-            yaxis: {
-                title: ('Channel Voltage (mV)'),
-                range:[-range, range],
-                tickvals: tickVals,
-                ticktext: tickText,
-            },
-        }
-        // Create the plotly graph
-        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
-    // } catch (TypeError) {
-    //     console.log("Type error identified")
-    // }
+    // Create layout for empty graph
+    layout = {
+        title: 'Live view of PicoScope traces',
+        autosize: true,
+        margin: { t: 50, b: 60},
+        xaxis: {title: 'Sample Interval'},
+        yaxis: {
+            title: ('Channel Voltage (mV)'),
+            range:[-range, range],
+            tickvals: tickVals,
+            ticktext: tickText,
+        },
+    }
+    // Create the plotly graph
+    Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
 }
 
 function update_pha_graph() {
@@ -302,14 +294,16 @@ function update_pha_graph() {
 
         scope_pha = document.getElementById('scope_pha');
 
-        for (var chan = 0; chan < pha_channels.length; chan++) {
-            pha_data.push({
-                x: x = bin_edges,
-                y: y = pha_array[pha_channels[chan]],
-                name: ('Channel ' + active_channels_pha_letters[chan]),
-                type: 'scatter',
-                line: {color: channel_colours[pha_channels[chan]]}
-            })
+        for (var chan = 0; chan < 4; chan++) {
+            if (pha_channels[chan] == true) {
+                pha_data.push({
+                    x: x = bin_edges,
+                    y: y = pha_array[chan],
+                    name: ('Channel ' + letters[chan]),
+                    type: 'scatter',
+                    line: {color: channel_colours[chan]}
+                })
+            }
         }
 
         layout = {
@@ -320,7 +314,6 @@ function update_pha_graph() {
             autosize: true,
             legend: {orientation: "h"}
         }
-
         Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
     }
 }
@@ -376,6 +369,7 @@ function sync_with_adapter(){
 
         var chan_responses = [response.device.settings.channels.a, response.device.settings.channels.b, response.device.settings.channels.c, response.device.settings.channels.d]
 
+
         for (var i = 0; i < 4; i++) {
             var channel = "channel-"+String.fromCharCode(i + 97)+"-"
             if (!focusFlags[channel+"range"]) {$("#"+channel+"range").val(chan_responses[i].range)}
@@ -384,7 +378,21 @@ function sync_with_adapter(){
             if (!focusFlags[channel+"active"]) {document.getElementById(channel+"active").checked=(chan_responses[i].active)}
             if (!focusFlags[channel+"liveview"]) {document.getElementById(channel+"liveview").checked=(chan_responses[i].live_view)}
             if (!focusFlags[channel+"pha"]) {document.getElementById(channel+"pha").checked=(chan_responses[i].pha_active)}
-            activate_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
+            activate_lv_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
+            if (pha_array != undefined) {
+                try{
+                if (pha_array[i].length != 0) {
+                    console.log("true")
+                    activate_pha_buttons(String.fromCharCode(i + 97), true)
+                }
+                else {
+                    console.log("false")
+                    activate_pha_buttons(String.fromCharCode(i + 97), false)
+                }
+             } catch {
+
+            }
+            }
         }
 
         if (!focusFlags["trigger-enable"]) {
@@ -423,10 +431,13 @@ function sync_with_adapter(){
             sample_list = Array.from({length: samples}, (_,index) => index + 1);
         }
         
-        pha_channels = response.device.live_view.pha_active_channels
+        pha_channels = [response.device.settings.channels.a.pha_active, response.device.settings.channels.b.pha_active,
+                response.device.settings.channels.c.pha_active, response.device.settings.channels.d.pha_active]
         active_channels_pha_letters = []
         for (let chan = 0; chan < pha_channels.length; chan++) {
-            active_channels_pha_letters.push(letters[pha_channels[chan]])
+            if (pha_channels[chan] == true) {
+                active_channels_pha_letters.push(letters[chan])
+            }
         }
 
         channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
@@ -599,16 +610,18 @@ function commit_float_adapter(id,path,key){
 
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
-    if (key == "pha_active") {
-        commit_true_adapter('commands/', 'clear_pha')
-    }
     ajax_put(path,key,checked)
 }
 
-function activate_buttons(channel, checked) {
+function activate_lv_buttons(channel, checked) {
     document.getElementById("channel-"+channel+"-liveview").disabled = !checked
-    document.getElementById("channel-"+channel+"-pha").disabled = !checked
 }
+
+function activate_pha_buttons(channel, checked) {
+    document.getElementById("channel-"+channel+"-pha").disabled = !checked
+    commit_checked_adapter('channel-'+channel+'-pha','settings/channels/'+channel,'pha_active')
+}
+
 
 function verify_int(id){
     var input_box = (document.getElementById(id));
