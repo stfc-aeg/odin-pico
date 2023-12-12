@@ -129,9 +129,9 @@ function toggle_play_lv() {
     play_button_lv = !play_button_lv;
     
     if (play_button_lv) {
-      button_lv.innerHTML = '<span class="material-icons">pause</span>'; 
+      button_lv.innerHTML = '<span class="material-icons">pause_circle_outline</span>'; 
     } else {
-      button_lv.innerHTML = '<span class="material-icons">play_arrow</span>';
+      button_lv.innerHTML = '<span class="material-icons">play_circle_outline</span>';
     }
   }
 
@@ -140,9 +140,9 @@ function toggle_play_pha() {
     play_button_pha = !play_button_pha;
 
     if (play_button_pha) {
-        button_pha.innerHTML = '<span class="material-icons">pause</span>';
+        button_pha.innerHTML = '<span class="material-icons">pause_circle_outline</span>';
     } else {
-        button_pha.innerHTML = '<span class="material-icons">play_arrow</span>';
+        button_pha.innerHTML = '<span class="material-icons">play_circle_outline</span>';
     }
 }
 
@@ -255,10 +255,10 @@ function update_lv_graph(){
 }
 
 function create_empty_lv_graph() {
-    console.log("Called")
-    let range = 10
-    console.log("Range", range)
 
+    let range = 10
+
+    
     var tickVals = []
     var tickText = []
 
@@ -381,17 +381,14 @@ function sync_with_adapter(){
             activate_lv_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
             if (pha_array != undefined) {
                 try{
-                if (pha_array[i].length != 0) {
-                    console.log("true")
-                    activate_pha_buttons(String.fromCharCode(i + 97), true)
+                    if (pha_array[i].length != 0) {
+                        activate_pha_buttons(String.fromCharCode(i + 97), true)
+                    }
+                    else {
+                        activate_pha_buttons(String.fromCharCode(i + 97), false)
+                    }
+                 } catch {
                 }
-                else {
-                    console.log("false")
-                    activate_pha_buttons(String.fromCharCode(i + 97), false)
-                }
-             } catch {
-
-            }
             }
         }
 
@@ -439,7 +436,7 @@ function sync_with_adapter(){
                 active_channels_pha_letters.push(letters[chan])
             }
         }
-
+        
         channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 
         max_adc = response.device.settings.pha.upper_range
@@ -448,9 +445,8 @@ function sync_with_adapter(){
             response.device.settings.channels.c.range, response.device.settings.channels.d.range]
         chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
             response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
-
         // Assign LV & PHA data locally
-        try{
+        try {
             if (response.device.live_view.lv_data != undefined) {
                 if ((response.device.live_view.lv_data.toString()) != (lv_data.toString())) {
                     data_array = response.device.live_view.lv_data
@@ -461,11 +457,11 @@ function sync_with_adapter(){
             console.log("Error in assigning LV values")
         }
         
-        try{
+        try {
             if (response.device.live_view.pha_counts != undefined) {
                 if ((response.device.live_view.pha_counts.toString()) != (pha_array.toString())) {
                     pha_array = response.device.live_view.pha_counts
-                    bin_edges = response.device.live_view.bin_edges
+                    bin_edges = response.device.live_view.pha_bin_edges
                     update_pha_graph()
                 }
             }
@@ -619,9 +615,7 @@ function activate_lv_buttons(channel, checked) {
 
 function activate_pha_buttons(channel, checked) {
     document.getElementById("channel-"+channel+"-pha").disabled = !checked
-    commit_checked_adapter('channel-'+channel+'-pha','settings/channels/'+channel,'pha_active')
 }
-
 
 function verify_int(id){
     var input_box = (document.getElementById(id));

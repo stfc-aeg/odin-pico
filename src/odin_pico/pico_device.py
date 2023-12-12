@@ -36,7 +36,6 @@ class PicoDevice():
         self.pico_status.open_unit = ps.ps5000aOpenUnit(ctypes.byref(self.dev_conf.mode.handle), None, self.dev_conf.mode.resolution)
         if self.pico_status.open_unit == 0:
             ps.ps5000aMaximumValue(self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_adc))
-            self.dev_conf.pha.upper_range = (self.dev_conf.meta_data.max_adc.value)
         logging.debug(f'open_unit value:{self.pico_status.open_unit} /nopen_unit() finished')
 
     def generate_arrays(self, *args):

@@ -36,7 +36,7 @@ div.content-container {
 }
 
 .save-pha-btn {
-  height: 25px;
+  height: 24px;
 }
 
 .span-btn {
@@ -63,9 +63,9 @@ div.content-container {
   padding-right: 0px;
 }
 
-.panel-heading-nav {
+/* .panel-heading-nav {
   padding: 10px;
-}
+} */
 
 #main-body {
   padding-top: 20px;

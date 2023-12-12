@@ -80,13 +80,13 @@ class BufferManager():
         if len(all_current_pha_data) > 0:
             self.bin_edges = ((all_current_pha_data[0])[0])
 
+        if self.clear_pha == True:
+            self.pha_counts = [[]] * 4
+            self.clear_pha = False
+
         pha_counts = []
         for array in range((len(all_current_pha_data))):
             pha_counts.append((all_current_pha_data[array])[1])
-
-        if (self.clear_pha):
-            self.pha_counts = [[]] * 4
-            self.clear_pha = False
 
         for channel in range(len(pha_counts)):
             if (len(self.pha_counts[self.current_pha_channels[channel]])) != 0:
@@ -124,4 +124,4 @@ class BufferManager():
             array.clear()
         self.chan_range = [0] * 4
         self.chan_offsets = [0] * 4
-        self.pha_channels_active = [False] * 4
+        self.pha_channels_active = [False] * 4        

@@ -348,96 +348,90 @@
                                           
                       <!-- Graph Rows -->
                         <div class="flex-width">
-                          <div class="row">
-                            <div class="col-sm-12">
-                              <div id = "setup-6" class="panel panel-default">
-                                <div class="panel-heading">Live View and PHA Data:</div>
-                                  <div class="panel-body">
-                                    <div class="row">
-                                      <div class="col-sm-5" id="live-view-channels">
-                                        <span>&nbsp;&nbsp;Select Live View Channels: </span>
-                                        <form class="custom-form" id="live-view-form">
-                                          <fieldset class="custom-fieldset">
-                                            <div class="custom-div-a">
-                                              <input type="checkbox" id="channel-a-liveview" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-liveview','settings/channels/a/','live_view')">
-                                              <label for="channel-a" class="custom-label">A</label>
-                                            </div>
-                                            <div class="custom-div-b">
-                                              <input type="checkbox" id="channel-b-liveview" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-liveview','settings/channels/b/','live_view')">
-                                              <label for="channel-b" class="custom-label">B</label>
-                                            </div>
-                                            <div class="custom-div-c">
-                                              <input type="checkbox" id="channel-c-liveview" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-liveview','settings/channels/c/','live_view')">
-                                              <label for="channel-c" class="custom-label">C</label>
-                                            </div>
-                                            <div class="custom-div-d">
-                                              <input type="checkbox" id="channel-d-liveview" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-liveview','settings/channels/d/','live_view')">
-                                              <label for="channel-d" class="custom-label">D</label>
-                                            </div>
-                                          </fieldset>
-                                        </form>
-                                      </div>
-                                      <div class="col-sm-5">
-                                        <td class="toggle-container">
-                                          <button id="p_p_button_lv" class="icon-button" onclick="toggle_play_lv()">
-                                            <span class="material-icons">pause</span>
-                                          </button>
-                                        </td>
-                                      </div>
-                                    </div>
-                                    <table class="table table-borderless">
-                                      <tr>
-                                        <td colspan="2">
-                                          <div class="plot-container" id="scope_lv"></div>
-                                        </td>
-                                      </tr>
-                                    </table>
-                                    <div class="row">
-                                      <div class="col-sm-5" id="pha-active-channels">
-                                        <span>&nbsp;&nbsp;Select Channels for PHA: </span>
-                                        <form class="custom-form" id="pha-active-form">
-                                          <fieldset class="custom-fieldset">
-                                            <div class = "custom-div-a">
-                                              <input type="checkbox" id="channel-a-pha" value="0", class="custom-checkbox" oninput="commit_checked_adapter('channel-a-pha','settings/channels/a','pha_active')">
-                                              <label for="channel-a" class="custom-label">A</label>
-                                            </div>
-                                            <div class = "custom-div-b">
-                                              <input type="checkbox" id="channel-b-pha" value="1", class="custom-checkbox" onclick="commit_checked_adapter('channel-b-pha','settings/channels/b','pha_active')">
-                                              <label for="channel-b" class="custom-label">B</label>
-                                            </div>
-                                            <div class="custom-div-c">
-                                              <input type="checkbox" id="channel-c-pha" value="2", class="custom-checkbox" onclick="commit_checked_adapter('channel-c-pha','settings/channels/c','pha_active')">
-                                              <label for="channel-c" class="custom-label">C</label>
-                                            </div>
-                                            <div class="custom-div-d">
-                                              <input type="checkbox" id="channel-d-pha" value="3", class="custom-checkbox" onclick="commit_checked_adapter('channel-d-pha','settings/channels/d','pha_active')">
-                                              <label for="channel-d" class="custom-label">D</label>
-                                            </div>
-                                          </fieldset>
-                                        </form>
-                                      </div>
-                                      <!-- <div class="col-sm-5"> -->
-                                        <td class="toggle-container">
-                                          <button id="p_p_button_pha" class="icon-button" onclick="toggle_play_pha()">
-                                            <span class="material-icons">pause</span>
-                                          </button>
-                                        </td>
-                                      <!-- </div> -->
-                                      <!-- <div class="col-sm-5"> -->
-                                        <th>
-                                          <label for="clear_pha_btn">Clear PHA Data: </label>
-                                          <button class="btn btn-default" type="button" id="clear_pha_btn" value = "true" onclick="commit_true_adapter('commands/','clear_pha')" >Clear</button>
-                                        </th>   
-                                      <!-- </div> -->
-                                    </div>
-                                    <tr>
-                                      <td colspan="2">
-                                        <div class="plot-container" id="scope_pha"></div>
-                                      </td>
-                                    </tr>
+                          <div class="col-sm-12">
+                            <div id = "setup-6" class="panel panel-default">
+                              <div class="panel-heading">Live View and PHA Data:</div>
+                              <div class="panel-body">
+                                <div class="row">
+                                  <div class="col-sm-5" id="live-view-channels">
+                                    <span>&nbsp;&nbsp;Select Live View Channels: </span>
+                                    <form class="custom-form" id="live-view-form">
+                                      <fieldset class="custom-fieldset">
+                                        <div class="custom-div-a">
+                                          <input type="checkbox" id="channel-a-liveview" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-liveview','settings/channels/a/','live_view')">
+                                          <label for="channel-a" class="custom-label">A</label>
+                                        </div>
+                                        <div class="custom-div-b">
+                                          <input type="checkbox" id="channel-b-liveview" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-liveview','settings/channels/b/','live_view')">
+                                          <label for="channel-b" class="custom-label">B</label>
+                                        </div>
+                                        <div class="custom-div-c">
+                                          <input type="checkbox" id="channel-c-liveview" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-liveview','settings/channels/c/','live_view')">
+                                          <label for="channel-c" class="custom-label">C</label>
+                                        </div>
+                                        <div class="custom-div-d">
+                                          <input type="checkbox" id="channel-d-liveview" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-liveview','settings/channels/d/','live_view')">
+                                          <label for="channel-d" class="custom-label">D</label>
+                                        </div>
+                                      </fieldset>
+                                    </form>
+                                  </div>
+                                  <div class="col-sm-5">
+                                    <td class="toggle-container">
+                                      <button id="p_p_button_lv" class="icon-button" onclick="toggle_play_lv()">
+                                        <span class="material-icons">pause_circle_outline</span>
+                                      </button>
+                                    </td>
                                   </div>
                                 </div>
                               </div>
+                              <table class="table table-borderless">
+                                <tr>
+                                  <td colspan="2">
+                                    <div class="plot-container" id="scope_lv"></div>
+                                  </td>
+                                </tr>
+                              </table>
+                              <div class="row">
+                                <div class="col-sm-5" id="pha-active-channels">
+                                  <span>&nbsp;&nbsp;Select Channels to view PHA: </span>
+                                  <form class="custom-form" id="pha-active-form">
+                                    <fieldset class="custom-fieldset">
+                                      <div class = "custom-div-a">
+                                        <input type="checkbox" id="channel-a-pha" value="0", class="custom-checkbox" oninput="commit_checked_adapter('channel-a-pha','settings/channels/a','pha_active')">
+                                        <label for="channel-a" class="custom-label">A</label>
+                                      </div>
+                                      <div class = "custom-div-b">
+                                        <input type="checkbox" id="channel-b-pha" value="1", class="custom-checkbox" onclick="commit_checked_adapter('channel-b-pha','settings/channels/b','pha_active')">
+                                        <label for="channel-b" class="custom-label">B</label>
+                                      </div>
+                                      <div class="custom-div-c">
+                                        <input type="checkbox" id="channel-c-pha" value="2", class="custom-checkbox" onclick="commit_checked_adapter('channel-c-pha','settings/channels/c','pha_active')">
+                                        <label for="channel-c" class="custom-label">C</label>
+                                      </div>
+                                      <div class="custom-div-d">
+                                        <input type="checkbox" id="channel-d-pha" value="3", class="custom-checkbox" onclick="commit_checked_adapter('channel-d-pha','settings/channels/d','pha_active')">
+                                        <label for="channel-d" class="custom-label">D</label>
+                                      </div>
+                                    </fieldset>
+                                  </form>
+                                </div>
+                                <div class="col-sm-2">
+                                  <button id="p_p_button_pha" class="icon-button" onclick="toggle_play_pha()">
+                                    <span class="material-icons">pause_circle_outline</span>
+                                  </button>
+                                </div>
+                                <span>Clear PHA Data</span>
+                                <button class="save-pha-btn" type="button" id="clear_pha_btn" value = "true" onclick="commit_true_adapter('commands/','clear_pha')" >Clear</button>
+                              </div>
+                              <table class="table table-borderless">
+                              <tr>
+                                <td colspan="2">
+                                  <div class="plot-container" id="scope_pha"></div>
+                                </td>
+                              </tr>
+                              </table>
+                            </div>
                             </div>
                           </div>
                         </div>

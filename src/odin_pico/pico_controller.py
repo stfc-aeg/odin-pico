@@ -151,11 +151,19 @@ class PicoController():
             return None
 
     def set_dc_value(self, obj, attr_name, value):
+ 
+        if (attr_name == "num_bins") or (attr_name == "lower_range") or (attr_name == "upper_range"):
+            self.buffer_manager.clear_pha = True
+
+        if (attr_name == 'clear_pha'):
+            for chan in range(4):
+                self.set_dc_chan_value(self.dev_conf, f'channel_{chr(chan+97)}', 'pha_active', False)
+
         setattr(obj, attr_name, value)
     
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
 
-        if (attr_name == 'live_view'): # or (attr_name == 'pha_active'):
+        if (attr_name == 'live_view'):
             try:
                 channel_dc = getattr(obj, chan_name)
                 if getattr(channel_dc, 'active', None) == True:
@@ -167,7 +175,6 @@ class PicoController():
             try:
                 channel_dc = getattr(obj, chan_name)
                 setattr(channel_dc, 'live_view', value)
-                # setattr(channel_dc, 'pha_active', value)
                 setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
@@ -178,6 +185,7 @@ class PicoController():
             except AttributeError:
                 pass
 
+            
     def verify_settings(self):
         """Verifies all picoscope settings, sets status of individual groups of settings"""
 
@@ -240,6 +248,7 @@ class PicoController():
         """Responsible for telling the picoscope to collect and return data"""
 
         self.calc_samp_time()
+        # print("UPPER", self.dev_conf.pha.upper_range)
         if self.pico_status.flags.verify_all:
             self.check_res()
             if self.pico_status.flags.user_capture:
