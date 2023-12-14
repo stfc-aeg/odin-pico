@@ -1,6 +1,5 @@
 import ctypes
 import numpy as np
-import logging
 
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.pico_util import PicoUtil
