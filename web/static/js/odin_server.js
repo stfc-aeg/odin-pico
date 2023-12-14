@@ -51,6 +51,8 @@ var timeLimit = 10000; // 5 seconds
 
 var pha_array = []
 var lv_data = []
+var active_channels_lv = []
+var chan_ranges = [0, 0, 0, 0]
 
 play_button_lv = true;
 play_button_pha = true;
@@ -58,8 +60,7 @@ play_button_pha = true;
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
-    create_empty_lv_graph();
-    create_empty_pha_graph();
+    update_lv_graph();
     run_sync();
 });
 
@@ -146,14 +147,48 @@ function toggle_play_pha() {
     }
 }
 
+function update_pha_graph() {
+
+    if (play_button_pha) {
+
+        pha_data = []
+
+        scope_pha = document.getElementById('scope_pha');
+
+        for (var chan = 0; chan < 4; chan++) {
+            if (pha_channels[chan] == true) {
+                pha_data.push({
+                    x: x = bin_edges,
+                    y: y = pha_array[chan],
+                    name: ('Channel ' + String.fromCharCode(chan+65)),
+                    type: 'scatter',
+                    line: {color: channel_colours[chan]}
+                })
+            }
+        }
+
+        layout = {
+            title: 'Current PHA Data',
+            margin: { t: 50, b: 60 },
+            xaxis: {title: 'Energy Level (ADC_Counts)'},
+            yaxis: {title: 'Counts'},
+            autosize: true,
+            legend: {orientation: "h"}
+        }
+        Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
+    }
+}
+
 function update_lv_graph(){
 
     if (play_button_lv){
+
         // Create variables for values on graph axes
         var tickVals = [];
         var tickText = [];
 
         lv_data = []
+
         try {
             if (active_channels_lv.length > 0) {
 
@@ -239,12 +274,13 @@ function update_lv_graph(){
                             side: 'right',
                             tickvals: tickVals2,
                             ticktext: tickText2,
-                        autosize: true,
+                            autosize: true,
                         },
                         legend: {
                             orientation: "h",
                         }
-                    }           
+
+                    }
                 }
                 Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
             }
@@ -253,87 +289,6 @@ function update_lv_graph(){
         }
     }
 }
-
-function create_empty_lv_graph() {
-
-    let range = 10
-
-    
-    var tickVals = []
-    var tickText = []
-
-    // Create the gaps between each axis label
-    var stepSize = range / 4
-    for (var i = -range; i <= range; i += stepSize) {
-        tickVals.push(i);
-        tickText.push(i.toFixed(2));
-    }
-
-    // Create layout for empty graph
-    layout = {
-        title: 'Live view of PicoScope traces',
-        autosize: true,
-        margin: { t: 50, b: 60},
-        xaxis: {title: 'Sample Interval'},
-        yaxis: {
-            title: ('Channel Voltage (mV)'),
-            range:[-range, range],
-            tickvals: tickVals,
-            ticktext: tickText,
-        },
-    }
-    // Create the plotly graph
-    Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
-}
-
-function update_pha_graph() {
-
-    if (play_button_pha) {
-
-        pha_data = []
-
-        scope_pha = document.getElementById('scope_pha');
-
-        for (var chan = 0; chan < 4; chan++) {
-            if (pha_channels[chan] == true) {
-                pha_data.push({
-                    x: x = bin_edges,
-                    y: y = pha_array[chan],
-                    name: ('Channel ' + letters[chan]),
-                    type: 'scatter',
-                    line: {color: channel_colours[chan]}
-                })
-            }
-        }
-
-        layout = {
-            title: 'Current PHA Data',
-            margin: { t: 50, b: 60 },
-            xaxis: {title: 'Energy Level (ADC_Counts)'},
-            yaxis: {title: 'Counts'},
-            autosize: true,
-            legend: {orientation: "h"}
-        }
-        Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
-    }
-}
-    
-function create_empty_pha_graph() {    
-    layout = {
-        title: 'Last PHA from recorded traces',
-        autosize: true,
-        margin: { t: 50, b: 60},
-        xaxis: {
-            title: 'Energy Level (ADC_Counts)',
-            range: [0, 10000],
-        },
-        yaxis: {
-            title: ('Channel Counts'),
-        },
-    }
-    Plotly.newPlot((document.getElementById('scope_pha')), [], layout, {scrollZoom: true})
-}           
-
 
 function run_sync(){
     $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
@@ -387,8 +342,7 @@ function sync_with_adapter(){
                     else {
                         activate_pha_buttons(String.fromCharCode(i + 97), false)
                     }
-                 } catch {
-                }
+                } catch {}
             }
         }
 
@@ -416,24 +370,16 @@ function sync_with_adapter(){
 
         active_channels_lv = response.device.live_view.active_channels
         active_channels_lv_letters = []
-        letters = ['A', 'B', 'C', 'D']
         for (let chan = 0; chan < active_channels_lv.length; chan++) {
-            active_channels_lv_letters.push(letters[active_channels_lv[chan]])
+            active_channels_lv_letters.push(String.fromCharCode(65+active_channels_lv[chan]))
         }
 
-        if (active_channels_lv.length == 0) {
-            pre_trig_samples = response.device.settings.capture.pre_trig_samples
-            post_trig_samples = response.device.settings.capture.post_trig_samples
-            samples = pre_trig_samples+post_trig_samples
-            sample_list = Array.from({length: samples}, (_,index) => index + 1);
-        }
-        
         pha_channels = [response.device.settings.channels.a.pha_active, response.device.settings.channels.b.pha_active,
                 response.device.settings.channels.c.pha_active, response.device.settings.channels.d.pha_active]
         active_channels_pha_letters = []
         for (let chan = 0; chan < pha_channels.length; chan++) {
             if (pha_channels[chan] == true) {
-                active_channels_pha_letters.push(letters[chan])
+                active_channels_pha_letters.push(String.fromCharCode(65+chan))
             }
         }
         

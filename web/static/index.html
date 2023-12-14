@@ -54,23 +54,23 @@
                           <div class="col-sm-12" id="pico-6-div">
                             <div id = "setup-2" class="panel panel-default">
                               <div class="panel-heading">Picoscope Setup</div>
-                                <div class="panel-body">
-                                  <table class="table table-striped">
-                                    <thead>
-                                      <tr>
-                                        <th>Resolution</th>
-                                        <th>Timebase</th>
-                                        <th>Channels</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr class ="default" id= "pico-setup-row">
-                                        <th>
-                                          <form>
-                                            <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
-                                              <option value="" selected disable hidden> </option>
-                                              <option value = "0">8 Bit Mode</option>
-                                              <option value = "1">12 Bit Mode</option>
+                              <div class="panel-body">
+                                <table class="table table-striped">
+                                  <thead>
+                                    <tr>
+                                      <th>Resolution</th>
+                                      <th>Timebase</th>
+                                      <th>Channels</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr class ="default" id= "pico-setup-row">
+                                      <th>
+                                        <form>
+                                          <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
+                                            <option value="" selected disable hidden> </option>
+                                            <option value = "0">8 Bit Mode</option>
+                                            <option value = "1">12 Bit Mode</option>
                                             </select>
                                           </form>
                                         </th>
@@ -78,7 +78,7 @@
                                           <form>
                                             <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
                                           </form>
-                                          <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
+                                        <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
                                         </th>
                                         <th>
                                           <form class="custom-form">
@@ -113,18 +113,18 @@
                             <div class="col-sm-12" id="chan-6-div">
                               <div id = "setup-3" class="panel panel-default">
                                 <div class="panel-heading" >Channel Setup</div>
-                                  <div class="panel-body">
-                                    <table class="table table-striped">
-                                      <thead>
-                                        <tr class="responsive-row">
-                                          <th>Channel: </th>
-                                          <th>Channel Coupling</th>
-                                          <th>Channel Range</th>
-                                          <th>Offset (%)</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        <tr class="default responsive-row" id = 'channel-a-set'>
+                                <div class="panel-body">
+                                  <table class="table table-striped">
+                                    <thead>
+                                      <tr class="responsive-row">
+                                        <th>Channel: </th>
+                                        <th>Channel Coupling</th>
+                                        <th>Channel Range</th>
+                                        <th>Offset (%)</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr class="default responsive-row" id = 'channel-a-set'>
                                         <th>A</th>
                                         <th>
                                           <select id = "channel-a-coupl" onchange="commit_int_adapter('channel-a-coupl','settings/channels/a/','coupling')"  >
@@ -291,8 +291,8 @@
                                     <tr id="trigger-row2">
                                       <th>
                                         <form>
-                                        <label for="trigger-threshold">Threshold (mV):</label>
-                                        <input id="trigger-threshold" type="text" oninput="commit_int_adapter('trigger-threshold','settings/trigger/','threshold')"  />
+                                          <label for="trigger-threshold">Threshold (mV):</label>
+                                          <input id="trigger-threshold" type="text" oninput="commit_int_adapter('trigger-threshold','settings/trigger/','threshold')"  />
                                         </form>
                                       </th>
                                       <th>
@@ -346,7 +346,8 @@
                           </div>
                         </div>
                                           
-                      <!-- Graph Rows -->
+                        <!-- Graph Rows -->
+
                         <div class="flex-width">
                           <div class="col-sm-12">
                             <div id = "setup-6" class="panel panel-default">
@@ -376,143 +377,143 @@
                                       </fieldset>
                                     </form>
                                   </div>
-                                  <div class="col-sm-5">
-                                    <td class="toggle-container">
-                                      <button id="p_p_button_lv" class="icon-button" onclick="toggle_play_lv()">
-                                        <span class="material-icons">pause_circle_outline</span>
-                                      </button>
-                                    </td>
-                                  </div>
-                                </div>
-                              </div>
-                              <table class="table table-borderless">
-                                <tr>
-                                  <td colspan="2">
-                                    <div class="plot-container" id="scope_lv"></div>
+                                  <div class="col-sm-5"></div>
+                                  <td class="toggle-container-lv">
+                                    <button id="p_p_button_lv" class="icon-button" onclick="toggle_play_lv()">
+                                      <span class="material-icons">pause_circle_outline</span>
+                                    </button>
                                   </td>
-                                </tr>
-                              </table>
-                              <div class="row">
-                                <div class="col-sm-5" id="pha-active-channels">
-                                  <span>&nbsp;&nbsp;Select Channels to view PHA: </span>
-                                  <form class="custom-form" id="pha-active-form">
-                                    <fieldset class="custom-fieldset">
-                                      <div class = "custom-div-a">
-                                        <input type="checkbox" id="channel-a-pha" value="0", class="custom-checkbox" oninput="commit_checked_adapter('channel-a-pha','settings/channels/a','pha_active')">
-                                        <label for="channel-a" class="custom-label">A</label>
-                                      </div>
-                                      <div class = "custom-div-b">
-                                        <input type="checkbox" id="channel-b-pha" value="1", class="custom-checkbox" onclick="commit_checked_adapter('channel-b-pha','settings/channels/b','pha_active')">
-                                        <label for="channel-b" class="custom-label">B</label>
-                                      </div>
-                                      <div class="custom-div-c">
-                                        <input type="checkbox" id="channel-c-pha" value="2", class="custom-checkbox" onclick="commit_checked_adapter('channel-c-pha','settings/channels/c','pha_active')">
-                                        <label for="channel-c" class="custom-label">C</label>
-                                      </div>
-                                      <div class="custom-div-d">
-                                        <input type="checkbox" id="channel-d-pha" value="3", class="custom-checkbox" onclick="commit_checked_adapter('channel-d-pha','settings/channels/d','pha_active')">
-                                        <label for="channel-d" class="custom-label">D</label>
-                                      </div>
-                                    </fieldset>
-                                  </form>
                                 </div>
-                                <div class="col-sm-2">
-                                  <button id="p_p_button_pha" class="icon-button" onclick="toggle_play_pha()">
-                                    <span class="material-icons">pause_circle_outline</span>
-                                  </button>
+                                <table class="table table-borderless">
+                                  <tr>
+                                    <td colspan="2">
+                                      <div class="plot-container" id="scope_lv"></div>
+                                    </td>
+                                  </tr>
+                                </table>
+                                <div class="row">
+                                  <div class="col-sm-5" id="pha-active-channels">
+                                    <span>&nbsp;&nbsp;Select Channels to view PHA: </span>
+                                    <form class="custom-form" id="pha-active-form">
+                                      <fieldset class="custom-fieldset">
+                                        <div class = "custom-div-a">
+                                          <input type="checkbox" id="channel-a-pha" value="0", class="custom-checkbox" oninput="commit_checked_adapter('channel-a-pha','settings/channels/a','pha_active')">
+                                          <label for="channel-a" class="custom-label">A</label>
+                                        </div>
+                                        <div class = "custom-div-b">
+                                          <input type="checkbox" id="channel-b-pha" value="1", class="custom-checkbox" onclick="commit_checked_adapter('channel-b-pha','settings/channels/b','pha_active')">
+                                          <label for="channel-b" class="custom-label">B</label>
+                                        </div>
+                                        <div class="custom-div-c">
+                                          <input type="checkbox" id="channel-c-pha" value="2", class="custom-checkbox" onclick="commit_checked_adapter('channel-c-pha','settings/channels/c','pha_active')">
+                                          <label for="channel-c" class="custom-label">C</label>
+                                        </div>
+                                        <div class="custom-div-d">
+                                          <input type="checkbox" id="channel-d-pha" value="3", class="custom-checkbox" onclick="commit_checked_adapter('channel-d-pha','settings/channels/d','pha_active')">
+                                          <label for="channel-d" class="custom-label">D</label>
+                                        </div>
+                                      </fieldset>
+                                    </form>
+                                  </div>
+                                  <div class="col-sm-5">
+                                    <span>Clear PHA Data</span>
+                                    <button class="save-pha-btn" type="button" id="clear_pha_btn" value = "true" onclick="commit_true_adapter('commands/','clear_pha')" >Clear</button>
+                                  </div>
+                                  <td class="toggle-container-lv">
+                                    <button id="p_p_button_pha" class="icon-button" onclick="toggle_play_pha()">
+                                      <span class="material-icons">pause_circle_outline</span>
+                                    </button>
+                                  </td>
                                 </div>
-                                <span>Clear PHA Data</span>
-                                <button class="save-pha-btn" type="button" id="clear_pha_btn" value = "true" onclick="commit_true_adapter('commands/','clear_pha')" >Clear</button>
+                                <table class="table table-borderless">
+                                  <tr>
+                                    <td colspan="2">
+                                      <div class="plot-container" id="scope_pha"></div>
+                                    </td>
+                                  </tr>
+                                </table>
                               </div>
-                              <table class="table table-borderless">
-                              <tr>
-                                <td colspan="2">
-                                  <div class="plot-container" id="scope_pha"></div>
-                                </td>
-                              </tr>
-                              </table>
-                            </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    <!-- <div class="content-container"> -->
-                
-                    <div role="tabpanel" class="tab-pane fade" id="two">
-                      <div class ="row">
-                        <div class = "col-sm-12">
-                          <div id = "setup-6" class="panel panel-default">
-                              <div class="panel-heading">PHA Settings</div>
-                              <div class="panel-body">
-                                <table class="table table-striped">            
-                                  <tr id ="capture-row">
-                                    <th>
-                                      <form>
-                                        <label for="pha-num-bins">Number Bins: </label>
-                                        <input id="pha-num-bins" type="text" oninput="commit_int_adapter('pha-num-bins','settings/pha','num_bins')" />
-                                      </form>
-                                    </th>
-                                    <th>
-                                      <form>
-                                        <label for="pha-lower-range">Lower range of ADC_Counts: </label>
-                                        <input id="pha-lower-range" type="text" oninput="commit_int_adapter('pha-lower-range','settings/pha','lower_range')" />
-                                      </form>
-                                    </th>
-                                    <th>
-                                      <form>
-                                        <label for="pha-upper-range">Upper Range of ADC_Counts: </label>
-                                        <input id="pha-upper-range" type="text" oninput="commit_int_adapter('pha-upper-range','settings/pha','upper_range')" />
-                                      </form>
-                                    </th>
-                                  </tr>
-                                </table>
-                              </div>
-                          </div>
-                      </div>
+                  <!-- <div class="content-container"> -->
+
+                  <div role="tabpanel" class="tab-pane fade" id="two">
+                    <div class ="row">
                       <div class = "col-sm-12">
                         <div id = "setup-6" class="panel panel-default">
-                          <div class="panel-heading">File Settings</div>
-                          <div class="panel-body">
-                            <table class="table table-striped">            
-                              <tr id ="capture-row">
+                            <div class="panel-heading">PHA Settings</div>
+                            <div class="panel-body">
+                              <table class="table table-striped">
+                                <tr id ="capture-row">
+                                  <th>
+                                    <form>
+                                      <label for="pha-num-bins">Number Bins: </label>
+                                      <input id="pha-num-bins" type="text" oninput="commit_int_adapter('pha-num-bins','settings/pha','num_bins')" />
+                                    </form>
+                                  </th>
+                                  <th>
+                                    <form>
+                                      <label for="pha-lower-range">Lower range of ADC_Counts: </label>
+                                      <input id="pha-lower-range" type="text" oninput="commit_int_adapter('pha-lower-range','settings/pha','lower_range')" />
+                                    </form>
+                                  </th>
+                                  <th>
+                                    <form>
+                                      <label for="pha-upper-range">Upper Range of ADC_Counts: </label>
+                                      <input id="pha-upper-range" type="text" oninput="commit_int_adapter('pha-upper-range','settings/pha','upper_range')" />
+                                    </form>
+                                  </th>
+                                </tr>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class = "col-sm-12">
+                      <div id = "setup-6" class="panel panel-default">
+                        <div class="panel-heading">File Settings</div>
+                        <div class="panel-body">
+                          <table class="table table-striped">            
+                            <tr id ="capture-row">
+                              <th>
+                                <form>
+                                  <label for="capture-folder-name">Folder name: </label>
+                                  <input id="capture-folder-name" type="text" oninput="commit_str_adapter('capture-folder-name','settings/file','folder_name')" />
+                                </form>
+                              </th>
+                              <th>
+                                <form>
+                                  <label for="capture-file-name">File Name: </label>
+                                  <input id="capture-file-name" type="text" oninput="commit_str_adapter('capture-file-name','settings/file','file_name')" />
+                                </form>
+                              </th>
+                              <th>
+                                <label for="save_cap_butt">Record scope traces and PHA to file: </label>
+                                <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
+                              </th>
+                            </tr>
+                            <tr>
+                              <tr>
+                                <th><span>File : </span><span id="file-name-span"></span></th>
+                                <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
                                 <th>
-                                  <form>
-                                    <label for="capture-folder-name">Folder name: </label>
-                                    <input id="capture-folder-name" type="text" oninput="commit_str_adapter('capture-folder-name','settings/file','folder_name')" />
-                                  </form>
-                                </th>
-                                <th>
-                                  <form>
-                                    <label for="capture-file-name">File Name: </label>
-                                    <input id="capture-file-name" type="text" oninput="commit_str_adapter('capture-file-name','settings/file','file_name')" />
-                                  </form>
-                                </th>
-                                <th>
-                                  <label for="save_cap_butt">Record scope traces and PHA to file: </label>
-                                  <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Save</button>
+                                  <label for="abort_cap_butt">Abort current capture: </label>
+                                  <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
                                 </th>
                               </tr>
                               <tr>
-                                <tr>
-                                  <th><span>File : </span><span id="file-name-span"></span></th>
-                                  <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
-                                  <th>
-                                    <label for="abort_cap_butt">Abort current capture: </label>
-                                    <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
-                                  </th>
-                                </tr>
-                                <tr>
-                                  <th colspan="3">
-                                    <div class="progress">
-                                      <div id="capture-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                  </th>
-                                </tr>   
+                                <th colspan="3">
+                                  <div class="progress">
+                                    <div id="capture-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                  </div>
+                                </th>
                               </tr>
-                            </table>
-                          </div>
+                            </tr>
+                          </table>
                         </div>
                       </div>
                     </div>
