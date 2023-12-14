@@ -180,16 +180,24 @@ function update_pha_graph() {
 }
 
 function update_lv_graph(){
-
+    console.log("DOING LV")
     if (play_button_lv){
-
-        // Create variables for values on graph axes
-        var tickVals = [];
-        var tickText = [];
-
-        lv_data = []
-
+        console.log("YES")
         try {
+            // Create variables for values on graph axes
+            var tickVals = [];
+            var tickText = [];
+
+            lv_data = []
+
+            layout = {
+                title: 'Live view of PicoScope traces',
+                margin: { t: 50, b: 60 },
+                xaxis: { title: 'Sample Interval'},
+                yaxis: { title: ('Channel  Voltage (mV)')},
+                autosize: true
+            }
+
             if (active_channels_lv.length > 0) {
 
                 // Fetch channel range for first LV channel
@@ -279,11 +287,10 @@ function update_lv_graph(){
                         legend: {
                             orientation: "h",
                         }
-
                     }
                 }
-                Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
             }
+            Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
         } catch (TypeError) {
             console.log("TypeError identified")
         }
@@ -393,12 +400,18 @@ function sync_with_adapter(){
             response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
         // Assign LV & PHA data locally
         try {
+            console.log("HERE")
             if (response.device.live_view.lv_data != undefined) {
+                console.log("HERE 1")
                 if ((response.device.live_view.lv_data.toString()) != (lv_data.toString())) {
+                    console.log("HERE 2")
                     data_array = response.device.live_view.lv_data
                     update_lv_graph()
+                } else {
+                    console.log("HERE 2")
+                    update_lv_graph()
                 }
-            }
+            }              
         } catch {
             console.log("Error in assigning LV values")
         }
