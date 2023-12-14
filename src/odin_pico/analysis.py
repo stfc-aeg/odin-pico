@@ -1,9 +1,5 @@
 import logging
 import numpy as np 
-<<<<<<< HEAD
-import math
-=======
->>>>>>> main
 
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.DataClasses.device_config import DeviceConfig
