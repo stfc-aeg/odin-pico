@@ -173,7 +173,9 @@ function update_pha_graph() {
             xaxis: {title: 'Energy Level (ADC_Counts)'},
             yaxis: {title: 'Counts'},
             autosize: true,
+            showlegend: true
         }
+
         Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
     }
 }
@@ -204,7 +206,8 @@ function update_lv_graph() {
                 ticktext: tickText,
                 tickvals: tickVals,
             },
-            autosize: true
+            autosize: true,
+            showlegend: true
         }
 
         for (var chan = 0; chan < active_channels_lv.length; chan++) {
@@ -216,6 +219,7 @@ function update_lv_graph() {
                 line: {color: channel_colours[active_channels_lv[chan]]}
             })
         }
+
         Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
     }
 }
@@ -262,15 +266,7 @@ function sync_with_adapter(){
             if (!focusFlags[channel+"active"]) {document.getElementById(channel+"active").checked=(chan_responses[i].active)}
             if (!focusFlags[channel+"liveview"]) {document.getElementById(channel+"liveview").checked=(chan_responses[i].live_view)}
             if (!focusFlags[channel+"pha"]) {document.getElementById(channel+"pha").checked=(chan_responses[i].pha_active)}
-            activate_lv_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
-            try{
-                if (pha_array[i].length != 0) {
-                    activate_pha_buttons(String.fromCharCode(i + 97), true)
-                }
-                else {
-                    activate_pha_buttons(String.fromCharCode(i + 97), false)
-                }
-            } catch {}
+            activate_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
         }
 
         if (!focusFlags["trigger-enable"]) {
@@ -297,7 +293,7 @@ function sync_with_adapter(){
 
         if (!focusFlags["lv_range"]) {$("#lv_range").val(response.device.live_view.lv_range)}
 
-        active_channels_lv = response.device.live_view.active_channels
+        active_channels_lv = response.device.live_view.lv_active_channels
         active_channels_lv_letters = []
         for (let chan = 0; chan < active_channels_lv.length; chan++) {
             active_channels_lv_letters.push(String.fromCharCode(65+active_channels_lv[chan]))
@@ -351,7 +347,7 @@ function sync_with_adapter(){
             progressBar.innerHTML = 0 + '%';
         }
 
-        // document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
+        document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"
@@ -480,8 +476,9 @@ function commit_checked_adapter(id,path,key){
     ajax_put(path,key,checked)
 }
 
-function activate_lv_buttons(channel, checked) {
+function activate_buttons(channel, checked) {
     document.getElementById("channel-"+channel+"-liveview").disabled = !checked
+    document.getElementById("channel-"+channel+"-pha").disabled = !checked
 }
 
 function activate_pha_buttons(channel, checked) {

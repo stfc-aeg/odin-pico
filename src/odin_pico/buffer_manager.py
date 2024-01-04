@@ -18,7 +18,6 @@ class BufferManager():
         self.trigger_times = []
 
         # Holds currrent PHA and LV data        
-        self.pha_counts = []
         self.lv_channel_arrays = []
 
         # Holds ranges and offsets for active channels
@@ -31,7 +30,6 @@ class BufferManager():
         self.current_pha_channels = []
         self.bin_edges = []
         self.pha_counts = [[]] * 4
-        self.pha_changed = False
         self.clear_pha = False
         self.lv_range = 0
 

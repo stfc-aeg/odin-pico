@@ -106,13 +106,14 @@ class PicoController():
         })
 
         live_view = ParameterTree({
-            'active_channels': (lambda: self.buffer_manager.lv_channels_active, None),
+            'lv_active_channels': (lambda: self.buffer_manager.lv_channels_active, None),
             'pha_counts': (lambda: self.buffer_manager.pha_counts, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
             'lv_data': (lambda: self.buffer_manager.lv_channel_arrays, None),
             'pha_bin_edges': (lambda: self.buffer_manager.bin_edges, None),
-            'lv_range': (lambda: self.buffer_manager.lv_range, partial(self.set_dc_value, self.buffer_manager, "lv_range"))
+            'lv_range': (lambda: self.buffer_manager.lv_range, partial(self.set_dc_value, self.buffer_manager, "lv_range")),
+            'pha_active_channels': (lambda: self.buffer_manager.pha_active_channels, None),
         })
 
         pico_commands = ParameterTree({
