@@ -111,7 +111,8 @@ class PicoController():
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
             'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
             'lv_data': (lambda: self.buffer_manager.lv_channel_arrays, None),
-            'pha_bin_edges': (lambda: self.buffer_manager.bin_edges, None)
+            'pha_bin_edges': (lambda: self.buffer_manager.bin_edges, None),
+            'lv_range': (lambda: self.buffer_manager.lv_range, partial(self.set_dc_value, self.buffer_manager, "lv_range"))
         })
 
         pico_commands = ParameterTree({

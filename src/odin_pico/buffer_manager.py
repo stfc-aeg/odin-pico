@@ -33,6 +33,7 @@ class BufferManager():
         self.pha_counts = [[]] * 4
         self.pha_changed = False
         self.clear_pha = False
+        self.lv_range = 0
 
     def generate_arrays(self, *args):
         """

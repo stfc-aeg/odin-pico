@@ -52,63 +52,73 @@
                       <div class="fixed-width" id="left-panel">
                         <div class="row">
                           <div class="col-sm-12" id="pico-6-div">
-                            <div id = "setup-2" class="panel panel-default">
+                            <div id = "setup-4" class="panel panel-default">
                               <div class="panel-heading">Picoscope Setup</div>
                               <div class="panel-body">
                                 <table class="table table-striped">
                                   <thead>
                                     <tr>
                                       <th>Resolution</th>
-                                      <th>Timebase</th>
+                                      <th>Sample Interval</th>
                                       <th>Channels</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     <tr class ="default" id= "pico-setup-row">
                                       <th>
-                                        <form>
-                                          <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
-                                            <option value="" selected disable hidden> </option>
-                                            <option value = "0">8 Bit Mode</option>
-                                            <option value = "1">12 Bit Mode</option>
-                                            </select>
-                                          </form>
-                                        </th>
-                                        <th>
-                                          <form>
-                                            <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
-                                          </form>
-                                        <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
-                                        </th>
+                                        <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
+                                          <option value="" selected disable hidden> </option>
+                                          <option value = "0">8 Bit Mode</option>
+                                          <option value = "1">12 Bit Mode</option>
+                                        </select>
+                                      </th>
+                                      <!-- <th>
+                                        <form class="custom-form">
+                                        <select id="time-base-input" oninput="commit_int_adapter('time-base-input', 'settings/mode/','timebase')">
+                                          <option value="1">2.00 ns</option>
+                                          <option value="2">4.00 ns</option>
+                                          <option value="3">8.00 ns</option>
+                                          <option value="4">16.00 ns</option>
+                                        </select>
+                                        </form>
+                                      </th> -->
+
+
                                         <th>
                                           <form class="custom-form">
-                                            <fieldset class="custom-fieldset">
-                                              <div class="custom-div-a">
-                                                <input type="checkbox" id="channel-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-active','settings/channels/a/','active')">
-                                                <label for="channel-a" class="custom-label">A</label>
-                                              </div>
-                                              <div class="custom-div-b">
-                                                <input type="checkbox" id="channel-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-active','settings/channels/b/','active')">
-                                                <label for="channel-b" class="custom-label">B</label>
-                                              </div>
-                                              <div class="custom-div-c">
-                                                <input type="checkbox" id="channel-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-active','settings/channels/c/','active')">
-                                                <label for="channel-c" class="custom-label">C</label>
-                                              </div>
-                                              <div class="custom-div-d">
-                                                <input type="checkbox" id="channel-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-active','settings/channels/d/','active')">
-                                                <label for="channel-d" class="custom-label">D</label>
-                                              </div>
-                                            </fieldset>
+                                            <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
                                           </form>
                                         </th>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
+
+                                      <th>
+                                        <form class="custom-form">
+                                          <fieldset class="custom-fieldset">
+                                            <div class="custom-div-a">
+                                              <input type="checkbox" id="channel-a-active" value="0" class="custom-checkbox" oninput="commit_checked_adapter('channel-a-active','settings/channels/a/','active')">
+                                              <label for="channel-a" class="custom-label">A</label>
+                                            </div>
+                                            <div class="custom-div-b">
+                                              <input type="checkbox" id="channel-b-active" value="1" class="custom-checkbox" oninput="commit_checked_adapter('channel-b-active','settings/channels/b/','active')">
+                                              <label for="channel-b" class="custom-label">B</label>
+                                            </div>
+                                            <div class="custom-div-c">
+                                              <input type="checkbox" id="channel-c-active" value="2" class="custom-checkbox" oninput="commit_checked_adapter('channel-c-active','settings/channels/c/','active')">
+                                              <label for="channel-c" class="custom-label">C</label>
+                                            </div>
+                                            <div class="custom-div-d">
+                                              <input type="checkbox" id="channel-d-active" value="3" class="custom-checkbox" oninput="commit_checked_adapter('channel-d-active','settings/channels/d/','active')">
+                                              <label for="channel-d" class="custom-label">D</label>
+                                            </div>
+                                          </fieldset>
+                                        </form>
+                                      </th>
+                                    </tr>
+                                </tbody>
+                              </table>
                             </div>
                           </div>
+                        </div>
+                      </div>
                           <div class="row">
                             <div class="col-sm-12" id="chan-6-div">
                               <div id = "setup-3" class="panel panel-default">
@@ -376,6 +386,22 @@
                                         </div>
                                       </fieldset>
                                     </form>
+                                  </div>
+                                  <div class="col-sm-5">
+                                    <span>Liveview Range&nbsp;</span>
+                                    <select id="lv_range" onchange="commit_int_adapter('lv_range','live_view/','lv_range')">
+                                      <option value = "0">10 mV</option>
+                                      <option value = "1">20 mV</option> 
+                                      <option value = "2">50 mV</option>
+                                      <option value = "3">100 mV</option>
+                                      <option value = "4">200 mV</option>
+                                      <option value = "5">500 mV</option>
+                                      <option value = "6">1 V</option>
+                                      <option value = "7">2 V</option> 
+                                      <option value = "8">5 V</option>
+                                      <option value = "9">10 V</option>
+                                      <option value = "10">20 V</option>
+                                    </select>
                                   </div>
                                   <div class="col-sm-5"></div>
                                   <td class="toggle-container-lv">

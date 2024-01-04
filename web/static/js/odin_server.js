@@ -42,6 +42,7 @@ var focusFlags = {
   "pha-num-bins": false,
   "pha-lower-range": false,
   "pha-upper-range": false,
+  "lv_range": false,
 };
 // Initialize a timers object to keep track of the timers for each field
 var timers = {};
@@ -52,7 +53,6 @@ var timeLimit = 10000; // 5 seconds
 var pha_array = []
 var lv_data = []
 var active_channels_lv = []
-var chan_ranges = [0, 0, 0, 0]
 
 play_button_lv = true;
 play_button_pha = true;
@@ -173,127 +173,50 @@ function update_pha_graph() {
             xaxis: {title: 'Energy Level (ADC_Counts)'},
             yaxis: {title: 'Counts'},
             autosize: true,
-            legend: {orientation: "h"}
         }
         Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
     }
 }
 
-function update_lv_graph(){
-    console.log("DOING LV")
-    if (play_button_lv){
-        console.log("YES")
-        try {
-            // Create variables for values on graph axes
-            var tickVals = [];
-            var tickText = [];
+function update_lv_graph() {
 
-            lv_data = []
+    if (play_button_lv) {
 
-            layout = {
-                title: 'Live view of PicoScope traces',
-                margin: { t: 50, b: 60 },
-                xaxis: { title: 'Sample Interval'},
-                yaxis: { title: ('Channel  Voltage (mV)')},
-                autosize: true
-            }
+        var tickText = []
+        var tickVals = []
 
-            if (active_channels_lv.length > 0) {
+        let range = get_range_value_mv(lv_range)
 
-                // Fetch channel range for first LV channel
-                let range1 = get_range_value_mv(chan_ranges[(active_channels_lv[0])])
+        lv_data = []
 
-                // Create first data line
-                var trace_one = {
-                    x: x = data_array[0].map((value, index)=> index),
-                    y: y = data_array[0],
-                    name: ('Channel ' + active_channels_lv_letters[0]),
-                    type: 'scatter',
-                    line: {color: channel_colours[active_channels_lv[0]]}
-                }
-
-                // Create the values to go on graph axes
-                var stepSize = range1 / 4
-                for (var i = -range1; i <= range1; i += stepSize) {
-                    tickVals.push(i);
-                    tickText.push(i.toFixed(1)); 
-                }
-
-                // Create the layout for the graph
-                layout = {
-                    title: 'Live view of PicoScope traces',
-                    margin: { t: 50, b: 60 },
-                    xaxis: { title: 'Sample Interval'},
-                    yaxis: {
-                        title: ('Channel ' + active_channels_lv_letters[0] + ' Voltage (mV)'),
-                        range: [-range1, range1],
-                        tickvals: tickVals,
-                        ticktext: tickText,
-                    },
-                    autosize: true
-                }
-
-                // Push the data from trace_one into the lv_data list
-                lv_data.push(trace_one)
-                if (active_channels_lv.length > 1) {
-
-                    var tickVals2 = [];
-                    var tickText2 = [];           
-
-                    // Fetch channel range for second LV channel
-                    let range2 = get_range_value_mv(chan_ranges[(active_channels_lv[1])])
-
-                    // Create the second data line for the graph
-                    var trace_two = {
-                        x: x = data_array[1].map((value, index) => index),
-                        y: data_array[1],
-                        name: ('Channel ' + active_channels_lv_letters[1]),
-                        yaxis: 'y2',
-                        type: 'scatter',
-                        line: {color: channel_colours[active_channels_lv[1]]}
-                    }
-
-                    // Create labels for graph axes
-                    var stepSize2 = range2 / 4
-                    for (var i = -range2; i <= range2; i += stepSize2) {
-                        tickVals2.push(i);
-                        tickText2.push(i.toFixed(1)); 
-                    }
-
-                    // Add second data line to lv_data
-                    lv_data.push(trace_two)
-
-                    // Create layout for plotly graph, with two axes
-                    layout = {
-                        title: 'Live view of PicoScope traces',
-                        margin: { t: 50, b: 60},
-                        xaxis: { title: 'Sample Interval'},
-                        yaxis: {
-                            title: ('Channel ' + active_channels_lv_letters[0] +  ' Voltage (mV)'),
-                            automargin: true,
-                            range: [-range1, range1],
-                            tickvals: tickVals,
-                            ticktext: tickText,
-                        },
-                        yaxis2: {
-                            title: ('Channel ' + active_channels_lv_letters[1] + ' Voltage (mV)'),
-                            range:[-range2, range2],
-                            overlaying: 'y',
-                            side: 'right',
-                            tickvals: tickVals2,
-                            ticktext: tickText2,
-                            autosize: true,
-                        },
-                        legend: {
-                            orientation: "h",
-                        }
-                    }
-                }
-            }
-            Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
-        } catch (TypeError) {
-            console.log("TypeError identified")
+        for (var i = -range; i <= range; i += (range / 4)) {
+            tickVals.push(i);
+            tickText.push(i.toFixed(1)); 
         }
+
+        layout = {
+            title: 'Live view of PicoScope traces',
+            margin: { t: 50, b: 60 },
+            xaxis: { title: 'Sample Interval'},
+            yaxis: {
+                title: ('Channel  Voltage (mV)'),
+                range: [-range, range],
+                ticktext: tickText,
+                tickvals: tickVals,
+            },
+            autosize: true
+        }
+
+        for (var chan = 0; chan < active_channels_lv.length; chan++) {
+            lv_data.push ({
+                x: x = data_array[chan].map((value, index)=> index),
+                y: y = data_array[chan],
+                name: ('Channel '+ active_channels_lv_letters[chan]),
+                type: 'scatter',
+                line: {color: channel_colours[active_channels_lv[chan]]}
+            })
+        }
+        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
     }
 }
 
@@ -331,7 +254,6 @@ function sync_with_adapter(){
 
         var chan_responses = [response.device.settings.channels.a, response.device.settings.channels.b, response.device.settings.channels.c, response.device.settings.channels.d]
 
-
         for (var i = 0; i < 4; i++) {
             var channel = "channel-"+String.fromCharCode(i + 97)+"-"
             if (!focusFlags[channel+"range"]) {$("#"+channel+"range").val(chan_responses[i].range)}
@@ -341,16 +263,14 @@ function sync_with_adapter(){
             if (!focusFlags[channel+"liveview"]) {document.getElementById(channel+"liveview").checked=(chan_responses[i].live_view)}
             if (!focusFlags[channel+"pha"]) {document.getElementById(channel+"pha").checked=(chan_responses[i].pha_active)}
             activate_lv_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
-            if (pha_array != undefined) {
-                try{
-                    if (pha_array[i].length != 0) {
-                        activate_pha_buttons(String.fromCharCode(i + 97), true)
-                    }
-                    else {
-                        activate_pha_buttons(String.fromCharCode(i + 97), false)
-                    }
-                } catch {}
-            }
+            try{
+                if (pha_array[i].length != 0) {
+                    activate_pha_buttons(String.fromCharCode(i + 97), true)
+                }
+                else {
+                    activate_pha_buttons(String.fromCharCode(i + 97), false)
+                }
+            } catch {}
         }
 
         if (!focusFlags["trigger-enable"]) {
@@ -375,6 +295,8 @@ function sync_with_adapter(){
         if (!focusFlags["pha-lower-range"]) {$("#pha-lower-range").val(response.device.settings.pha.lower_range)}
         if (!focusFlags["pha-upper-range"]) {$("#pha-upper-range").val(response.device.settings.pha.upper_range)}
 
+        if (!focusFlags["lv_range"]) {$("#lv_range").val(response.device.live_view.lv_range)}
+
         active_channels_lv = response.device.live_view.active_channels
         active_channels_lv_letters = []
         for (let chan = 0; chan < active_channels_lv.length; chan++) {
@@ -392,28 +314,18 @@ function sync_with_adapter(){
         
         channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 
-        max_adc = response.device.settings.pha.upper_range
-        min_adc = response.device.settings.pha.lower_range
-        chan_ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
-            response.device.settings.channels.c.range, response.device.settings.channels.d.range]
-        chan_offsets = [response.device.settings.channels.a.offset, response.device.settings.channels.b.offset,
-            response.device.settings.channels.c.offset, response.device.settings.channels.d.offset]
+        lv_range = response.device.live_view.lv_range
+
         // Assign LV & PHA data locally
         try {
-            console.log("HERE")
             if (response.device.live_view.lv_data != undefined) {
-                console.log("HERE 1")
                 if ((response.device.live_view.lv_data.toString()) != (lv_data.toString())) {
-                    console.log("HERE 2")
                     data_array = response.device.live_view.lv_data
-                    update_lv_graph()
-                } else {
-                    console.log("HERE 2")
-                    update_lv_graph()
                 }
+                update_lv_graph()
             }              
         } catch {
-            console.log("Error in assigning LV values")
+            console.log("Error in assigning and plotting LV values")
         }
         
         try {
@@ -439,7 +351,7 @@ function sync_with_adapter(){
             progressBar.innerHTML = 0 + '%';
         }
 
-        document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
+        // document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"
@@ -631,8 +543,4 @@ function ajax_put(path,key,value){
         contentType: "application/json",
         data: JSON.stringify(data),
     });
-}
-
-function ajax_get(path,key){
-
 }
