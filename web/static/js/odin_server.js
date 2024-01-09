@@ -60,7 +60,6 @@ play_button_pha = true;
 //runs when the script is loaded
 $( document ).ready(function() {
     update_api_version();
-    update_lv_graph();
     run_sync();
 });
 
@@ -170,10 +169,13 @@ function update_pha_graph() {
         layout = {
             title: 'Current PHA Data',
             margin: { t: 50, b: 60 },
-            xaxis: {title: 'Energy Level (ADC_Counts)'},
+            xaxis: {
+                title: 'Energy Level (ADC_Counts)',
+                range: [lower_range, upper_range],
+            },
             yaxis: {title: 'Counts'},
             autosize: true,
-            showlegend: true
+            showlegend: true,
         }
 
         Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
@@ -199,7 +201,10 @@ function update_lv_graph() {
         layout = {
             title: 'Live view of PicoScope traces',
             margin: { t: 50, b: 60 },
-            xaxis: { title: 'Sample Interval'},
+            xaxis: {
+                title: 'Sample Interval',
+                range: [pre_samples, post_samples],
+            },
             yaxis: {
                 title: ('Channel  Voltage (mV)'),
                 range: [-range, range],
@@ -307,6 +312,12 @@ function sync_with_adapter(){
                 active_channels_pha_letters.push(String.fromCharCode(65+chan))
             }
         }
+
+        lower_range = response.device.settings.pha.lower_range
+        upper_range = response.device.settings.pha.upper_range
+
+        pre_samples = response.device.settings.capture.pre_trig_samples
+        post_samples = response.device.settings.capture.post_trig_samples
         
         channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 

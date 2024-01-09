@@ -279,7 +279,7 @@ class PicoController():
                 self.pico.run_block()
                 self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
                 self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
-                self.analysis.PHA_one_peak()
+                self.analysis.PHA_one_peak(True)
                 self.buffer_manager.save_lv_data()
             self.file_writer.writeHDF5()
         self.dev_conf.capture_run.reset()
@@ -295,7 +295,7 @@ class PicoController():
                 self.pico.run_block()
                 self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
                 self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
-                self.analysis.PHA_one_peak()
+                self.analysis.PHA_one_peak(False)
                 self.buffer_manager.save_lv_data()
         self.dev_conf.capture_run.reset()
 
