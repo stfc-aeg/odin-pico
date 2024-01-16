@@ -141,6 +141,7 @@ class PicoController():
         # Initalise the "update_loop" if control variable passed to the Pico_Controller is True
         if self.update_loop_active:
             self.update_loop()
+
         # Set initial state of the verification system
         self.verify_settings()
         # print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
@@ -187,9 +188,10 @@ class PicoController():
             except AttributeError:
                 pass
 
-            
     def verify_settings(self):
-        """Verifies all picoscope settings, sets status of individual groups of settings"""
+        """
+            Verifies all picoscope settings, sets status of individual groups of settings
+        """
 
         active = [self.dev_conf.channel_a.active, self.dev_conf.channel_b.active, self.dev_conf.channel_c.active, self.dev_conf.channel_d.active]
 
@@ -202,7 +204,9 @@ class PicoController():
         self.pico_status.flags.verify_all = self.set_verify_flag()
 
     def set_verify_flag(self):
-        """Used by the verify_settings() function to return the Boolean value of the setting verified flag"""
+        """
+            Used by the verify_settings() function to return the Boolean value of the setting verified flag
+        """
 
         status_list = [self.pico_status.pico_setup_verify, self.pico_status.channel_setup_verify, self.pico_status.channel_trigger_verify, self.pico_status.capture_settings_verify]
         for status in status_list:
@@ -211,29 +215,36 @@ class PicoController():
         return True
     
     def set_capture_run_limits(self):
-        """Set the value for maximum amount of captures that can fit into the picoscope memory taking into account current user settings as well as setting the captures_remaning variable"""
+        """
+            Set the value for maximum amount of captures that can fit into the picoscope memory taking 
+            into accountcurrent user settings as well as setting the captures_remaning variable
+        """
 
         capture_samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
         self.dev_conf.capture_run.caps_max = math.floor(self.util.max_samples(self.dev_conf.mode.resolution) / capture_samples)
         self.dev_conf.capture_run.caps_remaining = self.dev_conf.capture.n_captures
 
     def set_capture_run_length(self):
-        """Sets the captures to be completed in each "run" based on the maximum allowed captures, and the amount of captures left to be collected"""
+        """
+            Sets the captures to be completed in each "run" based on the maximum allowed captures, and
+            the amount of captures left to be collected
+        """
+        if len(self.buffer_manager.active_channels) > 0:
+            max_caps = math.trunc((self.dev_conf.capture_run.caps_max)/(len(self.buffer_manager.active_channels)))
+        else
+            max_caps = self.dev_conf.capture_run.caps_max
 
-        if self.dev_conf.capture_run.caps_remaining <= self.dev_conf.capture_run.caps_max:
+        # print("SET CAPTURE RUN LENGTH ACTIVE CHANNELS", self.buffer_manager.active_channels)
+
+        if self.dev_conf.capture_run.caps_remaining <= max_caps:
             self.dev_conf.capture_run.caps_in_run = self.dev_conf.capture_run.caps_remaining
         else:
-            self.dev_conf.capture_run.caps_in_run = self.dev_conf.capture_run.caps_max
-
-    def set_capture_run_lv(self):
-        """Sets the capture variables to collect a single trace for LiveView"""
-
-        self.dev_conf.capture_run.caps_max = self.lv_captures
-        self.dev_conf.capture_run.caps_remaining = self.lv_captures
-        self.dev_conf.capture_run.caps_in_run = self.lv_captures
+            self.dev_conf.capture_run.caps_in_run = max_caps
 
     def calc_samp_time(self):
-        """Calculates the sample interval based on the resolution and timebase"""
+        """
+            Calculates the sample interval based on the resolution and timebase
+        """
 
         if self.dev_conf.mode.resolution == 0:
             if ((self.dev_conf.mode.timebase) >= 0 and (self.dev_conf.mode.timebase <= 2)):
@@ -247,57 +258,90 @@ class PicoController():
                 self.dev_conf.mode.samp_time = ((self.dev_conf.mode.timebase - 3) / (62500000))
 
     def run_capture(self):
-        """Responsible for telling the picoscope to collect and return data"""
+        """
+            Responsible for telling the picoscope to collect and return data
+        """
 
         self.calc_samp_time()
-        # print("UPPER", self.dev_conf.pha.upper_range)
         if self.pico_status.flags.verify_all:
             self.check_res()
-            if self.pico_status.flags.user_capture:
-                self.user_cap()
-            else:
-                self.lv_pha_cap()
+            self.start_capture(self.pico_status.flags.user_capture)
+
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
 
     def check_res(self):
-        """Detect if the device resolution has been changed, if so apply to picoscope"""
+        """
+            Detect if the device resolution has been changed, if so apply to picoscope
+        """
 
         if self.pico_status.flags.res_changed:
             if self.pico_status.open_unit == 0:
                 self.pico.stop_scope()
             self.pico_status.flags.res_changed = False
 
-    def user_cap(self):
-        """Run the appropriate steps for starting a user defined capture"""
+    def start_capture(self, save_file):
+        """
+            Run the appropriate steps for a capture, which changes depending on whether it will be 
+            saved to a file
+        """
 
-        self.set_capture_run_limits()
-        if self.pico.run_setup():
-            while self.dev_conf.capture_run.caps_comp < self.dev_conf.capture.n_captures:
-                self.set_capture_run_length()
-                self.pico.assign_pico_memory()
-                self.pico.run_block()
-                self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
-                self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
-                self.analysis.PHA_one_peak(True)
-                self.buffer_manager.save_lv_data()
-            self.file_writer.writeHDF5()
-        self.dev_conf.capture_run.reset()
-        self.pico_status.flags.user_capture = False
-
-    def lv_pha_cap(self):
         captures = self.dev_conf.capture.n_captures
         self.set_capture_run_limits()
         if self.pico.run_setup():
             while self.dev_conf.capture_run.caps_comp < captures:
+                start_time = time.time()
                 self.set_capture_run_length()
                 self.pico.assign_pico_memory()
                 self.pico.run_block()
                 self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
                 self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
-                self.analysis.PHA_one_peak(False)
-                self.buffer_manager.save_lv_data()
+                chan = 0
+                for array in self.buffer_manager.np_channel_arrays:
+                    print("CHANNEL", chan, "PREVIEW")
+                    chan += 1
+                    if len(array) > 1200:
+                        print(array[1160])
+                    else:
+                        print(array[2])
+
+            self.analysis.PHA_one_peak(save_file)
+            self.buffer_manager.save_lv_data()
+            print(len(self.buffer_manager.np_channel_arrays))
+
+            for a in range(len(self.buffer_manager.np_channel_arrays)):
+            # if len(self.buffer_manager.np_channel_arrays) > 1:
+                temp = self.buffer_manager.np_channel_arrays[a]
+
+
+                # temp = self.buffer_manager.np_channel_arrays[0]
+                # print("LENGTH OF ARRAY", len(temp))
+                for i in range(3):
+                    print("Number", i, temp[i])
+                for x in range((len(temp)-3), len(temp)):
+                    print("Number", x, temp[x])
+
+                for value in range((len(temp))-4):
+                    if temp[value][0] == 0:
+                        if temp[value + 1][0] == 0:
+                            if temp [value + 2][0] == 0:
+                                if temp[value + 3][0] != 0:
+                                    print("CHANNEL", a)
+                                    print("VALUE =", value)
+                                    print("A =", temp[value])
+                                    print("A + 1 =", temp[value+1])
+                                    print("A + 2 =", temp[value+2])
+                                    print("A + 3 =", temp[value + 3])
+
+
+
+            if save_file == True:
+                self.file_writer.writeHDF5()
+
         self.dev_conf.capture_run.reset()
+        
+        if save_file == True:
+            self.pico_status.flags.user_capture = False
 
 
 ##### Adapter specific functions below #####

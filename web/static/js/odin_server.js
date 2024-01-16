@@ -255,6 +255,7 @@ function get_range_value_mv(key) {
 }
 
 function sync_with_adapter(){
+
     return function(response){
 
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
@@ -279,22 +280,39 @@ function sync_with_adapter(){
             if (response.device.settings.trigger.active == false) {$("#trigger-enable").val("false")}
         }
         
-        if (!focusFlags["trigger-source"]) {$("#trigger-source").val(response.device.settings.trigger.source)}
-        if (!focusFlags["trigger-direction"]) {$("#trigger-direction").val(response.device.settings.trigger.direction)}
-        if (!focusFlags["trigger-threshold"]) {$("#trigger-threshold").val(response.device.settings.trigger.threshold)}
-        if (!focusFlags["trigger-delay"]) {$("#trigger-delay").val(response.device.settings.trigger.delay)}
-        if (!focusFlags["trigger-auto"]) {$("#trigger-auto").val(response.device.settings.trigger.auto_trigger)}
+        var settings = response.device.settings
         
-        if (!focusFlags["capture-pretrig-samples"]) {$("#capture-pretrig-samples").val(response.device.settings.capture.pre_trig_samples)}
-        if (!focusFlags["capture-posttrig-samples"]) {$("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)}
-        if (!focusFlags["capture-count"]) {$("#capture-count").val(response.device.settings.capture.n_captures)}
+        var settings_2 = [settings.trigger, settings.capture, settings.file, settings.pha]
+
+        var settings_3 = [settings_2[0].source, settings_2[0].direction, settings_2[0].threshold, settings_2[0].delay,
+                        settings_2[0].auto_trigger, settings_2[1].pre_trig_samples, settings_2[1].post_trig_samples,
+                        settings_2[1].n_captures, settings_2[2].folder_name, settings_2[2].file_name, settings_2[3].num_bins,
+                        settings_2[3].lower_range, settings_2[3].upper_range]
+
+        var focus_strings = ["trigger-source", "trigger-direction", "trigger-threshold", "trigger-delay","trigger-auto",
+                        "capture-pretrig-samples", "capture-posttrig-samples", "capture-count", "capture-folder-name",
+                        "capture-file-name", "pha-num-bins", "pha-lower-range", "pha-upper-range"]
+
+        for (var setting = 0; setting < focus_strings.length; setting++) {
+            if (!focusFlags[focus_strings[setting]]) {$("#" + focus_strings[setting]).val(settings_3[setting])}
+        }
+
+        // if (!focusFlags["trigger-source"]) {$("#trigger-source").val(response.device.settings.trigger.source)}
+        // if (!focusFlags["trigger-direction"]) {$("#trigger-direction").val(response.device.settings.trigger.direction)}
+        // if (!focusFlags["trigger-threshold"]) {$("#trigger-threshold").val(response.device.settings.trigger.threshold)}
+        // if (!focusFlags["trigger-delay"]) {$("#trigger-delay").val(response.device.settings.trigger.delay)}
+        // if (!focusFlags["trigger-auto"]) {$("#trigger-auto").val(response.device.settings.trigger.auto_trigger)}
         
-        if (!focusFlags["capture-folder-name"]) {$("#capture-folder-name").val(response.device.settings.file.folder_name)}
-        if (!focusFlags["capture-file-name"]) {$("#capture-file-name").val(response.device.settings.file.file_name)}
+        // if (!focusFlags["capture-pretrig-samples"]) {$("#capture-pretrig-samples").val(response.device.settings.capture.pre_trig_samples)}
+        // if (!focusFlags["capture-posttrig-samples"]) {$("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)}
+        // if (!focusFlags["capture-count"]) {$("#capture-count").val(response.device.settings.capture.n_captures)}
         
-        if (!focusFlags["pha-num-bins"]) {$("#pha-num-bins").val(response.device.settings.pha.num_bins)}
-        if (!focusFlags["pha-lower-range"]) {$("#pha-lower-range").val(response.device.settings.pha.lower_range)}
-        if (!focusFlags["pha-upper-range"]) {$("#pha-upper-range").val(response.device.settings.pha.upper_range)}
+        // if (!focusFlags["capture-folder-name"]) {$("#capture-folder-name").val(response.device.settings.file.folder_name)}
+        // if (!focusFlags["capture-file-name"]) {$("#capture-file-name").val(response.device.settings.file.file_name)}
+        
+        // if (!focusFlags["pha-num-bins"]) {$("#pha-num-bins").val(response.device.settings.pha.num_bins)}
+        // if (!focusFlags["pha-lower-range"]) {$("#pha-lower-range").val(response.device.settings.pha.lower_range)}
+        // if (!focusFlags["pha-upper-range"]) {$("#pha-upper-range").val(response.device.settings.pha.upper_range)}
 
         if (!focusFlags["lv_range"]) {$("#lv_range").val(response.device.live_view.lv_range)}
 

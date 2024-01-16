@@ -13,6 +13,7 @@ class PicoAnalysis():
         the picoscope.
     """
     def __init__(self, dev_conf=DeviceConfig(), buffer_manager=BufferManager(), pico_status=DeviceStatus()):
+
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
         self.pico_status = pico_status
@@ -24,6 +25,7 @@ class PicoAnalysis():
             traces and saves the information into a np.array in a dataset inside the file
             containing the raw adc_counts dataset
         """
+
         self.buffer_manager.current_pha_channels.clear()
         self.buffer_manager.pha_arrays.clear()
 
@@ -39,6 +41,13 @@ class PicoAnalysis():
 
     def get_pha_data(self, channel):
         peak_values = []
+        
+        # temp = self.buffer_manager.np_channel_arrays[self.np_array]
+        # print("LENGTH OF ARRAY", len(temp))
+        # for i in range(3):
+        #     print("Number", i, temp[i])
+        # for x in range((len(temp)-3), len(temp)):
+        #     print("Number", x, temp[x])
 
         # Iterate through the channel array to expose each capture
         for i in range(len(self.buffer_manager.np_channel_arrays[self.np_array])):

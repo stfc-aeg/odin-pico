@@ -33,15 +33,15 @@ class BufferManager():
         self.clear_pha = False
         self.lv_range = 0
 
-    def generate_arrays(self, *args):
+    def generate_arrays(self):
         """
             Creates the local buffers that the picoscope will eventually be mapped
             onto for data collection.
         """
-        if args:
-            n_captures = args[0]
-        else:
-            n_captures = self.dev_conf.capture.n_captures
+
+        print("GENERATING ARRAYS")
+
+        n_captures = self.dev_conf.capture.n_captures
 
         self.overflow = (ctypes.c_int16 * n_captures)()
         self.clear_arrays()
@@ -86,6 +86,7 @@ class BufferManager():
         for array in range((len(all_current_pha_data))):
             pha_counts.append((all_current_pha_data[array])[1])
 
+        # Adds PHA to previous data, unless there is no previous data
         for channel in range(len(pha_counts)):
             if (len(self.pha_counts[self.current_pha_channels[channel]])) != 0:
                 self.pha_counts[self.current_pha_channels[channel]] = np.array(pha_counts[channel]) + np.array(self.pha_counts[self.current_pha_channels[channel]])
