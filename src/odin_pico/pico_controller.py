@@ -231,10 +231,8 @@ class PicoController():
         """
         if len(self.buffer_manager.active_channels) > 0:
             max_caps = math.trunc((self.dev_conf.capture_run.caps_max)/(len(self.buffer_manager.active_channels)))
-        else
+        else:
             max_caps = self.dev_conf.capture_run.caps_max
-
-        # print("SET CAPTURE RUN LENGTH ACTIVE CHANNELS", self.buffer_manager.active_channels)
 
         if self.dev_conf.capture_run.caps_remaining <= max_caps:
             self.dev_conf.capture_run.caps_in_run = self.dev_conf.capture_run.caps_remaining
@@ -290,50 +288,9 @@ class PicoController():
         self.set_capture_run_limits()
         if self.pico.run_setup():
             while self.dev_conf.capture_run.caps_comp < captures:
-                start_time = time.time()
-                self.set_capture_run_length()
-                self.pico.assign_pico_memory()
-                self.pico.run_block()
-                self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
-                self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
-                chan = 0
-                for array in self.buffer_manager.np_channel_arrays:
-                    print("CHANNEL", chan, "PREVIEW")
-                    chan += 1
-                    if len(array) > 1200:
-                        print(array[1160])
-                    else:
-                        print(array[2])
-
+                self.capture_run()
+                self.buffer_manager.save_lv_data()
             self.analysis.PHA_one_peak(save_file)
-            self.buffer_manager.save_lv_data()
-            print(len(self.buffer_manager.np_channel_arrays))
-
-            for a in range(len(self.buffer_manager.np_channel_arrays)):
-            # if len(self.buffer_manager.np_channel_arrays) > 1:
-                temp = self.buffer_manager.np_channel_arrays[a]
-
-
-                # temp = self.buffer_manager.np_channel_arrays[0]
-                # print("LENGTH OF ARRAY", len(temp))
-                for i in range(3):
-                    print("Number", i, temp[i])
-                for x in range((len(temp)-3), len(temp)):
-                    print("Number", x, temp[x])
-
-                for value in range((len(temp))-4):
-                    if temp[value][0] == 0:
-                        if temp[value + 1][0] == 0:
-                            if temp [value + 2][0] == 0:
-                                if temp[value + 3][0] != 0:
-                                    print("CHANNEL", a)
-                                    print("VALUE =", value)
-                                    print("A =", temp[value])
-                                    print("A + 1 =", temp[value+1])
-                                    print("A + 2 =", temp[value+2])
-                                    print("A + 3 =", temp[value + 3])
-
-
 
             if save_file == True:
                 self.file_writer.writeHDF5()
@@ -342,6 +299,13 @@ class PicoController():
         
         if save_file == True:
             self.pico_status.flags.user_capture = False
+
+    def capture_run(self):
+        self.set_capture_run_length()
+        self.pico.assign_pico_memory()
+        self.pico.run_block()
+        self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
+        self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
 
 
 ##### Adapter specific functions below #####
@@ -364,6 +328,7 @@ class PicoController():
 
         self.set_update_loop_state(False)
         self.pico.stop_scope()
+        self.pico_status.flags.abort_cap = True
         logging.debug("Stopping PicoScope services and closing device")
 
     def get(self, path):

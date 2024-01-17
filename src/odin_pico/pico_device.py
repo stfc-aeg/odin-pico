@@ -48,7 +48,6 @@ class PicoDevice():
             samples=(self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples)
 
             for c,b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
-                print("ACTIVE CHANNEL", c)
                 for i in range(self.dev_conf.capture_run.caps_comp, self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run):
                     buff = b[i]
                     ps.ps5000aSetDataBuffer(self.dev_conf.mode.handle, c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), samples, i-self.dev_conf.capture_run.caps_comp, 0)
@@ -112,10 +111,6 @@ class PicoDevice():
         self.prev_seg_caps = 0
         self.seg_caps = 0
 
-        # print("PING SCOPE", self.ping_scope())
-
-        # print((Trigger_Info._fields_[0])[1].value)
-
         # print(f'\n\npico_status when called: {self.pico_status.flags.system_state}')
 
         if True:#self.ping_scope():
@@ -128,7 +123,6 @@ class PicoDevice():
 
             self.get_cap_count()
             print("CURRENT CAPS", self.dev_conf.capture_run.live_cap_comp)
-            print("PING SCOPE", self.ping_scope())
 
             # 7a. To obtain data before rapid block capture has finished, call ps5000aStop and then
             # ps5000aGetNoOfCaptures to find out how many captures were completed
@@ -149,7 +143,6 @@ class PicoDevice():
 
                 time.sleep(0.05)
                 self.prev_seg_caps = self.seg_caps
-                # print("PING SCOPE", self.ping_scope())
 
             self.get_cap_count()
 
@@ -157,8 +150,6 @@ class PicoDevice():
                 seg_to_indx = self.seg_caps
             else:
                 seg_to_indx = (self.dev_conf.capture_run.caps_in_run - 1)
-
-            # print("PING SCOPE", self.ping_scope())
 
             ps.ps5000aGetValuesBulk(self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_samples), 0, (seg_to_indx), 0, 0, ctypes.byref(self.buffer_manager.overflow))
             self.get_trigger_timing()

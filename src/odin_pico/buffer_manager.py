@@ -1,5 +1,6 @@
 import ctypes
 import numpy as np
+import random
 
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.pico_util import PicoUtil
@@ -39,8 +40,6 @@ class BufferManager():
             onto for data collection.
         """
 
-        print("GENERATING ARRAYS")
-
         n_captures = self.dev_conf.capture.n_captures
 
         self.overflow = (ctypes.c_int16 * n_captures)()
@@ -61,15 +60,10 @@ class BufferManager():
             if(chan.active is True):
                 self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
 
-    def save_lv_data(self):
+    def accumulate_pha(self):
         """
-            Return a live view of traces being captured.
-            """
-
-        # Find ranges and offsets for all channels
-        for channel in range(4):
-            self.chan_range[channel] = self.channels[channel].range
-            self.chan_offsets[channel] = self.channels[channel].offset
+            Add the new PHA data to the previous data, if there is any data.
+        """
 
         all_current_pha_data = []
         for c, b in zip(self.active_channels, self.pha_arrays):
@@ -94,11 +88,21 @@ class BufferManager():
             else:
                 self.pha_counts[self.current_pha_channels[channel]] = pha_counts[channel]
 
+    def save_lv_data(self):
+        """
+            Return a live view of traces being captured.
+        """
+
+        # Find ranges and offsets for all channels
+        for channel in range(4):
+            self.chan_range[channel] = self.channels[channel].range
+            self.chan_offsets[channel] = self.channels[channel].offset
+
         current_lv_array = []
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
 
             # Find current data, along with channel range and offset
-            values = adc2mV(b[-1], self.chan_range[c], self.dev_conf.meta_data.max_adc)
+            values = adc2mV(b[(random.randint(0, (self.dev_conf.capture_run.caps_comp - 1)))], self.chan_range[c], self.dev_conf.meta_data.max_adc)
             current_offset = self.chan_offsets[c]
             current_range = self.util.get_range_value_mv(self.chan_range[c])
             offset_key = ((current_offset/100) * current_range)

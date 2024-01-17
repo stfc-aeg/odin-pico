@@ -1,4 +1,3 @@
-import logging
 import numpy as np 
 
 from odin_pico.buffer_manager import BufferManager
@@ -38,16 +37,11 @@ class PicoAnalysis():
             for channel in self.buffer_manager.pha_active_channels:
                 self.get_pha_data(channel)
                 self.np_array += 1
+                self.buffer_manager.accumulate_pha()
 
     def get_pha_data(self, channel):
-        peak_values = []
         
-        # temp = self.buffer_manager.np_channel_arrays[self.np_array]
-        # print("LENGTH OF ARRAY", len(temp))
-        # for i in range(3):
-        #     print("Number", i, temp[i])
-        # for x in range((len(temp)-3), len(temp)):
-        #     print("Number", x, temp[x])
+        peak_values = []
 
         # Iterate through the channel array to expose each capture
         for i in range(len(self.buffer_manager.np_channel_arrays[self.np_array])):
@@ -61,4 +55,3 @@ class PicoAnalysis():
         counts, bin_edge = np.histogram(peak_values, bins=self.dev_conf.pha.num_bins, range=(self.dev_conf.pha.lower_range, self.dev_conf.pha.upper_range))
         self.buffer_manager.pha_arrays.append(np.vstack((bin_edge[:-1], counts)))
         self.buffer_manager.current_pha_channels.append(channel)
-
