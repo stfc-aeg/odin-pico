@@ -1,6 +1,5 @@
 import math
 from picosdk.ps5000a import ps5000a as ps
-import ctypes
 import numpy as np
 
 
@@ -178,7 +177,7 @@ class PicoUtil():
             return -1
         return 0
     
-    def calc_offset(self,range, off_per):
+    def calc_offset(self, range, off_per):
         try:
             range_mv = self.get_range_value_mv(range)
             return((math.ceil(range_mv/(100/off_per)))*pow(10,-3))

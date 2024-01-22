@@ -25,6 +25,8 @@ class PicoController():
         self.update_loop_active = loop
         self.lv_captures = 1
 
+        self.enable = False
+
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
         self.dev_conf = DeviceConfig()
         self.dev_conf.file.file_path = path
@@ -52,9 +54,11 @@ class PicoController():
                 'channel_id': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'channel_id'), None),
                 'active': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'active'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'active')),
                 'verified': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'verified'), None),
+                'live_view': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'live_view'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'live_view')),
                 'coupling': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'coupling'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'coupling')),
                 'range': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'range'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'range')),
-                'offset': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'offset'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'offset'))
+                'offset': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'offset'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'offset')),
+                'pha_active': (partial(self.get_dc_value, self.dev_conf, f'channel_{name}', 'pha_active'), partial(self.set_dc_chan_value, self.dev_conf, f'channel_{name}', 'pha_active'))
                 })
 
         pico_trigger = ParameterTree({
@@ -102,15 +106,19 @@ class PicoController():
         })
 
         live_view = ParameterTree({
-            'preview_channel': (lambda: self.dev_conf.preview_channel, partial(self.set_dc_value, self.dev_conf, "preview_channel")),
-            'lv_data': (self.lv_data, None),
-            'pha_data': (self.pha_data, None),
+            'lv_active_channels': (lambda: self.buffer_manager.lv_channels_active, None),
+            'pha_counts': (lambda: self.buffer_manager.pha_counts, None),
             'capture_count': (lambda: self.dev_conf.capture_run.live_cap_comp, None),
-            'captures_requested': (lambda: self.dev_conf.capture.n_captures, None)
+            'captures_requested': (lambda: self.dev_conf.capture.n_captures, None),
+            'lv_data': (lambda: self.buffer_manager.lv_channel_arrays, None),
+            'pha_bin_edges': (lambda: self.buffer_manager.bin_edges, None),
+            'lv_range': (lambda: self.buffer_manager.lv_range, partial(self.set_dc_value, self.buffer_manager, "lv_range")),
+            'pha_active_channels': (lambda: self.buffer_manager.pha_active_channels, None),
         })
 
         pico_commands = ParameterTree({
-            'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture"))
+            'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
+            'clear_pha': (lambda: self.analysis.clear_pha, partial(self.set_dc_value, self.analysis, "clear_pha"))
         })
 
         pico_flags = ParameterTree({
@@ -133,9 +141,10 @@ class PicoController():
         # Initalise the "update_loop" if control variable passed to the Pico_Controller is True
         if self.update_loop_active:
             self.update_loop()
+
         # Set initial state of the verification system
         self.verify_settings()
-        print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
+        # print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
 
     def get_dc_value(self, obj, chan_name, attr_name):
         try:
@@ -145,17 +154,40 @@ class PicoController():
             return None
 
     def set_dc_value(self, obj, attr_name, value):
+ 
+        if (attr_name == "num_bins") or (attr_name == "lower_range") or (attr_name == "upper_range"):
+            self.analysis.clear_pha = True
+
         setattr(obj, attr_name, value)
     
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
-        try:
-            channel_dc = getattr(obj, chan_name)
-            setattr(channel_dc, attr_name, value)
-        except AttributeError:
-            pass
-   
+
+        if (attr_name == 'live_view'):
+            try:
+                channel_dc = getattr(obj, chan_name)
+                if getattr(channel_dc, 'active', None) == True:
+                    setattr(channel_dc, attr_name, value)
+            except AttributeError:
+                pass
+
+        elif (attr_name == 'active') and (value == False):
+            try:
+                channel_dc = getattr(obj, chan_name)
+                setattr(channel_dc, 'live_view', value)
+                setattr(channel_dc, attr_name, value)
+            except AttributeError:
+                pass
+        else:
+            try:
+                channel_dc = getattr(obj, chan_name)
+                setattr(channel_dc, attr_name, value)
+            except AttributeError:
+                pass
+
     def verify_settings(self):
-        """Verifies all picoscope settings, sets status of individual groups of settings"""
+        """
+            Verifies all picoscope settings, sets status of individual groups of settings
+        """
 
         active = [self.dev_conf.channel_a.active, self.dev_conf.channel_b.active, self.dev_conf.channel_c.active, self.dev_conf.channel_d.active]
 
@@ -168,7 +200,9 @@ class PicoController():
         self.pico_status.flags.verify_all = self.set_verify_flag()
 
     def set_verify_flag(self):
-        """Used by the verify_settings() function to return the Boolean value of the setting verified flag"""
+        """
+            Used by the verify_settings() function to return the Boolean value of the setting verified flag
+        """
 
         status_list = [self.pico_status.pico_setup_verify, self.pico_status.channel_setup_verify, self.pico_status.channel_trigger_verify, self.pico_status.capture_settings_verify]
         for status in status_list:
@@ -177,29 +211,34 @@ class PicoController():
         return True
     
     def set_capture_run_limits(self):
-        """Set the value for maximum amount of captures that can fit into the picoscope memory taking into account current user settings as well as setting the captures_remaning variable"""
+        """
+            Set the value for maximum amount of captures that can fit into the picoscope memory taking 
+            into accountcurrent user settings as well as setting the captures_remaning variable
+        """
 
         capture_samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
         self.dev_conf.capture_run.caps_max = math.floor(self.util.max_samples(self.dev_conf.mode.resolution) / capture_samples)
         self.dev_conf.capture_run.caps_remaining = self.dev_conf.capture.n_captures
 
     def set_capture_run_length(self):
-        """Sets the captures to be completed in each "run" based on the maximum allowed captures, and the amount of captures left to be collected"""
+        """
+            Sets the captures to be completed in each "run" based on the maximum allowed captures, and
+            the amount of captures left to be collected
+        """
+        if len(self.buffer_manager.active_channels) > 0:
+            max_caps = math.trunc((self.dev_conf.capture_run.caps_max)/(len(self.buffer_manager.active_channels)))
+        else:
+            max_caps = self.dev_conf.capture_run.caps_max
 
-        if self.dev_conf.capture_run.caps_remaining <= self.dev_conf.capture_run.caps_max:
+        if self.dev_conf.capture_run.caps_remaining <= max_caps:
             self.dev_conf.capture_run.caps_in_run = self.dev_conf.capture_run.caps_remaining
         else:
-            self.dev_conf.capture_run.caps_in_run = self.dev_conf.capture_run.caps_max
-
-    def set_capture_run_lv(self):
-        """Sets the capture variables to collect a single trace for LiveView"""
-
-        self.dev_conf.capture_run.caps_max = self.lv_captures
-        self.dev_conf.capture_run.caps_remaining = self.lv_captures
-        self.dev_conf.capture_run.caps_in_run = self.lv_captures
+            self.dev_conf.capture_run.caps_in_run = max_caps
 
     def calc_samp_time(self):
-        """Calculates the sample interval based on the resolution and timebase"""
+        """
+            Calculates the sample interval based on the resolution and timebase
+        """
 
         if self.dev_conf.mode.resolution == 0:
             if ((self.dev_conf.mode.timebase) >= 0 and (self.dev_conf.mode.timebase <= 2)):
@@ -213,78 +252,59 @@ class PicoController():
                 self.dev_conf.mode.samp_time = ((self.dev_conf.mode.timebase - 3) / (62500000))
 
     def run_capture(self):
-        """Responsible for telling the picoscope to collect and return data"""
+        """
+            Responsible for telling the picoscope to collect and return data
+        """
 
         self.calc_samp_time()
-        self.pico_status.flags.abort_cap = False
         if self.pico_status.flags.verify_all:
             self.check_res()
-            if self.pico_status.flags.user_capture:
-                self.user_cap()
-            else:
-                self.lv_cap()
+            self.start_capture(self.pico_status.flags.user_capture)
+
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
 
     def check_res(self):
-        """Detect if the device resolution has been changed, if so apply to picoscope"""
+        """
+            Detect if the device resolution has been changed, if so apply to picoscope
+        """
 
         if self.pico_status.flags.res_changed:
             if self.pico_status.open_unit == 0:
                 self.pico.stop_scope()
             self.pico_status.flags.res_changed = False
 
-    def user_cap(self):
-        """Run the appropriate steps for starting a user defined capture"""
+    def start_capture(self, save_file):
+        """
+            Run the appropriate steps for a capture, which changes depending on whether it will be 
+            saved to a file
+        """
 
+        captures = self.dev_conf.capture.n_captures
         self.set_capture_run_limits()
+
         if self.pico.run_setup():
-            while self.dev_conf.capture_run.caps_comp < self.dev_conf.capture.n_captures:
-                self.set_capture_run_length()
-                self.pico.assign_pico_memory()
-                self.pico.run_block()
-                self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
-                self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
-                self.analysis.PHA_one_peak()
-                self.buffer_manager.save_lv_data()
-            self.file_writer.writeHDF5()
+            while self.dev_conf.capture_run.caps_comp < captures:
+                self.capture_run(save_file)
+    
+            self.analysis.PHA_one_peak(save_file)
+    
+            if save_file == True:
+                self.file_writer.writeHDF5()
+
         self.dev_conf.capture_run.reset()
-        self.pico_status.flags.user_capture = False
+        
+        if save_file == True:
+            self.pico_status.flags.user_capture = False
 
-    def lv_cap(self):
-        """Run the appropriate steps for starting a live view capture"""
+    def capture_run(self, save_file):
+        self.set_capture_run_length()
+        self.pico.assign_pico_memory()
+        self.pico.run_block()
+        self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
+        self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
+        self.buffer_manager.save_lv_data()
 
-        self.set_capture_run_lv()
-        if self.pico.run_setup(self.lv_captures):
-            self.pico.assign_pico_memory()
-            self.pico.run_block()
-            self.buffer_manager.save_lv_data()
-      
-    def lv_data(self):
-        """Returns array of the last captured trace, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
-
-        array = None
-
-        for c, b in zip(self.buffer_manager.lv_active_channels, self.buffer_manager.lv_channel_arrays):
-            if (c == self.dev_conf.preview_channel):
-                array = b#[::10]
-        if array is None:
-            return []
-        else:
-            return array
-
-    def pha_data(self):
-        """ Returns array of the last calculated PHA, that has been stored in the buffer manager, for a channel selected by the user in the UI"""
-
-        array = None
-
-        for c, b in zip(self.buffer_manager.active_channels, self.buffer_manager.lv_pha):
-            if (c == self.dev_conf.preview_channel):
-                array = b.tolist()
-        if array is None:
-            return []
-        else:
-            return array
 
 ##### Adapter specific functions below #####
 

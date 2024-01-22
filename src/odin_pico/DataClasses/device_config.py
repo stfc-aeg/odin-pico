@@ -46,7 +46,7 @@ class DeviceConfig:
         conf_d['meta_data']['total_cap_samples'] = int(self.meta_data.total_cap_samples.value)
         conf_d['meta_data']['samples_per_seg'] = int(self.meta_data.samples_per_seg.value)
         
-        # Remove the PicoUtil instance from each ChannelConfig dict, 
+        # Remove the PicoUtil instance from each ChannelConfig dict, as this doesnt not need to be saved
         for name in ['A', 'B', 'C', 'D']:
             if f'channel_{name}' in conf_d:
                 del conf_d[f'channel_{name}']['util']

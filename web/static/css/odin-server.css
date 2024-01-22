@@ -22,9 +22,8 @@ div.content-container {
   text-align: left;
 }
 
-.toggle-container {
+.toggle-container_lv {
   width: 50%;
-  text-align: right;
 }
 
 .icon-button {
@@ -32,7 +31,16 @@ div.content-container {
   border: none;
   cursor: pointer;
   padding: 0;
-  font-size: 24px;
+  font-size: 20px;
+  height: 24px;
+}
+
+.save-pha-btn {
+  height: 24px;
+}
+
+.span-btn {
+  font-size: larger;
 }
 
 .plot-container {
@@ -55,9 +63,9 @@ div.content-container {
   padding-right: 0px;
 }
 
-.panel-heading-nav {
+/* .panel-heading-nav {
   padding: 10px;
-}
+} */
 
 #main-body {
   padding-top: 20px;
@@ -116,7 +124,7 @@ div.content-container {
   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif
 }
 
-#custom-form, #custom-fieldset {
+.custom-form, .custom-fieldset {
   margin: 0;
   padding: 0;
 }
@@ -131,12 +139,30 @@ div.content-container {
   padding: 0;
 }
 
-#custom-div-a, 
-#custom-div-b, 
-#custom-div-c, 
-#custom-div-d {
+.custom-div-a, 
+.custom-div-b, 
+.custom-div-c, 
+.custom-div-d {
   display: inline-block;
   margin-right: 10px;
+}
+
+#live-view-channels {
+    display: flex;
+    align-items: center;
+}
+
+#pha-active-channels {
+    display: flex;
+    align-items: center;
+}
+
+#live-view-form {
+  padding-left: 8px;
+}
+
+#pha-active-form {
+  padding-left: 8px;
 }
 
 /* Custom grid-row style */

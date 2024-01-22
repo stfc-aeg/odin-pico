@@ -1,6 +1,3 @@
-import ctypes
-import json
-import os
 from odin_pico.pico_util import PicoUtil
 
 class DeviceConfig():
