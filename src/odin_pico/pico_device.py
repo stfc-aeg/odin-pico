@@ -121,9 +121,6 @@ class PicoDevice():
             ps.ps5000aRunBlock(self.dev_conf.mode.handle, self.dev_conf.capture.pre_trig_samples, self.dev_conf.capture.post_trig_samples, self.dev_conf.mode.timebase, None, 0, None, None)
             self.pico_status.flags.system_state = "Collecting Data"
 
-            self.get_cap_count()
-            print("CURRENT CAPS", self.dev_conf.capture_run.live_cap_comp)
-
             # 7a. To obtain data before rapid block capture has finished, call ps5000aStop and then
             # ps5000aGetNoOfCaptures to find out how many captures were completed
 

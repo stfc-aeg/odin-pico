@@ -17,6 +17,7 @@ class PicoAnalysis():
         self.buffer_manager = buffer_manager
         self.pico_status = pico_status
         self.bin_width = 250
+        self.clear_pha = False
 
     def PHA_one_peak(self, file_save):
         """
@@ -30,14 +31,18 @@ class PicoAnalysis():
 
         self.np_array = 0
 
+        if self.clear_pha == True:
+            self.buffer_manager.pha_counts = [[]] * 4
+            self.clear_pha = False
+
         if file_save == True:
             for chan in self.buffer_manager.active_channels:
                 self.get_pha_data(chan)
         else:
             for channel in self.buffer_manager.pha_active_channels:
                 self.get_pha_data(channel)
+                self.buffer_manager.accumulate_pha(channel, self.np_array)
                 self.np_array += 1
-                self.buffer_manager.accumulate_pha()
 
     def get_pha_data(self, channel):
         

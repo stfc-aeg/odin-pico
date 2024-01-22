@@ -118,7 +118,7 @@ class PicoController():
 
         pico_commands = ParameterTree({
             'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
-            'clear_pha': (lambda: self.buffer_manager.clear_pha, partial(self.set_dc_value, self.buffer_manager, "clear_pha"))
+            'clear_pha': (lambda: self.analysis.clear_pha, partial(self.set_dc_value, self.analysis, "clear_pha"))
         })
 
         pico_flags = ParameterTree({
@@ -156,11 +156,7 @@ class PicoController():
     def set_dc_value(self, obj, attr_name, value):
  
         if (attr_name == "num_bins") or (attr_name == "lower_range") or (attr_name == "upper_range"):
-            self.buffer_manager.clear_pha = True
-
-        if (attr_name == 'clear_pha'):
-            for chan in range(4):
-                self.set_dc_chan_value(self.dev_conf, f'channel_{chr(chan+97)}', 'pha_active', False)
+            self.analysis.clear_pha = True
 
         setattr(obj, attr_name, value)
     
@@ -286,12 +282,13 @@ class PicoController():
 
         captures = self.dev_conf.capture.n_captures
         self.set_capture_run_limits()
+
         if self.pico.run_setup():
             while self.dev_conf.capture_run.caps_comp < captures:
-                self.capture_run()
-                self.buffer_manager.save_lv_data()
+                self.capture_run(save_file)
+    
             self.analysis.PHA_one_peak(save_file)
-
+    
             if save_file == True:
                 self.file_writer.writeHDF5()
 
@@ -300,12 +297,13 @@ class PicoController():
         if save_file == True:
             self.pico_status.flags.user_capture = False
 
-    def capture_run(self):
+    def capture_run(self, save_file):
         self.set_capture_run_length()
         self.pico.assign_pico_memory()
         self.pico.run_block()
         self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
         self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
+        self.buffer_manager.save_lv_data()
 
 
 ##### Adapter specific functions below #####
@@ -328,7 +326,6 @@ class PicoController():
 
         self.set_update_loop_state(False)
         self.pico.stop_scope()
-        self.pico_status.flags.abort_cap = True
         logging.debug("Stopping PicoScope services and closing device")
 
     def get(self, path):
