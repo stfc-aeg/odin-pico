@@ -49,7 +49,7 @@ class PicoAnalysis():
         peak_values = []
 
         # Iterate through the channel array to expose each capture
-        for i in range(len(self.buffer_manager.np_channel_arrays[self.np_array])):
+        for i in range(self.dev_conf.capture_run.caps_in_run):
             data = (self.buffer_manager.np_channel_arrays[self.np_array])[i]
 
             # Find the peaks in each capture

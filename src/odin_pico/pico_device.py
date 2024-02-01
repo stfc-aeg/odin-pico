@@ -48,7 +48,8 @@ class PicoDevice():
             samples=(self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples)
 
             for c,b in zip(self.buffer_manager.active_channels, self.buffer_manager.np_channel_arrays):
-                for i in range(self.dev_conf.capture_run.caps_comp, self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run):
+                # for i in range(self.dev_conf.capture_run.caps_comp, self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run):
+                for i in range(self.dev_conf.capture_run.caps_in_run):
                     buff = b[i]
                     ps.ps5000aSetDataBuffer(self.dev_conf.mode.handle, c, buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)), samples, i-self.dev_conf.capture_run.caps_comp, 0)
 
@@ -90,7 +91,6 @@ class PicoDevice():
             self.open_unit()
 
         if self.pico_status.open_unit == 0:
-            # if self.ping_scope() == True:
             self.pico_status.flags.system_state = "Connected to Picoscope"
             self.set_channels()
             self.set_trigger()
@@ -99,6 +99,18 @@ class PicoDevice():
                 self.buffer_manager.generate_arrays(args[0])
             else:
                 self.buffer_manager.generate_arrays()
+            return True
+        
+    def run_tb_setup(self):
+
+        if self.pico_status.open_unit != 0:
+            self.pico_status.flags.system_state = "Waiting for connection"
+            self.open_unit()
+
+        if self.pico_status.open_unit == 0:
+            self.pico_status.flags.system_state = "Connected to Picoscope"
+            self.set_channels()
+            self.set_trigger()
             return True
 
     def run_block(self):
@@ -127,16 +139,24 @@ class PicoDevice():
             while self.pico_status.block_ready.value == self.pico_status.block_check.value:
                 ps.ps5000aIsReady(self.dev_conf.mode.handle, ctypes.byref(self.pico_status.block_ready))
 
-                if (time.time() - start_time >= 0.25):
-                    start_time = time.time()
-                    self.get_cap_count()
-                    # print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
+                # if (time.time() - start_time >= 0.25):
+                #     start_time = time.time()
+                #     self.get_cap_count()
+                #     print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
 
-                    if (self.prev_seg_caps == self.seg_caps):
-                        self.pico_status.flags.system_state = "Waiting for trigger"
+                #     if (self.prev_seg_caps == self.seg_caps):
+                #         self.pico_status.flags.system_state = "Waiting for trigger"
+
+                if (time.time() - start_time) > 10:
+                    self.get_cap_count()
+                    if self.seg_caps == 0:
+                        self.pico_status.flags.abort_cap = True
+                        self.pico_status.system_state = "Trigger criteria not met"
+
 
                 if (self.pico_status.flags.abort_cap):
                     ps.ps5000aStop(self.dev_conf.mode.handle)
+                    self.pico_status.block_check.value = 1
 
                 time.sleep(0.05)
                 self.prev_seg_caps = self.seg_caps
@@ -154,7 +174,7 @@ class PicoDevice():
     def get_trigger_timing(self):
 
         trigger_info = (Trigger_Info*self.dev_conf.capture_run.caps_in_run) ()
-        ps.ps5000aGetTriggerInfoBulk(self.dev_conf.mode.handle, ctypes.byref(trigger_info), 0, (self.dev_conf.capture_run.caps_in_run-1))
+        ps.ps5000aGetTriggerInfoBulk(self.dev_conf.mode.handle, ctypes.byref(trigger_info), 0, (self.dev_conf.capture_run.caps_in_run - 1))
         last_samples = 0
 
         for i in trigger_info:
@@ -162,6 +182,7 @@ class PicoDevice():
             time_interval = sample_interval * self.dev_conf.mode.samp_time
             last_samples = i.timeStampCounter
             self.buffer_manager.trigger_times.append(time_interval)
+            print("TRIGGER TIMES", self.buffer_manager.trigger_times)
       
     def ping_scope(self):
         """

@@ -26,6 +26,9 @@ class PicoController():
         self.lv_captures = 1
 
         self.enable = False
+        self.do_time_capture = False
+        self.lv_active = False
+        self.test_run = False
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
         self.dev_conf = DeviceConfig()
@@ -73,7 +76,10 @@ class PicoController():
         pico_capture = ParameterTree({
             'pre_trig_samples': (lambda: self.dev_conf.capture.pre_trig_samples, partial(self.set_dc_value, self.dev_conf.capture, "pre_trig_samples")),
             'post_trig_samples': (lambda: self.dev_conf.capture.post_trig_samples, partial(self.set_dc_value, self.dev_conf.capture, "post_trig_samples")),
-            'n_captures': (lambda: self.dev_conf.capture.n_captures, partial(self.set_dc_value, self.dev_conf.capture, "n_captures"))
+            'n_captures': (lambda: self.dev_conf.capture.n_captures, partial(self.set_dc_value, self.dev_conf.capture, "n_captures")),
+            'time_based': (lambda: self.dev_conf.capture.time_based, partial(self.set_dc_value, self.dev_conf.capture, 'time_based')),
+            'sample_time': (lambda: self.dev_conf.capture.sample_time, partial(self.set_dc_value, self.dev_conf.capture, 'sample_time')),
+            'caps_in_cycle': (lambda: self.dev_conf.capture.caps_in_cycle, partial(self.set_dc_value, self.dev_conf.capture, 'caps_in_cycle'))
         })
 
         pico_mode = ParameterTree({
@@ -118,7 +124,10 @@ class PicoController():
 
         pico_commands = ParameterTree({
             'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
-            'clear_pha': (lambda: self.analysis.clear_pha, partial(self.set_dc_value, self.analysis, "clear_pha"))
+            'clear_pha': (lambda: self.analysis.clear_pha, partial(self.set_dc_value, self.analysis, "clear_pha")),
+            'do_time_capture': (lambda: self.do_time_capture, partial(self.set_dc_value, self, "do_time_capture")),
+            'live_view_active': (lambda: self.lv, partial(self.set_dc_value, self, "lv_active")),
+            'test_run': (lambda: self.test_run, partial(self.set_dc_value, self, "test_run"))
         })
 
         pico_flags = ParameterTree({
@@ -157,6 +166,10 @@ class PicoController():
  
         if (attr_name == "num_bins") or (attr_name == "lower_range") or (attr_name == "upper_range"):
             self.analysis.clear_pha = True
+
+        if (attr_name == "caps_in_cycle"):
+            if value > 2560:
+                value = 2560
 
         setattr(obj, attr_name, value)
     
@@ -259,8 +272,26 @@ class PicoController():
         self.calc_samp_time()
         if self.pico_status.flags.verify_all:
             self.check_res()
-            self.start_capture(self.pico_status.flags.user_capture)
+            if self.lv_active == True:
+                #lv_capture()
+            elif self.test_run == True:
+                #test_capture()
+                self.test_run = False
+            elif self.pico_status.flags.user_capture == True:
+                #user_capture()
+                self.pico_status.flags.user_capture = False
+            elif self.do_time_capture == True:
+                #self.tb_capture()
+                self.do_time_capture = False
 
+            # self.start_capture(self.pico_status.flags.user_capture)
+            if self.do_time_capture == True:
+                # start_time = time.time()
+                # self.start_capture(self.pico_status.flags.user_capture)
+                self.tb_capture()
+                self.do_time_capture = False
+                # end_time = time.time()
+                # print("TIME FOR CAP", end_time - start_time)
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
 
@@ -285,10 +316,10 @@ class PicoController():
 
         if self.pico.run_setup():
             while self.dev_conf.capture_run.caps_comp < captures:
-                self.capture_run(save_file)
+                self.capture_run()
     
-            self.analysis.PHA_one_peak(save_file)
-    
+                self.analysis.PHA_one_peak(save_file)
+
             if save_file == True:
                 self.file_writer.writeHDF5()
 
@@ -297,13 +328,48 @@ class PicoController():
         if save_file == True:
             self.pico_status.flags.user_capture = False
 
-    def capture_run(self, save_file):
+    def capture_run(self):
         self.set_capture_run_length()
         self.pico.assign_pico_memory()
         self.pico.run_block()
         self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
         self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
         self.buffer_manager.save_lv_data()
+
+
+    def tb_capture(self):
+
+        self.buffer_manager.clear_arrays()
+        self.buffer_manager.check_channels()
+        total_time = self.dev_conf.capture.sample_time
+        self.dev_conf.capture_run.caps_in_run = (math.trunc(self.dev_conf.capture.caps_in_cycle/(len(self.buffer_manager.active_channels))))
+        self.buffer_manager.generate_tb_arrays()
+        if self.pico.run_tb_setup():
+            start_time = time.time()
+            while (time.time() - start_time) < total_time:
+                if (self.pico_status.flags.abort_cap == False):
+                    time_2 = time.time()
+                    self.pico.assign_pico_memory()
+                    time_3 = time.time()
+                    print("ASSIGNING MEMORY", time_3 - time_2)
+                    self.pico.run_block()
+                    time_4 = time.time()
+                    print("RUNNING BLOCK MODE", time_4 - time_3)
+                    # self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
+                    print("SEG CAPS", self.pico.seg_caps)
+                    self.dev_conf.capture_run.caps_comp += self.pico.seg_caps
+                    self.buffer_manager.save_lv_data()
+                    time_5 = time.time()
+                    print("SAVING LV DATA", time_5 - time_4)
+                    self.analysis.PHA_one_peak(False)
+                    time_6 = time.time()
+                    print("DOING PHA", time_6 - time_5)
+                else:
+                    total_time = 0
+                    self.pico_status.flags.abort_cap = False
+        
+        print("CAPS COMPLETED", (self.dev_conf.capture_run.caps_comp * len(self.buffer_manager.active_channels)))
+        self.dev_conf.capture_run.reset()
 
 
 ##### Adapter specific functions below #####
@@ -325,6 +391,7 @@ class PicoController():
         """Responsible for making sure the picoscope is closed cleanly when the adapter is shutdown"""
 
         self.set_update_loop_state(False)
+        self.pico_status.flags.abort_cap = True
         self.pico.stop_scope()
         logging.debug("Stopping PicoScope services and closing device")
 

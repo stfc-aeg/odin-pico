@@ -1,7 +1,6 @@
 import ctypes
 import numpy as np
-import random
-
+import math
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.pico_util import PicoUtil
 
@@ -39,12 +38,7 @@ class BufferManager():
             onto for data collection.
         """
 
-        n_captures = self.dev_conf.capture.n_captures
-
-        self.overflow = (ctypes.c_int16 * n_captures)()
         self.clear_arrays()
-
-        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
 
         for chan in self.channels:
             if (chan.active is True):
@@ -54,6 +48,25 @@ class BufferManager():
                 if (chan.pha_active is True):
                     self.pha_channels_active[chan.channel_id] = True
                     self.pha_active_channels.append(chan.channel_id)
+
+        # n_captures = self.dev_conf.capture.n_captures
+        n_captures = math.trunc(self.dev_conf.capture_run.caps_max / len(self.active_channels))
+
+        self.overflow = (ctypes.c_int16 * n_captures)()
+
+        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
+
+        for chan in self.channels:
+            if(chan.active is True):
+                self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
+
+    def generate_tb_arrays(self):
+
+        n_captures = self.dev_conf.capture_run.caps_in_run
+
+        self.overflow = (ctypes.c_int16 * n_captures)()
+
+        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
 
         for chan in self.channels:
             if(chan.active is True):
@@ -77,6 +90,17 @@ class BufferManager():
         else:
             self.pha_counts[chan] = pha_counts
 
+    def check_channels(self):
+
+        for chan in self.channels:
+            if (chan.active is True):
+                self.active_channels.append(chan.channel_id)
+                if (chan.live_view is True):
+                    self.lv_channels_active.append(chan.channel_id)
+                if (chan.pha_active is True):
+                    self.pha_channels_active[chan.channel_id] = True
+                    self.pha_active_channels.append(chan.channel_id)
+
     def save_lv_data(self):
         """
             Return a live view of traces being captured.
@@ -92,7 +116,7 @@ class BufferManager():
         for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
 
             # Find current data, along with channel range and offset
-            values = adc2mV(b[(self.dev_conf.capture_run.caps_comp - 1)], self.chan_range[c], self.dev_conf.meta_data.max_adc)
+            values = adc2mV(b[(self.dev_conf.capture_run.caps_in_run - 1)], self.chan_range[c], self.dev_conf.meta_data.max_adc)
             current_offset = self.chan_offsets[c]
             current_range = self.util.get_range_value_mv(self.chan_range[c])
             offset_key = ((current_offset/100) * current_range)
