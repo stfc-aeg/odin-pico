@@ -87,11 +87,11 @@ class PicoDevice():
         """
 
         if self.pico_status.open_unit != 0:
-            self.pico_status.flags.system_state = "Waiting for connection"
+            # self.pico_status.flags.system_state = "Waiting for connection"
             self.open_unit()
 
         if self.pico_status.open_unit == 0:
-            self.pico_status.flags.system_state = "Connected to Picoscope"
+            # self.pico_status.flags.system_state = "Connected to Picoscope"
             self.set_channels()
             self.set_trigger()
 
@@ -104,11 +104,11 @@ class PicoDevice():
     def run_tb_setup(self):
 
         if self.pico_status.open_unit != 0:
-            self.pico_status.flags.system_state = "Waiting for connection"
+            # self.pico_status.flags.system_state = "Waiting for connection"
             self.open_unit()
 
         if self.pico_status.open_unit == 0:
-            self.pico_status.flags.system_state = "Connected to Picoscope"
+            # self.pico_status.flags.system_state = "Connected to Picoscope"
             self.set_channels()
             self.set_trigger()
             return True
@@ -131,7 +131,7 @@ class PicoDevice():
             self.dev_conf.meta_data.total_cap_samples = (self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples)
             self.dev_conf.meta_data.max_samples = ctypes.c_int32(self.dev_conf.meta_data.total_cap_samples)
             ps.ps5000aRunBlock(self.dev_conf.mode.handle, self.dev_conf.capture.pre_trig_samples, self.dev_conf.capture.post_trig_samples, self.dev_conf.mode.timebase, None, 0, None, None)
-            self.pico_status.flags.system_state = "Collecting Data"
+            # self.pico_status.flags.system_state = "Collecting Data"
 
             # 7a. To obtain data before rapid block capture has finished, call ps5000aStop and then
             # ps5000aGetNoOfCaptures to find out how many captures were completed
@@ -139,10 +139,10 @@ class PicoDevice():
             while self.pico_status.block_ready.value == self.pico_status.block_check.value:
                 ps.ps5000aIsReady(self.dev_conf.mode.handle, ctypes.byref(self.pico_status.block_ready))
 
-                # if (time.time() - start_time >= 0.25):
-                #     start_time = time.time()
-                #     self.get_cap_count()
-                #     print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
+                if (time.time() - start_time >= 0.25):
+                    # start_time = time.time()
+                    self.get_cap_count()
+                    print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
 
                 #     if (self.prev_seg_caps == self.seg_caps):
                 #         self.pico_status.flags.system_state = "Waiting for trigger"
@@ -182,7 +182,6 @@ class PicoDevice():
             time_interval = sample_interval * self.dev_conf.mode.samp_time
             last_samples = i.timeStampCounter
             self.buffer_manager.trigger_times.append(time_interval)
-            print("TRIGGER TIMES", self.buffer_manager.trigger_times)
       
     def ping_scope(self):
         """

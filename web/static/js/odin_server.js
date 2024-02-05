@@ -421,11 +421,11 @@ function sync_with_adapter(){
             document.getElementById("connection_status").textContent = "False"
         }
 
-        if (response.device.commands.run_user_capture == true){
-            document.getElementById("cap_type_status").textContent = "User"
-        } else {
-            document.getElementById("cap_type_status").textContent = "LiveView"
-        }
+        // if (response.device.commands.run_user_capture == true){
+        //     document.getElementById("cap_type_status").textContent = "User"
+        // } else {
+        //     document.getElementById("cap_type_status").textContent = "LiveView"
+        // }
 
         if (response.device.status.settings_verified == true){
             document.getElementById("settings_status").textContent = "True"

@@ -27,8 +27,9 @@ class PicoController():
 
         self.enable = False
         self.do_time_capture = False
-        self.lv_active = False
+        self.lv_active = True
         self.test_run = False
+        self.caps_collected = 0
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
         self.dev_conf = DeviceConfig()
@@ -125,8 +126,8 @@ class PicoController():
         pico_commands = ParameterTree({
             'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
             'clear_pha': (lambda: self.analysis.clear_pha, partial(self.set_dc_value, self.analysis, "clear_pha")),
-            'do_time_capture': (lambda: self.do_time_capture, partial(self.set_dc_value, self, "do_time_capture")),
-            'live_view_active': (lambda: self.lv, partial(self.set_dc_value, self, "lv_active")),
+            'time_capture': (lambda: self.do_time_capture, partial(self.set_dc_value, self, "do_time_capture")),
+            'live_view_active': (lambda: self.lv_active, partial(self.set_dc_value, self, "lv_active")),
             'test_run': (lambda: self.test_run, partial(self.set_dc_value, self, "test_run"))
         })
 
@@ -223,7 +224,7 @@ class PicoController():
                 return False
         return True
     
-    def set_capture_run_limits(self):
+    def set_capture_run_limits(self, captures):
         """
             Set the value for maximum amount of captures that can fit into the picoscope memory taking 
             into accountcurrent user settings as well as setting the captures_remaning variable
@@ -231,7 +232,7 @@ class PicoController():
 
         capture_samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
         self.dev_conf.capture_run.caps_max = math.floor(self.util.max_samples(self.dev_conf.mode.resolution) / capture_samples)
-        self.dev_conf.capture_run.caps_remaining = self.dev_conf.capture.n_captures
+        self.dev_conf.capture_run.caps_remaining = captures
 
     def set_capture_run_length(self):
         """
@@ -270,28 +271,35 @@ class PicoController():
         """
 
         self.calc_samp_time()
+
         if self.pico_status.flags.verify_all:
             self.check_res()
+
             if self.lv_active == True:
-                #lv_capture()
+                self.pico_status.flags.system_state = "Collecting LV Data"
+                self.user_capture(False)
+
+
             elif self.test_run == True:
-                #test_capture()
+                self.pico_status.flags.system_state = "Testing Capture Frequency"
+                self.tb_capture(False)
+                self.pico_status.flags.system_state = ("Test Complete, ~" + str(math.trunc(self.caps_collected / 10)) + " Captures/Second")
                 self.test_run = False
+
             elif self.pico_status.flags.user_capture == True:
-                #user_capture()
+                self.buffer_manager.pha_counts = [[]] * 4
+                self.pico_status.flags.system_state = "Collecting Requested Captures"
+                self.user_capture(True)
+                self.pico_status.flags.system_state = "Captures Collected, File Written"
                 self.pico_status.flags.user_capture = False
+
             elif self.do_time_capture == True:
-                #self.tb_capture()
+                self.buffer_manager.pha_counts = [[]] * 4
+                self.pico_status.flags.system_state = "Completing Time-Based Capture Collection"
+                self.tb_capture(True)
+                self.pico_status.flags.system_state = ("File Written, Captures Collected: " + str(self.caps_collected))
                 self.do_time_capture = False
 
-            # self.start_capture(self.pico_status.flags.user_capture)
-            if self.do_time_capture == True:
-                # start_time = time.time()
-                # self.start_capture(self.pico_status.flags.user_capture)
-                self.tb_capture()
-                self.do_time_capture = False
-                # end_time = time.time()
-                # print("TIME FOR CAP", end_time - start_time)
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
 
@@ -305,71 +313,67 @@ class PicoController():
                 self.pico.stop_scope()
             self.pico_status.flags.res_changed = False
 
-    def start_capture(self, save_file):
+    def user_capture(self, save_file):
         """
             Run the appropriate steps for a capture, which changes depending on whether it will be 
             saved to a file
         """
 
-        captures = self.dev_conf.capture.n_captures
-        self.set_capture_run_limits()
+        if save_file:
+            captures = self.dev_conf.capture.n_captures
+        else:
+            captures = 10
+        self.set_capture_run_limits(captures)
 
         if self.pico.run_setup():
             while self.dev_conf.capture_run.caps_comp < captures:
-                self.capture_run()
-    
-                self.analysis.PHA_one_peak(save_file)
+                if self.pico_status.flags.abort_cap == False:
+                    self.set_capture_run_length()
+                    self.capture_run()
+                    self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
+                else:
+                    self.dev_conf.capture_run.caps_comp = captures
+                    self.pico_status.flags.abort_cap = False
 
-            if save_file == True:
+            if save_file:
                 self.file_writer.writeHDF5()
 
         self.dev_conf.capture_run.reset()
         
-        if save_file == True:
-            self.pico_status.flags.user_capture = False
-
     def capture_run(self):
-        self.set_capture_run_length()
         self.pico.assign_pico_memory()
         self.pico.run_block()
-        self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
-        self.dev_conf.capture_run.caps_remaining -= self.dev_conf.capture_run.caps_in_run
+        self.dev_conf.capture_run.caps_comp += self.pico.seg_caps
         self.buffer_manager.save_lv_data()
+        self.analysis.PHA_one_peak(False)
 
-
-    def tb_capture(self):
+    def tb_capture(self, save_file):
 
         self.buffer_manager.clear_arrays()
         self.buffer_manager.check_channels()
-        total_time = self.dev_conf.capture.sample_time
+
+        if save_file:
+            total_time = self.dev_conf.capture.sample_time
+        else:
+            total_time = 10
+
         self.dev_conf.capture_run.caps_in_run = (math.trunc(self.dev_conf.capture.caps_in_cycle/(len(self.buffer_manager.active_channels))))
         self.buffer_manager.generate_tb_arrays()
         if self.pico.run_tb_setup():
             start_time = time.time()
             while (time.time() - start_time) < total_time:
                 if (self.pico_status.flags.abort_cap == False):
-                    time_2 = time.time()
-                    self.pico.assign_pico_memory()
-                    time_3 = time.time()
-                    print("ASSIGNING MEMORY", time_3 - time_2)
-                    self.pico.run_block()
-                    time_4 = time.time()
-                    print("RUNNING BLOCK MODE", time_4 - time_3)
-                    # self.dev_conf.capture_run.caps_comp += self.dev_conf.capture_run.caps_in_run
-                    print("SEG CAPS", self.pico.seg_caps)
-                    self.dev_conf.capture_run.caps_comp += self.pico.seg_caps
-                    self.buffer_manager.save_lv_data()
-                    time_5 = time.time()
-                    print("SAVING LV DATA", time_5 - time_4)
-                    self.analysis.PHA_one_peak(False)
-                    time_6 = time.time()
-                    print("DOING PHA", time_6 - time_5)
+                    self.capture_run()
                 else:
                     total_time = 0
                     self.pico_status.flags.abort_cap = False
+            if save_file:
+                self.file_writer.writeHDF5()
         
-        print("CAPS COMPLETED", (self.dev_conf.capture_run.caps_comp * len(self.buffer_manager.active_channels)))
+        # print("CAPS COMPLETED", (self.dev_conf.capture_run.caps_comp * len(self.buffer_manager.active_channels)))
+        self.caps_collected = self.dev_conf.capture_run.caps_comp
         self.dev_conf.capture_run.reset()
+
 
 
 ##### Adapter specific functions below #####
