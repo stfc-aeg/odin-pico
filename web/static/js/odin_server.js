@@ -421,11 +421,15 @@ function sync_with_adapter(){
             document.getElementById("connection_status").textContent = "False"
         }
 
-        // if (response.device.commands.run_user_capture == true){
-        //     document.getElementById("cap_type_status").textContent = "User"
-        // } else {
-        //     document.getElementById("cap_type_status").textContent = "LiveView"
-        // }
+        if (response.device.commands.run_user_capture == true){
+            document.getElementById("cap_type_status").textContent = "User"
+        } else if (response.device.commands.time_capture == true){
+            document.getElementById("cap_type_status").textContent = "Time-Based"
+        } else if (response.device.commands.test_run == true) {
+            document.getElementById("cap_type_status").textContent = "Test Run"
+        } else if (response.device.commands.live_view_active) {
+            document.getElementById("cap_type_status").textContent = "Live View"
+        }
 
         if (response.device.status.settings_verified == true){
             document.getElementById("settings_status").textContent = "True"

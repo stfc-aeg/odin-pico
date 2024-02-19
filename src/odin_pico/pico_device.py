@@ -127,6 +127,7 @@ class PicoDevice():
 
         if True:#self.ping_scope():
             start_time = time.time()
+            t = time.time()
             self.pico_status.block_ready = ctypes.c_int16(0)
             self.dev_conf.meta_data.total_cap_samples = (self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples)
             self.dev_conf.meta_data.max_samples = ctypes.c_int32(self.dev_conf.meta_data.total_cap_samples)
@@ -139,20 +140,15 @@ class PicoDevice():
             while self.pico_status.block_ready.value == self.pico_status.block_check.value:
                 ps.ps5000aIsReady(self.dev_conf.mode.handle, ctypes.byref(self.pico_status.block_ready))
 
-                if (time.time() - start_time >= 0.25):
-                    # start_time = time.time()
+                if (time.time() - t >= 0.25):
+                    t = time.time()
                     self.get_cap_count()
                     print(f'Caps: {self.dev_conf.capture_run.live_cap_comp}')
-
-                #     if (self.prev_seg_caps == self.seg_caps):
-                #         self.pico_status.flags.system_state = "Waiting for trigger"
 
                 if (time.time() - start_time) > 10:
                     self.get_cap_count()
                     if self.seg_caps == 0:
                         self.pico_status.flags.abort_cap = True
-                        self.pico_status.system_state = "Trigger criteria not met"
-
 
                 if (self.pico_status.flags.abort_cap):
                     ps.ps5000aStop(self.dev_conf.mode.handle)

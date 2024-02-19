@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 @dataclass
 class CaptureConfig:
-    time_based: bool = False
     sample_time: int = 10
     caps_in_cycle: int = 100
     pre_trig_samples: int = 0

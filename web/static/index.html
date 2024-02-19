@@ -22,9 +22,11 @@
           <div id="separator"></div>
           <span id="custom-item-label">Status:</span>
           <span id="custom-item1">Connection: <span id="connection_status"></span></span>
-          <!-- <span id="custom-item2">Capture Type: <span id="cap_type_status">True</span></span> -->
+          <span id="custom-item2">Capture Type: <span id="cap_type_status">True</span></span>
           <span id="custom-item3">Settings valid: <span id="settings_status"></span></span>
           <span id="custom-item4">System State: <span id="system-state"></span></span>
+          <label for="abort_cap_butt">Abort current capture: </label>
+          <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
         </div>
       </div>
     </nav>
@@ -344,8 +346,39 @@
                             </div>
                           </div>
                         </div>
+                        <div class="row">
+                        <div class = "col-sm-12">
+                          <div id = "setup-6" class="panel panel-default">
+                            <div class="panel-heading">PHA Settings</div>
+                            <div class="panel-body">
+                              <table class="table table-striped">
+                                <tr id ="capture-row">
+                                  <th>
+                                    <form>
+                                      <label for="pha-num-bins">Number Bins: </label>
+                                      <input id="pha-num-bins" type="text" oninput="commit_int_adapter('pha-num-bins','settings/pha','num_bins')" />
+                                    </form>
+                                  </th>
+                                  <th>
+                                    <form>
+                                      <label for="pha-lower-range">Lower range of ADC_Counts: </label>
+                                      <input id="pha-lower-range" type="text" oninput="commit_int_adapter('pha-lower-range','settings/pha','lower_range')" />
+                                    </form>
+                                  </th>
+                                  <th>
+                                    <form>
+                                      <label for="pha-upper-range">Upper Range of ADC_Counts: </label>
+                                      <input id="pha-upper-range" type="text" oninput="commit_int_adapter('pha-upper-range','settings/pha','upper_range')" />
+                                    </form>
+                                  </th>
+                                </tr>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                                        
+                      </div>
+                      <!-- </div> -->
                       <!-- Graph Rows -->
 
                       <div class="flex-width">
@@ -487,7 +520,7 @@
                             </tr>
                           </table>
                         </div>
-                    </div>
+                      </div>
                     </div>
                     <div class = "col-sm-12">
                       <div id = "setup-6" class="panel panel-default">

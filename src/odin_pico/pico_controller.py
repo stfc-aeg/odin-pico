@@ -78,7 +78,6 @@ class PicoController():
             'pre_trig_samples': (lambda: self.dev_conf.capture.pre_trig_samples, partial(self.set_dc_value, self.dev_conf.capture, "pre_trig_samples")),
             'post_trig_samples': (lambda: self.dev_conf.capture.post_trig_samples, partial(self.set_dc_value, self.dev_conf.capture, "post_trig_samples")),
             'n_captures': (lambda: self.dev_conf.capture.n_captures, partial(self.set_dc_value, self.dev_conf.capture, "n_captures")),
-            'time_based': (lambda: self.dev_conf.capture.time_based, partial(self.set_dc_value, self.dev_conf.capture, 'time_based')),
             'sample_time': (lambda: self.dev_conf.capture.sample_time, partial(self.set_dc_value, self.dev_conf.capture, 'sample_time')),
             'caps_in_cycle': (lambda: self.dev_conf.capture.caps_in_cycle, partial(self.set_dc_value, self.dev_conf.capture, 'caps_in_cycle'))
         })
@@ -343,7 +342,7 @@ class PicoController():
     def capture_run(self):
         self.pico.assign_pico_memory()
         self.pico.run_block()
-        self.dev_conf.capture_run.caps_comp += self.pico.seg_caps
+        self.dev_conf.capture_run.caps_comp += (self.pico.seg_caps * len(self.buffer_manager.active_channels))
         self.buffer_manager.save_lv_data()
         self.analysis.PHA_one_peak(False)
 
@@ -367,8 +366,8 @@ class PicoController():
                 else:
                     total_time = 0
                     self.pico_status.flags.abort_cap = False
-            if save_file:
-                self.file_writer.writeHDF5()
+            # if save_file:
+            #     self.file_writer.writeHDF5()
         
         # print("CAPS COMPLETED", (self.dev_conf.capture_run.caps_comp * len(self.buffer_manager.active_channels)))
         self.caps_collected = self.dev_conf.capture_run.caps_comp
