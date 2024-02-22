@@ -170,6 +170,8 @@ class PicoController():
         if (attr_name == "caps_in_cycle"):
             if value > 2560:
                 value = 2560
+        if (attr_name == "test_run"):
+            setattr(obj, "test_run", False)
 
         setattr(obj, attr_name, value)
     

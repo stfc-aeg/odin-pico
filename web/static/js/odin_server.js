@@ -557,3 +557,17 @@ function ajax_put(path,key,value){
         data: JSON.stringify(data),
     });
 }
+
+function openTab(tabID) {
+    var tabs = document.getElementsByClassName("tab-content")
+    console.log("GETTING HERE")
+    if (tabID == "one") {
+      console.log("ONE")
+      tabs[1].style.display = "block"
+      tabs[2].style.display = "none"
+    } else if (tabID == "two") {
+      console.log("TWO")
+      tabs[1].style.display = "none"
+      tabs[2].style.display = "block"
+    }
+}
