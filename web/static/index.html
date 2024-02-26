@@ -33,16 +33,6 @@
       <div class ="page-wrapper">
         <div class="content-container">
           <div class="panel panel-default">
-            <!-- <div class="panel-heading panel-heading-nav">
-              <ul class="nav nav-tabs">
-                <li role="presentation" class="active">
-                  <a href="#one" aria-controls="one" role="tab" data-toggle="tab">Block Capture Setup</a>
-                </li>
-                <li role="presentation">
-                  <a href="#two" aria-controls="two" role="tab" data-toggle="tab">PHA & File Settings</a>
-                </li>
-              </ul>
-            </div> -->
             <div class="panel-body" id="main-body">
               <div class="tab-content">
                   <div class="container-fluid">
@@ -58,40 +48,44 @@
                               <a href="#" role="tab" data-toggle="tab">Capture</a>
                             </li>
                           </ul>
+                          <div class="col-sm-12">
+                            <span>&nbsp;</span>
+                          </div>
                         </div>
                         <div role="tabpanel" class="tab-content" id="one">
                           <div class="row">
                             <div class="col-sm-12" id="pico-6-div">
                               <div id = "setup-2" class="panel panel-default">
-                                <div class="panel-heading">Picoscope Setup</div>
+                                <div class="panel-heading">General Setup</div>
                                 <div class="panel-body">
                                   <table class="table table-striped">
-                                    <thead>
-                                      <tr>
-                                        <th>Resolution</th>
-                                        <th>Timebase</th>
-                                        <th>Channels</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr class ="default" id= "pico-setup-row">
-                                        <th>
-                                          <form>
-                                            <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
-                                              <option value="" selected disable hidden> </option>
-                                              <option value = "0">8 Bit Mode</option>
-                                              <option value = "1">12 Bit Mode</option>
-                                            </select>
-                                          </form>
-                                        </th>
-                                        <th>
-                                          <form>
-                                            <input id="time-base-input" type="text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
-                                          </form>
-                                          <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
-                                        </th>
-                                      </tr>
-                                    </tbody>
+                                    <tr class ="default" id= "pico-setup-row">
+                                      <th>
+                                        <form>
+                                          <label for="bit-mode-dropdown">Resolution</label>
+                                          <select id = "bit-mode-dropdown" onchange="commit_int_adapter('bit-mode-dropdown','settings/mode/','resolution')">
+                                            <option value="" selected disable hidden> </option>
+                                            <option value = "0">8 Bit Mode</option>
+                                            <option value = "1">12 Bit Mode</option>
+                                          </select>
+                                        </form>
+                                      </th>
+                                      <th>
+                                        <form>
+                                          <label for="time-base-input">Timebase:</label>
+                                          <input id="time-base-input" type="text" class="test_text" oninput="commit_int_adapter('time-base-input','settings/mode/','timebase')"/>
+                                        </form>
+                                        <span>Sample Interval : </span><span id="samp-int"></span><span>s</span>
+                                      </th>
+                                      <th>
+                                        <label for="capture-pretrig-samples">Pre-Trigger Samples:</label>
+                                        <input id="capture-pretrig-samples" type="text" class="test_text" oninput="commit_int_adapter('capture-pretrig-samples','settings/capture/','pre_trig_samples')" />
+                                      </th>
+                                      <th>
+                                        <label for="capture-posttrig-samples">Post-Trigger Samples:</label>
+                                        <input id="capture-posttrig-samples" type="text" class="test_text" oninput="commit_int_adapter('capture-posttrig-samples','settings/capture/','post_trig_samples')" />                                     
+                                      </th>
+                                    </tr>
                                   </table>
                                 </div>
                               </div>
@@ -269,14 +263,16 @@
                                 <div class="panel-body">
                                   <table class="table table-striped custom-responsive-table">
                                     <tr id="trigger-row1">
-                                      <th>Enable:&nbsp;               
+                                      <th>
+                                        <label for="trigger-enable">Enable:</label>
                                         <select id = "trigger-enable" onchange="commit_to_adapter('trigger-enable','settings/trigger/','active')"   >
                                           <option value="" selected disabled hidden> </option>
                                           <option value = "true" >True</option>
                                           <option value = "false" >False</option>
                                         </select>
                                       </th>
-                                      <th>Source:&nbsp;
+                                      <th>
+                                        <label for="trigger-source">Source:</label>
                                         <select id = "trigger-source" onchange="commit_int_adapter('trigger-source','settings/trigger/','source')"   >
                                           <option value="" selected disabled hidden> </option>
                                           <option value = "0" >Channel A</option> 
@@ -285,7 +281,8 @@
                                           <option value = "3" >Channel D</option>
                                         </select>
                                       </th>
-                                      <th>Signal Direction:&nbsp;
+                                      <th>
+                                        <label for="trigger-direction">Signal Direction:</label>
                                         <select id = "trigger-direction" onchange="commit_int_adapter('trigger-direction','settings/trigger/','direction')"  >
                                           <option value="" selected disabled hidden> </option>
                                           <option value = "0">Above</option> 
@@ -318,37 +315,6 @@
                                     </tr>
                                   </table>
                                 </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="row">
-                            <div class="col-sm-12">
-                              <div id = "setup-5" class="panel panel-default">
-                                <div class="panel-heading">Capture Setup</div>
-                                <div class="panel-body">
-                                  <table class="table table-striped">
-                                    <tr id ="capture-row">
-                                      <th>
-                                        <form>
-                                          <label for="capture-pretrig-samples">Pre-Trigger Samples:</label>
-                                          <input id="capture-pretrig-samples" type="text" oninput="commit_int_adapter('capture-pretrig-samples','settings/capture/','pre_trig_samples')" />
-                                        </form>
-                                      </th>
-                                      <th>
-                                        <form>
-                                          <label for="capture-posttrig-samples">Post-Trigger Samples:</label>
-                                          <input id="capture-posttrig-samples" type="text" oninput="commit_int_adapter('capture-posttrig-samples','settings/capture/','post_trig_samples')" />
-                                        </form>
-                                      </th>
-                                      <th>
-                                        <form>
-                                          <label for="capture-count">Number of captures:</label>
-                                          <input id="capture-count" type="text" oninput="commit_int_adapter('capture-count','settings/capture/','n_captures')" />
-                                        </form>
-                                      </th>
-                                    </tr>
-                                  </table>                           
-                                </div>  
                               </div>
                             </div>
                           </div>
@@ -387,6 +353,30 @@
                         <div class="row">
                           <div role="tabpanel" class="tab-content" id="two" style="display:none;">
                             <div class = "col-sm-12">
+                              <div id = "setup-5" class="panel panel-default">
+                                <div class="panel-heading">Capture Settings</div>
+                                <div class="panel-body">
+                                  <table class="table table-striped">
+                                    <tr id ="capture-row">
+                                      <th>
+                                        <label for="capture-count">Number of Captures:</label>
+                                        <input id="capture-count" type="text" oninput="commit_int_adapter('capture-count','settings/capture/','n_captures')" />
+                                      </th>
+                                      <th>
+                                        <label for="slider"><span id="cap-label"></span></label>
+                                        <label id="slider" class="switch">
+                                          <input id="capture-mode" type="checkbox" oninput="commit_checked_adapter('capture-mode','settings/capture/','capture_mode')">
+                                          <span class="slider round"></span>
+                                        </label>
+                                      </th>
+                                      <th class="text-th">
+                                        <label for="capture-time">Capture Time (Seconds):</label>
+                                        <input id="capture-time" type="text" oninput="commit_int_adapter('capture-time','settings/capture/','capture_time')" />
+                                      </th>
+                                    </tr>
+                                  </table>                           
+                                </div>  
+                              </div>
                               <div id = "setup-4" class="panel panel-default">
                                 <div class="panel-heading">File Settings</div>
                                 <div class="panel-body">
@@ -394,7 +384,7 @@
                                     <tr id ="capture-row">
                                       <th>
                                         <form>
-                                          <label for="capture-folder-name">Folder name: </label>
+                                          <label for="capture-folder-name">Folder Name: </label>
                                           <input id="capture-folder-name" type="text" oninput="commit_str_adapter('capture-folder-name','settings/file','folder_name')" />
                                         </form>
                                       </th>
@@ -405,16 +395,16 @@
                                         </form>
                                       </th>
                                       <th>
-                                        <label for="save_cap_butt">Capture: </label>
+                                        <label for="save_cap_butt">Start Capture: </label>
                                         <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Capture</button>
                                       </th>
                                     </tr>
                                     <tr>
                                       <tr>
-                                        <th><span>File : </span><span id="file-name-span"></span></th>
-                                        <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
+                                        <th><span>File: </span><span id="file-name-span"></span></th>
+                                        <th><span>Recorded: </span><span id="file-write-succ-span">False</span></th>
                                         <th>
-                                          <label for="abort_cap_butt">Abort Capture: </label>
+                                          <label for="abort_cap_butt">Abort: </label>
                                           <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
                                         </th>
                                       </tr>
@@ -481,7 +471,6 @@
                                     <option value = "10">20 V</option>
                                   </select>
                                 </div>
-                                <div class="col-sm-5"></div>
                                 <td class="toggle-container-lv">
                                   <button id="p_p_button_lv" class="icon-button" onclick="toggle_play_lv()">
                                     <span class="material-icons">pause_circle_outline</span>

@@ -43,12 +43,16 @@ var focusFlags = {
   "pha-lower-range": false,
   "pha-upper-range": false,
   "lv_range": false,
+  "capture-time": false,
+  "capture-mode": false
 };
 // Initialize a timers object to keep track of the timers for each field
 var timers = {};
 
 // Time limit (in milliseconds) after which to blur the input
 var timeLimit = 10000; // 5 seconds
+
+document.getElementById("cap-label").textContent = "Time Capture"
 
 var pha_array = []
 var lv_data = []
@@ -199,7 +203,7 @@ function update_lv_graph() {
         }
 
         layout = {
-            title: 'Live view of PicoScope traces',
+            title: 'Live View of PicoScope Traces',
             margin: { t: 50, b: 60 },
             xaxis: {
                 title: 'Sample Interval',
@@ -286,12 +290,22 @@ function sync_with_adapter(){
 
         var settings_3 = [settings_2[0].source, settings_2[0].direction, settings_2[0].threshold, settings_2[0].delay,
                         settings_2[0].auto_trigger, settings_2[1].pre_trig_samples, settings_2[1].post_trig_samples,
-                        settings_2[1].n_captures, settings_2[2].folder_name, settings_2[2].file_name, settings_2[3].num_bins,
-                        settings_2[3].lower_range, settings_2[3].upper_range]
+                        settings_2[1].n_captures, settings_2[1].capture_time, settings_2[2].folder_name,
+                        settings_2[2].file_name, settings_2[3].num_bins, settings_2[3].lower_range, settings_2[3].upper_range]
 
         var focus_strings = ["trigger-source", "trigger-direction", "trigger-threshold", "trigger-delay","trigger-auto",
-                        "capture-pretrig-samples", "capture-posttrig-samples", "capture-count", "capture-folder-name",
-                        "capture-file-name", "pha-num-bins", "pha-lower-range", "pha-upper-range"]
+                        "capture-pretrig-samples", "capture-posttrig-samples", "capture-count", "capture-time",
+                        "capture-folder-name", "capture-file-name", "pha-num-bins", "pha-lower-range", "pha-upper-range"]
+
+        if (!focusFlags["capture-mode"]) {document.getElementById("capture-mode").checked=(response.device.settings.capture.capture_mode)}
+
+        if (response.device.settings.capture.capture_mode == true) {
+            document.getElementById("capture-count").disabled = true
+            document.getElementById("capture-time").disabled = false
+        } else {
+            document.getElementById("capture-count").disabled = false
+            document.getElementById("capture-time").disabled = true
+        }
 
         for (var setting = 0; setting < focus_strings.length; setting++) {
             if (!focusFlags[focus_strings[setting]]) {$("#" + focus_strings[setting]).val(settings_3[setting])}
@@ -490,6 +504,10 @@ function commit_float_adapter(id,path,key){
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
     ajax_put(path,key,checked)
+
+    if (key == "capture_mode") {
+        activate_textbox(checked)
+    }
 }
 
 function activate_buttons(channel, checked) {
@@ -499,6 +517,16 @@ function activate_buttons(channel, checked) {
 
 function activate_pha_buttons(channel, checked) {
     document.getElementById("channel-"+channel+"-pha").disabled = !checked
+}
+
+function activate_textbox(checked) {
+    if (checked == false) {
+        document.getElementById("cap-label").textContent = "No. Captures"
+    } else {
+        document.getElementById("cap-label").textContent = "Time Capture"
+    }
+
+
 }
 
 function verify_int(id){
@@ -560,13 +588,10 @@ function ajax_put(path,key,value){
 
 function openTab(tabID) {
     var tabs = document.getElementsByClassName("tab-content")
-    console.log("GETTING HERE")
     if (tabID == "one") {
-      console.log("ONE")
       tabs[1].style.display = "block"
       tabs[2].style.display = "none"
     } else if (tabID == "two") {
-      console.log("TWO")
       tabs[1].style.display = "none"
       tabs[2].style.display = "block"
     }

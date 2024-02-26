@@ -26,7 +26,6 @@ class PicoController():
         self.lv_captures = 1
 
         self.enable = False
-        self.do_time_capture = False
         self.lv_active = True
         self.test_run = False
         self.caps_collected = 0
@@ -78,8 +77,9 @@ class PicoController():
             'pre_trig_samples': (lambda: self.dev_conf.capture.pre_trig_samples, partial(self.set_dc_value, self.dev_conf.capture, "pre_trig_samples")),
             'post_trig_samples': (lambda: self.dev_conf.capture.post_trig_samples, partial(self.set_dc_value, self.dev_conf.capture, "post_trig_samples")),
             'n_captures': (lambda: self.dev_conf.capture.n_captures, partial(self.set_dc_value, self.dev_conf.capture, "n_captures")),
-            'sample_time': (lambda: self.dev_conf.capture.sample_time, partial(self.set_dc_value, self.dev_conf.capture, 'sample_time')),
-            'caps_in_cycle': (lambda: self.dev_conf.capture.caps_in_cycle, partial(self.set_dc_value, self.dev_conf.capture, 'caps_in_cycle'))
+            'capture_time': (lambda: self.dev_conf.capture.capture_time, partial(self.set_dc_value, self.dev_conf.capture, 'capture_time')),
+            'caps_in_cycle': (lambda: self.dev_conf.capture.caps_in_cycle, partial(self.set_dc_value, self.dev_conf.capture, 'caps_in_cycle')),
+            'capture_mode': (lambda:self.dev_conf.capture.capture_type, partial(self.set_dc_value, self.dev_conf.capture, "capture_type"))
         })
 
         pico_mode = ParameterTree({
@@ -125,7 +125,6 @@ class PicoController():
         pico_commands = ParameterTree({
             'run_user_capture': (lambda: self.pico_status.flags.user_capture, partial(self.set_dc_value, self.pico_status.flags, "user_capture")),
             'clear_pha': (lambda: self.analysis.clear_pha, partial(self.set_dc_value, self.analysis, "clear_pha")),
-            'time_capture': (lambda: self.do_time_capture, partial(self.set_dc_value, self, "do_time_capture")),
             'live_view_active': (lambda: self.lv_active, partial(self.set_dc_value, self, "lv_active")),
             'test_run': (lambda: self.test_run, partial(self.set_dc_value, self, "test_run"))
         })
@@ -289,17 +288,17 @@ class PicoController():
 
             elif self.pico_status.flags.user_capture == True:
                 self.buffer_manager.pha_counts = [[]] * 4
-                self.pico_status.flags.system_state = "Collecting Requested Captures"
-                self.user_capture(True)
-                self.pico_status.flags.system_state = "Captures Collected, File Written"
-                self.pico_status.flags.user_capture = False
 
-            elif self.do_time_capture == True:
-                self.buffer_manager.pha_counts = [[]] * 4
-                self.pico_status.flags.system_state = "Completing Time-Based Capture Collection"
-                self.tb_capture(True)
-                self.pico_status.flags.system_state = ("File Written, Captures Collected: " + str(self.caps_collected))
-                self.do_time_capture = False
+                if self.dev_conf.capture.capture_type == False:
+                    self.pico_status.flags.system_state = "Collecting Requested Captures"
+                    self.user_capture(True)
+                    self.pico_status.flags.system_state = "Captures Collected, File Written"
+                else:
+                    self.pico_status.flags.system_state = "Completing Time-Based Capture Collection"
+                    self.tb_capture(True)
+                    self.pico_status.flags.system_state = ("File Written, Captures Collected: " + str(self.caps_collected))
+
+                self.pico_status.flags.user_capture = False
 
         if ((self.pico_status.open_unit == 0) and (self.pico_status.flags.verify_all is False)):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"       
@@ -354,7 +353,7 @@ class PicoController():
         self.buffer_manager.check_channels()
 
         if save_file:
-            total_time = self.dev_conf.capture.sample_time
+            total_time = self.dev_conf.capture.capture_time
         else:
             total_time = 10
 
