@@ -1,7 +1,8 @@
-from dataclasses import dataclass, field
 import ctypes
+from dataclasses import dataclass, field
 
 from odin_pico.DataClasses.device_flags import DeviceFlags
+
 
 @dataclass
 class DeviceStatus:

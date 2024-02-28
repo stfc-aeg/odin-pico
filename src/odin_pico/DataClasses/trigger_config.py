@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
+
 from odin_pico.pico_util import PicoUtil
+
 
 @dataclass
 class TriggerConfig:
@@ -24,7 +26,7 @@ class TriggerConfig:
     @property
     def direction(self) -> int:
         return self._direction
-    
+
     @direction.setter
     def direction(self, value: int):
         if value in self.util.ps_direction:

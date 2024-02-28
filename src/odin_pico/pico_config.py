@@ -1,6 +1,7 @@
 from odin_pico.pico_util import PicoUtil
 
-class DeviceConfig():
+
+class DeviceConfig:
     def __init__(self, path):
         self.util = PicoUtil()
 
@@ -12,9 +13,9 @@ class DeviceConfig():
         self.channels = {}
         i = 0
         for name in self.util.channel_names:
-            self.channels[name] = self.util.set_channel_defaults(name,i)
+            self.channels[name] = self.util.set_channel_defaults(name, i)
             i += 1
-        
+
         self.meta_data = self.util.set_meta_data_defaults()
         self.file = self.util.set_file_defaults(path)
         self.pha = self.util.set_pha_defaults()

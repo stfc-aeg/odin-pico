@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class PHAConfig:
     num_bins: int = 1024

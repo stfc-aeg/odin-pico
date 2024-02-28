@@ -1,5 +1,6 @@
 from dataclasses import dataclass, fields
 
+
 @dataclass
 class CaptureRunConfig:
     caps_comp: int = 0

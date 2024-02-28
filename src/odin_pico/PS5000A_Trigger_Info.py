@@ -1,4 +1,6 @@
 import ctypes
+
+
 class Trigger_Info(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
