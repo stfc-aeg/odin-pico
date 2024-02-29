@@ -1,3 +1,5 @@
+"""Store settings for the PicoScope metadata."""
+
 import ctypes
 from dataclasses import dataclass
 

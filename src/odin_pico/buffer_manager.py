@@ -1,15 +1,18 @@
+"""Buffer manager which prepares and accepts buffers for the PicoScope."""
+
 import ctypes
 import math
-
 import numpy as np
 from picosdk.functions import adc2mV
-
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.pico_util import PicoUtil
 
 
 class BufferManager:
+    """Class which manages the buffers that are filled with data by the PicoScope."""
+
     def __init__(self, dev_conf=DeviceConfig()):
+        """Initialise the BufferManager Class."""
         self.dev_conf = dev_conf
         self.util = PicoUtil()
         self.overflow = None
@@ -40,9 +43,7 @@ class BufferManager:
         self.lv_range = 0
 
     def generate_arrays(self):
-        """Creates the local buffers that the picoscope will eventually be mapped
-        onto for data collection.
-        """
+        """Create the buffers that the picoscope will be mapped onto for data collection."""
         self.clear_arrays()
 
         for chan in self.channels:
@@ -73,6 +74,7 @@ class BufferManager:
                 )
 
     def generate_tb_arrays(self):
+        """Create the buffers that the PicoScope uses during time-based data collection."""
         n_captures = self.dev_conf.capture_run.caps_in_run
 
         self.overflow = (ctypes.c_int16 * n_captures)()
@@ -89,8 +91,7 @@ class BufferManager:
                 )
 
     def accumulate_pha(self, chan, pha_data):
-        """Add the new PHA data to the previous data, if there is any data.
-        """
+        """Add the new PHA data to the previous data, if there is any data."""
         current_pha_data = (self.pha_arrays[pha_data]).tolist()
 
         self.bin_edges = current_pha_data[0]
@@ -107,6 +108,7 @@ class BufferManager:
             self.pha_counts[chan] = pha_counts
 
     def check_channels(self):
+        """Check which channels are active, LV active and PHA active."""
         for chan in self.channels:
             if chan.active is True:
                 self.active_channels.append(chan.channel_id)
@@ -117,8 +119,7 @@ class BufferManager:
                     self.pha_active_channels.append(chan.channel_id)
 
     def save_lv_data(self):
-        """Return a live view of traces being captured.
-        """
+        """Return a live view of traces being captured."""
         # Find ranges and offsets for all channels
         for channel in range(4):
             self.chan_range[channel] = self.channels[channel].range
@@ -149,8 +150,7 @@ class BufferManager:
             self.lv_channel_arrays = current_lv_array
 
     def clear_arrays(self):
-        """Removes previously created buffers from the buffer_manager.
-        """
+        """Remove previously created buffers from the buffer_manager."""
         arrays = [
             self.active_channels,
             self.trigger_times,

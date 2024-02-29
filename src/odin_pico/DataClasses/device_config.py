@@ -33,7 +33,7 @@ class DeviceConfig:
             setattr(self, f"channel_{name}", channel)
             self.channel_names.append(name)
 
-    ## Config saving is not fully implemented and so these funcitons will be passed if called
+    ## Config saving is not fully implemented and so these functions will be passed if called
     def pre_save_adjustment(self):
         return
         """
@@ -51,7 +51,6 @@ class DeviceConfig:
             self.meta_data.samples_per_seg.value
         )
 
-        # Remove the PicoUtil instance from each ChannelConfig dict, as this doesnt not need to be saved
         for name in ["A", "B", "C", "D"]:
             if f"channel_{name}" in conf_d:
                 del conf_d[f"channel_{name}"]["util"]

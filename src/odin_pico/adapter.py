@@ -1,7 +1,6 @@
-"""Top level Adapter for Odin Control to interface with a picoscope 5444D"""
+"""Adapter for a PicoScope 5444D."""
 
 import threading
-
 from odin.adapters.adapter import (
     ApiAdapter,
     ApiAdapterResponse,
@@ -10,12 +9,13 @@ from odin.adapters.adapter import (
 )
 from odin.adapters.parameter_tree import ParameterTreeError
 from tornado.escape import json_decode
-
 from odin_pico.pico_controller import PicoController, PicoControllerError
 
-
 class PicoAdapter(ApiAdapter):
+    """Top level Adapter for Odin Control to interface with a PicoScope 5444D."""
+
     def __init__(self, **kwargs):
+        """Initialise the PicoAdapter Object."""
         super(PicoAdapter, self).__init__(**kwargs)
 
         self.lock = threading.Lock()
@@ -26,6 +26,7 @@ class PicoAdapter(ApiAdapter):
 
     @response_types("application/json", default="application/json")
     def get(self, path, request):
+        """Handle a HTTP GET request."""
         try:
             response = self.pico_controller.get(path)
             status_code = 200
@@ -42,11 +43,11 @@ class PicoAdapter(ApiAdapter):
     @request_types("application/json")
     @response_types("application/json", default="application/json")
     def put(self, path, request):
+        """Handle a HTTP PUT request."""
         content_type = "application/json"
 
         try:
             data = json_decode(request.body)
-            #            logging.debug(data)
             self.pico_controller.set(path, data)
             response = self.pico_controller.get(path)
             status_code = 200
@@ -64,6 +65,7 @@ class PicoAdapter(ApiAdapter):
         )
 
     def delete(self, path, request):
+        """Handle a HTTP DELETE request."""
         response = f"PicoAdapter: DELETE on path {path}"
         status_code = 200
 

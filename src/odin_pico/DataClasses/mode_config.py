@@ -1,3 +1,5 @@
+"""Store generic settings for the PicoScope set-up."""
+
 import ctypes
 from dataclasses import dataclass, field
 

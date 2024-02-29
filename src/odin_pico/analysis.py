@@ -1,3 +1,5 @@
+"""File which analyses the data extracted from the PicoScope."""
+
 import numpy as np
 
 from odin_pico.buffer_manager import BufferManager
@@ -18,27 +20,30 @@ class PicoAnalysis:
         buffer_manager=BufferManager(),
         pico_status=DeviceStatus(),
     ):
+        """Initialise PicoAnalysis class."""
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
         self.pico_status = pico_status
         self.bin_width = 250
         self.clear_pha = False
 
-    def PHA_one_peak(self, file_save):
-        """Analysis function that generates a distribution of peak heights in multiple
+    def pha_one_peak(self, file_save):
+        """Analysis function.
+
+        Generates a distribution of peak heights in multiple
         traces and saves the information into a np.array in a dataset inside the file
-        containing the raw adc_counts dataset
+        containing the raw adc_counts dataset.
         """
         self.buffer_manager.current_pha_channels.clear()
         self.buffer_manager.pha_arrays.clear()
 
         self.np_array = 0
 
-        if self.clear_pha == True:
+        if self.clear_pha:
             self.buffer_manager.pha_counts = [[]] * 4
             self.clear_pha = False
 
-        if file_save == True:
+        if file_save:
             for chan in self.buffer_manager.active_channels:
                 self.get_pha_data(chan)
         else:
@@ -48,6 +53,7 @@ class PicoAnalysis:
                 self.np_array += 1
 
     def get_pha_data(self, channel):
+        """Find the peaks in the data and send to the buffer manager."""
         peak_values = []
 
         # Iterate through the channel array to expose each capture

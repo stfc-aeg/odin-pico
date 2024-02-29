@@ -1,3 +1,5 @@
+"""Store settings for the file to write PicoScope data onto."""
+
 from dataclasses import dataclass
 
 

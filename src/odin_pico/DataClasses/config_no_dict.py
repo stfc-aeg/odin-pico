@@ -85,7 +85,6 @@ def main():
     device.channel_B.range = 5
     # print(device.channel_A)
     print("dataclasses no_dict config")
-    # print(f"Device config has {device.num_channels} channels with names: {', '.join(device.channel_names)}")
     # print(device.channel_A.channel_id)
     print()
     print(

@@ -44,7 +44,8 @@ var focusFlags = {
   "pha-upper-range": false,
   "lv_range": false,
   "capture-time": false,
-  "capture-mode": false
+  "capture-mode-num": true,
+  "capture-mode-time": false
 };
 // Initialize a timers object to keep track of the timers for each field
 var timers = {};
@@ -52,7 +53,7 @@ var timers = {};
 // Time limit (in milliseconds) after which to blur the input
 var timeLimit = 10000; // 5 seconds
 
-document.getElementById("cap-label").textContent = "Time Capture"
+// document.getElementById("cap-label").textContent = "Time Capture"
 
 var pha_array = []
 var lv_data = []
@@ -73,6 +74,32 @@ function update_api_version() {
         $('#api-version').html(response.api);
         api_version = response.api;
     });
+}
+
+var pre_trig = document.getElementById("capture-pretrig-samples")
+var post_trig = document.getElementById("capture-posttrig-samples")
+var a_offset = document.getElementById("channel-a-offset")
+var b_offset = document.getElementById("channel-b-offset")
+var c_offset = document.getElementById("channel-c-offset")
+var d_offset = document.getElementById("channel-d-offset")
+var trig_delay = document.getElementById("trigger-delay")
+var trig_auto = document.getElementById("trigger-auto")
+var bin_nums = document.getElementById("pha-num-bins")
+var pha_lower = document.getElementById("pha-lower-range")
+var pha_upper = document.getElementById("pha-upper-range")
+var time_textbox = document.getElementById("capture-time")
+var caps_textbox = document.getElementById("capture-count")
+textboxes = [pre_trig, post_trig, a_offset, b_offset, c_offset, d_offset, time_textbox, caps_textbox, trig_delay, trig_auto, bin_nums, pha_lower, pha_upper]
+
+for (let i = 0; i < textboxes.length; i++) {
+    textboxes[i].addEventListener("input", function() {
+        var value = parseFloat(textboxes[i].value)
+        if (value < 0) {
+            textboxes[i].value = (0 - value)
+        } else if (value < 1) {
+            textboxes[i].value = 1
+        }
+    })
 }
 
 // Resize plotly graphs after window changes size
@@ -207,7 +234,7 @@ function update_lv_graph() {
             margin: { t: 50, b: 60 },
             xaxis: {
                 title: 'Sample Interval',
-                range: [pre_samples, post_samples],
+                range: [0, pre_samples + post_samples],
             },
             yaxis: {
                 title: ('Channel  Voltage (mV)'),
@@ -279,6 +306,9 @@ function sync_with_adapter(){
             activate_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
         }
 
+        document.getElementById("capture-mode-time").checked = response.device.settings.capture.capture_mode
+        document.getElementById("capture-mode-num").checked = !(response.device.settings.capture.capture_mode)
+
         if (!focusFlags["trigger-enable"]) {
             if (response.device.settings.trigger.active == true) {$("#trigger-enable").val("true")}
             if (response.device.settings.trigger.active == false) {$("#trigger-enable").val("false")}
@@ -296,8 +326,6 @@ function sync_with_adapter(){
         var focus_strings = ["trigger-source", "trigger-direction", "trigger-threshold", "trigger-delay","trigger-auto",
                         "capture-pretrig-samples", "capture-posttrig-samples", "capture-count", "capture-time",
                         "capture-folder-name", "capture-file-name", "pha-num-bins", "pha-lower-range", "pha-upper-range"]
-
-        if (!focusFlags["capture-mode"]) {document.getElementById("capture-mode").checked=(response.device.settings.capture.capture_mode)}
 
         if (response.device.settings.capture.capture_mode == true) {
             document.getElementById("capture-count").disabled = true
@@ -361,9 +389,13 @@ function sync_with_adapter(){
         } catch (err){
             console.log("Error in assigning PHA values, error: ",err.message)
         }
-        
+
         if (response.device.commands.run_user_capture == true){
-            let cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
+            if (response.device.settings.capture.capture_mode == true) {
+                var cap_percent = ((response.device.live_view.current_tbdc_time / response.device.settings.capture.capture_time) * 100).toFixed(2)
+            } else {
+                var cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
+            }
             let progressBar = document.getElementById('capture-progress-bar');
             progressBar.style.width = cap_percent + '%';
             progressBar.innerHTML = cap_percent + '%';
@@ -375,6 +407,7 @@ function sync_with_adapter(){
 
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
         document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
+
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"
         } else {
@@ -382,33 +415,33 @@ function sync_with_adapter(){
         }
 
         if (response.device.status.pico_setup_verify == 0){
-            document.getElementById("pico-setup-row").className="success"
+            document.getElementById("general-setup-row").className="success"
         }else{
-            document.getElementById("pico-setup-row").className="danger"
+            document.getElementById("general-setup-row").className="danger"
         }
 
         // Syncing channel setup panels
-        if (response.device.settings.channels.a.verified == true){
+        if ((response.device.settings.channels.a.verified == true) && (response.device.settings.channels.a.active == true)) {
             document.getElementById("channel-a-set").className ="success"
-            } else{
-                document.getElementById("channel-a-set").className ="danger"
-            }
+        } else{
+            document.getElementById("channel-a-set").className ="danger"
+        }
         
 
-        if (response.device.settings.channels.b.verified == true){
+        if ((response.device.settings.channels.b.verified == true) && (response.device.settings.channels.b.active == true)) {
             document.getElementById("channel-b-set").className ="success"
-            } else{
-                document.getElementById("channel-b-set").className ="danger";
-            }
+        } else{
+            document.getElementById("channel-b-set").className ="danger";
+        }
             
-        if (response.device.settings.channels.c.verified == true){
+        if ((response.device.settings.channels.c.verified == true) && (response.device.settings.channels.c.active == true)) {
             document.getElementById("channel-c-set").className ="success";
-            } else{
-                document.getElementById("channel-c-set").className ="danger";
-            }
+        } else{
+            document.getElementById("channel-c-set").className ="danger";
+        }
 
-        if (response.device.settings.channels.d.verified == true){
-        document.getElementById("channel-d-set").className ="success";
+        if ((response.device.settings.channels.d.verified == true) && (response.device.settings.channels.d.active == true)) {
+            document.getElementById("channel-d-set").className ="success";
         } else{
             document.getElementById("channel-d-set").className ="danger";
         }
@@ -423,10 +456,21 @@ function sync_with_adapter(){
         }
 
         if (response.device.status.capture_settings_verify == 0){
-        document.getElementById("capture-row").className ="success";
+            document.getElementById("pha-row").className ="success";
+            document.getElementById("capture-row").className = "success"
+            document.getElementById("file-row").className = "success"
+            document.getElementById("file-info-row").className = "success"
+            if (response.device.commands.run_user_capture == true) {
+                document.getElementById("cap-progress").className = "success"
+            } else {
+                document.getElementById("cap-progress").className = "danger"
+            }
         } else {
-            document.getElementById("capture-row").className ="danger";
-
+            document.getElementById("cap-progress").className = "danger"
+            document.getElementById("pha-row").className ="danger";
+            document.getElementById("capture-row").className = "danger"
+            document.getElementById("file-row").className = "danger"
+            document.getElementById("file-info-row").className = "danger"
         }
 
         if (response.device.status.open_unit == 0){
@@ -595,4 +639,8 @@ function openTab(tabID) {
       tabs[1].style.display = "none"
       tabs[2].style.display = "block"
     }
+}
+
+function change_mode(time_based) {
+    ajax_put('settings/capture','capture_mode',time_based)
 }

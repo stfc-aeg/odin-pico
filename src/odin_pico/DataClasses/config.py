@@ -43,8 +43,6 @@ class DeviceConfig:
 def main():
     device = DeviceConfig()
 
-    # print(f"Device config has {device.num_channels} channels with names: {', '.join(device.channel_names)}")
-
     # for channel in device.channel_names:
     # print(device.channel_config[channel])
 

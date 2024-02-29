@@ -1,15 +1,18 @@
+"""File with several useful methods for the use of the scope."""
+
 import math
 
 from picosdk.ps5000a import ps5000a as ps
 
 
 class PicoUtil:
+    """Class containing several functions, useful for the PicoScope."""
+
     def __init__(self):
-        ######
-        # Revisit to see if channels_names, channel_names_dict and ps_channels can be replaced with just ps_channels
+        """Initialise the PicoUtil class."""
+        # Revisit to see if channels_names, channel_names_dict are obsolete.
         self.channel_names = ["a", "b", "c", "d"]
         self.channel_names_dict = {0: "a", 1: "b", 2: "c", 3: "d"}
-        ######
 
         self.range_offsets = {
             0: 0.25,
@@ -79,6 +82,7 @@ class PicoUtil:
         self.mode_dicts = {"resolution": self.ps_resolution}
 
     def get_range_value_mv(self, key):
+        """Convert channel ranges from a key to an actual range."""
         range_values = {
             0: 10,
             1: 20,
@@ -96,15 +100,17 @@ class PicoUtil:
             return range_values[key]
 
     def get_time_unit(self, key):
+        """Retrieve the time unit from the key."""
         unit_values = {0: -15, 1: -12, 2: -9, 3: -6, 4: -3, 5: 0}
         if key in unit_values:
             return unit_values[key]
 
     def verify_mode_settings(self, chan_active, mode):
+        """Check if chosen PicoScope settings are logically correct."""
         channel_count = 0
 
         for chan in chan_active:
-            if chan == True:
+            if chan:
                 channel_count += 1
 
         if mode.resolution == 1:
@@ -135,15 +141,17 @@ class PicoUtil:
             return -1
 
     def verify_channel_settings(self, offset):
+        """Check if chosen channel settings are logically correct."""
         if (offset >= 0) and (offset <= 100):
             return True
         else:
             return False
 
     def set_channel_verify_flag(self, channels):
+        """Clarify if channel settings are verified, even when channel is active."""
         error_count = 0
         for chan in channels:
-            if (chan.active == True) and (chan.verified == False):
+            if (chan.active) and (not chan.verified):
                 error_count += 1
         if error_count == 0:
             return 0
@@ -151,6 +159,7 @@ class PicoUtil:
             return -1
 
     def verify_trigger(self, channels, trigger):
+        """Check if chosen trigger settings are logically correct."""
         source_chan = channels[trigger.source]
         if not (source_chan.active):
             return -1
@@ -163,6 +172,7 @@ class PicoUtil:
         return 0
 
     def verify_capture(self, capture):
+        """Check if chosen capture settings are logically correct."""
         total_samples = capture.pre_trig_samples + capture.post_trig_samples
         if total_samples < 1:
             return -1
@@ -171,13 +181,15 @@ class PicoUtil:
         return 0
 
     def calc_offset(self, range, off_per):
+        """Calculate the offset, depending on range of channel."""
         try:
             range_mv = self.get_range_value_mv(range)
             return (math.ceil(range_mv / (100 / off_per))) * pow(10, -3)
-        except:
+        except Exception:
             return 0
 
     def max_samples(self, resolution):
+        """Calculate the maximum amount of captures per run."""
         if resolution == 0:
             return (512) * 10**6
         elif resolution == 1:
@@ -186,9 +198,7 @@ class PicoUtil:
             return None
 
     def flatten_metadata_dict(self, d):
-        """Function to flatten a dictionary structure, whilst maintaining
-        a unique name for each value in the dictionary, returns a dict
-        """
+        """Flatten a dictionary structure, maintaining a unique name for each value."""
         flat_d = {}
         for key, value in d.items():
             if isinstance(value, dict):

@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+"""Store settings for the Pulse Height Analysis."""
 
+from dataclasses import dataclass
 
 @dataclass
 class PHAConfig:

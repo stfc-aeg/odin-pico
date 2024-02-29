@@ -1,3 +1,5 @@
+"""Store flags to trigger the controller to complete PicoScope tasks."""
+
 from dataclasses import dataclass
 
 

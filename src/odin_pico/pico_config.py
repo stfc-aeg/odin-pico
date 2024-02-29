@@ -1,8 +1,12 @@
+"""File to link config files for parameter tree."""
 from odin_pico.pico_util import PicoUtil
 
 
 class DeviceConfig:
+    """Class that link config files together for the purpose of the controller."""
+
     def __init__(self, path):
+        """Initialise the DeviceConfig class."""
         self.util = PicoUtil()
 
         self.mode = self.util.set_mode_defaults()

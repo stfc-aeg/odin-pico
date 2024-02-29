@@ -1,3 +1,5 @@
+"""File to control the PicoScope processing."""
+
 import logging
 import math
 import time
@@ -17,9 +19,12 @@ from odin_pico.pico_util import PicoUtil
 
 
 class PicoController:
+    """Class which holds parameter trees and manages the PicoScope capture process."""
+
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
     def __init__(self, lock, loop, path):
+        """Initialise the PicoController Class."""
         # Threading lock and control variables
         self.lock = lock
         self.update_loop_active = loop
@@ -51,7 +56,7 @@ class PicoController:
         )
         self.pico = PicoDevice(self.dev_conf, self.pico_status, self.buffer_manager)
 
-        # ParameterTree's to represent different parts of the system
+        # ParameterTrees to represent different parts of the system
         adapter_status = ParameterTree(
             {
                 "settings_verified": (lambda: self.pico_status.flags.verify_all, None),
@@ -239,6 +244,14 @@ class PicoController:
                     lambda: self.dev_conf.capture.capture_type,
                     partial(self.set_dc_value, self.dev_conf.capture, "capture_type"),
                 ),
+                "capture_delay": (
+                    lambda: self.dev_conf.capture.capture_delay,
+                    partial(self.set_dc_value, self.dev_conf.capture, "capture_delay"),
+                ),
+                "capture_repeat": (
+                    lambda: self.dev_conf.capture.capture_repeat,
+                    partial(self.set_dc_value, self.dev_conf.capture, "capture_repeat"),
+                ),
             }
         )
 
@@ -380,9 +393,9 @@ class PicoController:
 
         # Set initial state of the verification system
         self.verify_settings()
-        # print(f'using get_dc_value: {self.get_dc_value(self.dev_conf, f"channel_B", "channel_id")}')
 
     def get_dc_value(self, obj, chan_name, attr_name):
+        """Retrive values for the live-view settings."""
         try:
             channel_dc = getattr(obj, chan_name)
             return getattr(channel_dc, attr_name, None)
@@ -390,6 +403,7 @@ class PicoController:
             return None
 
     def set_dc_value(self, obj, attr_name, value):
+        """Change values for the live-view settings."""
         if (
             (attr_name == "num_bins")
             or (attr_name == "lower_range")
@@ -414,15 +428,16 @@ class PicoController:
         setattr(obj, attr_name, value)
 
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
+        """Change values for the individual channel settings."""
         if attr_name == "live_view":
             try:
                 channel_dc = getattr(obj, chan_name)
-                if getattr(channel_dc, "active", None) == True:
+                if getattr(channel_dc, "active", None):
                     setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
 
-        elif (attr_name == "active") and (value == False):
+        elif (attr_name == "active") and (not value):
             try:
                 channel_dc = getattr(obj, chan_name)
                 setattr(channel_dc, "live_view", value)
@@ -437,8 +452,7 @@ class PicoController:
                 pass
 
     def verify_settings(self):
-        """Verifies all picoscope settings, sets status of individual groups of settings
-        """
+        """Verify all picoscope settings, sets status of individual groups of settings."""
         active = [
             self.dev_conf.channel_a.active,
             self.dev_conf.channel_b.active,
@@ -463,8 +477,7 @@ class PicoController:
         self.pico_status.flags.verify_all = self.set_verify_flag()
 
     def set_verify_flag(self):
-        """Used by the verify_settings() function to return the Boolean value of the setting verified flag
-        """
+        """Check if PicoScope settings are verified."""
         status_list = [
             self.pico_status.pico_setup_verify,
             self.pico_status.channel_setup_verify,
@@ -477,9 +490,7 @@ class PicoController:
         return True
 
     def set_capture_run_limits(self, captures):
-        """Set the value for maximum amount of captures that can fit into the picoscope memory taking
-        into accountcurrent user settings as well as setting the captures_remaning variable
-        """
+        """Set the value for maximum amount of captures that can fit into the picoscope memory."""
         capture_samples = (
             self.dev_conf.capture.pre_trig_samples
             + self.dev_conf.capture.post_trig_samples
@@ -490,9 +501,7 @@ class PicoController:
         self.dev_conf.capture_run.caps_remaining = captures
 
     def set_capture_run_length(self):
-        """Sets the captures to be completed in each "run" based on the maximum allowed captures, and
-        the amount of captures left to be collected
-        """
+        """Set the captures to be completed in each "run" based on the maximum allowed captures."""
         if len(self.buffer_manager.active_channels) > 0:
             max_caps = math.trunc(
                 (self.dev_conf.capture_run.caps_max)
@@ -509,8 +518,7 @@ class PicoController:
             self.dev_conf.capture_run.caps_in_run = max_caps
 
     def calc_samp_time(self):
-        """Calculates the sample interval based on the resolution and timebase
-        """
+        """Calculate the sample interval based on the resolution and timebase."""
         if self.dev_conf.mode.resolution == 0:
             if (self.dev_conf.mode.timebase) >= 0 and (
                 self.dev_conf.mode.timebase <= 2
@@ -535,17 +543,16 @@ class PicoController:
                 )
 
     def run_capture(self):
-        """Responsible for telling the picoscope to collect and return data
-        """
+        """Responsible for telling the picoscope to collect and return data."""
         self.calc_samp_time()
 
         if self.pico_status.flags.verify_all:
             self.check_res()
 
-            if self.pico_status.flags.user_capture == True:
+            if self.pico_status.flags.user_capture:
                 self.buffer_manager.pha_counts = [[]] * 4
 
-                if self.dev_conf.capture.capture_type == False:
+                if not self.dev_conf.capture.capture_type:
                     self.pico_status.flags.system_state = (
                         "Collecting Requested Captures"
                     )
@@ -571,7 +578,8 @@ class PicoController:
             # elif self.test_run == True:
             #     self.pico_status.flags.system_state = "Testing Capture Frequency"
             #     self.tb_capture(False)
-            #     self.pico_status.flags.system_state = ("Test Complete, ~" + str(math.trunc(self.caps_collected / 10)) + " Captures/Second")
+            #     caps = str(math.trunc(self.caps_collected / 10))
+            # self.pico_status.flags.system_state = ("Test Complete, ~" + caps + " Captures/Second")
             #     self.test_run = False
 
         if (self.pico_status.open_unit == 0) and (
@@ -580,17 +588,14 @@ class PicoController:
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"
 
     def check_res(self):
-        """Detect if the device resolution has been changed, if so apply to picoscope
-        """
+        """Detect if the device resolution has been changed, if so apply to picoscope."""
         if self.pico_status.flags.res_changed:
             if self.pico_status.open_unit == 0:
                 self.pico.stop_scope()
             self.pico_status.flags.res_changed = False
 
     def user_capture(self, save_file):
-        """Run the appropriate steps for a capture, which changes depending on whether it will be
-        saved to a file
-        """
+        """Run the appropriate steps for a set of captures."""
         if save_file:
             captures = self.dev_conf.capture.n_captures
         else:
@@ -599,7 +604,7 @@ class PicoController:
 
         if self.pico.run_setup():
             while self.dev_conf.capture_run.caps_comp < captures:
-                if self.pico_status.flags.abort_cap == False:
+                if not self.pico_status.flags.abort_cap:
                     self.set_capture_run_length()
                     self.capture_run()
                     self.dev_conf.capture_run.caps_remaining -= (
@@ -615,15 +620,17 @@ class PicoController:
         self.dev_conf.capture_run.reset()
 
     def capture_run(self):
+        """Run the necessary steps for a capture."""
         self.pico.assign_pico_memory()
         self.pico.run_block()
         self.dev_conf.capture_run.caps_comp += self.pico.seg_caps * len(
             self.buffer_manager.active_channels
         )
         self.buffer_manager.save_lv_data()
-        self.analysis.PHA_one_peak(False)
+        self.analysis.pha_one_peak(False)
 
     def tb_capture(self):
+        """Run the necessary steps for a set of time-based captures."""
         self.buffer_manager.clear_arrays()
         self.buffer_manager.check_channels()
 
@@ -637,7 +644,7 @@ class PicoController:
         if self.pico.run_tb_setup():
             start_time = time.time()
             while (time.time() - start_time) < total_time:
-                if self.pico_status.flags.abort_cap == False:
+                if not self.pico_status.flags.abort_cap:
                     self.capture_run()
                 else:
                     total_time = 0
@@ -652,17 +659,17 @@ class PicoController:
 
     @run_on_executor
     def update_loop(self):
-        """Function that is called in an executor thread, responsible for calling the run_capture function at timed intervals"""
+        """Execute thread, responsible for calling the run_capture function at timed intervals."""
         while self.update_loop_active:
             self.run_capture()
             time.sleep(0.2)
 
     def set_update_loop_state(self, state=bool):
-        """Sets the state of the update_loop in the executor thread"""
+        """Set the state of the update_loop in the executor thread."""
         self.update_loop_active = state
 
     def cleanup(self):
-        """Responsible for making sure the picoscope is closed cleanly when the adapter is shutdown"""
+        """Responsible for ensuring the picoscope is closed cleanly when the adapter is shutdown."""
         self.set_update_loop_state(False)
         self.pico_status.flags.abort_cap = True
         self.pico.stop_scope()

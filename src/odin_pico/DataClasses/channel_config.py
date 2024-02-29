@@ -1,3 +1,5 @@
+"""Store settings for each PicoScope channel."""
+
 from dataclasses import dataclass, field
 
 from odin_pico.pico_util import PicoUtil

@@ -1,3 +1,5 @@
+"""Store settings for a PicoScope capture run."""
+
 from dataclasses import dataclass, fields
 
 

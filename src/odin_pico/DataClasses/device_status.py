@@ -1,3 +1,5 @@
+"""Store settings for PicoScope setting verification."""
+
 import ctypes
 from dataclasses import dataclass, field
 

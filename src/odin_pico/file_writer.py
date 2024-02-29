@@ -1,10 +1,10 @@
+"""File to create a h5py file, and then add the capture data to it."""
+
 import logging
 import os
 from dataclasses import asdict
 from datetime import datetime
-
 import h5py
-
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.DataClasses.device_status import DeviceStatus
@@ -12,12 +12,15 @@ from odin_pico.pico_util import PicoUtil
 
 
 class FileWriter:
+    """Class that represents data in a h5py file."""
+
     def __init__(
         self,
         dev_conf=DeviceConfig(),
         buffer_manager=BufferManager(),
         pico_status=DeviceStatus(),
     ):
+        """Initialise the FileWriter Class."""
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
         self.pico_status = pico_status
@@ -26,7 +29,8 @@ class FileWriter:
         if not (os.path.isdir(self.dev_conf.file.file_path)):
             os.mkdir(self.dev_conf.file.file_path)
 
-    def writeHDF5(self):
+    def writehdf5(self):
+        """Create and write to a hdf5 file."""
         self.pico_status.flags.system_state = (
             "Connected to Picoscope, Writing hdf5 File"
         )

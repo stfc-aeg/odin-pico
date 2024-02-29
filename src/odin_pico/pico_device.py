@@ -1,3 +1,5 @@
+"""Manage the PicoScope in preparing for, and extracting the data."""
+
 import ctypes
 import logging
 import time
@@ -13,12 +15,15 @@ from odin_pico.PS5000A_Trigger_Info import Trigger_Info
 
 
 class PicoDevice:
+    """Class that communicates with the scope to collect data."""
+
     def __init__(
         self,
         dev_conf=DeviceConfig(),
         pico_status=DeviceStatus(),
         buffer_manager=BufferManager(),
     ):
+        """Initialise the PicoDevice class."""
         self.util = PicoUtil()
         self.dev_conf = dev_conf
         self.pico_status = pico_status
@@ -34,8 +39,7 @@ class PicoDevice:
         ]
 
     def open_unit(self):
-        """Responsible for initalising connection with the picoscope, and settings the status values.
-        """
+        """Initalise connection with the picoscope, and settings the status values."""
         logging.debug("Trying to open Device")
         self.pico_status.open_unit = ps.ps5000aOpenUnit(
             ctypes.byref(self.dev_conf.mode.handle), None, self.dev_conf.mode.resolution
@@ -49,10 +53,12 @@ class PicoDevice:
         )
 
     def assign_pico_memory(self):
-        """Responsible for mapping the local buffers in the buffer_manager to the picoscope for
-        each individual trace to be captured on each channel by the picoscope
+        """Give PicoScope memory locations for data to be extracted.
+
+        Map the local buffers in the buffer_manager to the picoscope for
+        each individual trace to be captured on each channel by the picoscope.
         """
-        if True:  # self.ping_scope():
+        if True:
             n_captures = self.dev_conf.capture_run.caps_in_run
             ps.ps5000aMemorySegments(
                 self.dev_conf.mode.handle,
@@ -69,7 +75,6 @@ class PicoDevice:
                 self.buffer_manager.active_channels,
                 self.buffer_manager.np_channel_arrays,
             ):
-                # for i in range(self.dev_conf.capture_run.caps_comp, self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run):
                 for i in range(self.dev_conf.capture_run.caps_in_run):
                     buff = b[i]
                     ps.ps5000aSetDataBuffer(
@@ -82,9 +87,8 @@ class PicoDevice:
                     )
 
     def set_trigger(self):
-        """Responsible for setting the trigger information on the picoscope
-        """
-        if True:  # self.ping_scope():
+        """Responsible for setting the trigger information on the picoscope."""
+        if True:
             channel_range = next(
                 (
                     chan.range
@@ -111,9 +115,8 @@ class PicoDevice:
             )
 
     def set_channels(self):
-        """Responsible for setting the channel information for each channel on the picoscope
-        """
-        if True:  # self.ping_scope():
+        """Set the channel information for each channel on the picoscope."""
+        if True:
             for chan in self.channels:
                 max_v = ctypes.c_float(0)
                 min_v = ctypes.c_float(0)
@@ -124,10 +127,7 @@ class PicoDevice:
                     ctypes.byref(max_v),
                     ctypes.byref(min_v),
                 )
-                #                logging.debug(f'Max offset:{max_v.value} Min offset:{min_v.value}')
-                offset = self.util.calc_offset(chan.range, chan.offset)
 
-                #                logging.debug(f'calculated offset value: {offset} based on percentage of {chan.offset}')
                 ps.ps5000aSetChannel(
                     self.dev_conf.mode.handle,
                     chan.channel_id,
@@ -138,8 +138,10 @@ class PicoDevice:
                 )
 
     def run_setup(self, *args):
-        """Responsible for "setting up" the picoscope, calling functions that apply local settings to the picoscope
-        and for calling the buffer generating function
+        """Responsible for "setting up" the picoscope.
+
+        Call functions that apply local settings to the picoscope
+        and for calling the buffer generating function.
         """
         if self.pico_status.open_unit != 0:
             # self.pico_status.flags.system_state = "Waiting for connection"
@@ -157,6 +159,7 @@ class PicoDevice:
             return True
 
     def run_tb_setup(self):
+        """Prepare the scope for a time-based capture."""
         if self.pico_status.open_unit != 0:
             # self.pico_status.flags.system_state = "Waiting for connection"
             self.open_unit()
@@ -168,16 +171,18 @@ class PicoDevice:
             return True
 
     def run_block(self):
-        """Responsible for telling the picoscope how much data to collect and
+        """Complete a PicoScope capture run using the rapid block mode.
+
+        Responsible for telling the picoscope how much data to collect and
         when to collect it, retrives that data into local buffers once
-        data collection is finished
+        data collection is finished.
         """
         self.prev_seg_caps = 0
         self.seg_caps = 0
 
         # print(f'\n\npico_status when called: {self.pico_status.flags.system_state}')
 
-        if True:  # self.ping_scope():
+        if True:
             start_time = time.time()
             t = time.time()
             self.pico_status.block_ready = ctypes.c_int16(0)
@@ -247,6 +252,7 @@ class PicoDevice:
             self.get_trigger_timing()
 
     def get_trigger_timing(self):
+        """Retrieve the trigger timing from the scope."""
         trigger_info = (Trigger_Info * self.dev_conf.capture_run.caps_in_run)()
         ps.ps5000aGetTriggerInfoBulk(
             self.dev_conf.mode.handle,
@@ -263,8 +269,7 @@ class PicoDevice:
             self.buffer_manager.trigger_times.append(time_interval)
 
     def ping_scope(self):
-        """Responsible for checking the connection to the picoscope is still live
-        """
+        """Responsible for checking the connection to the picoscope is still live."""
         if (ps.ps5000aPingUnit(self.dev_conf.mode.handle)) == 0:
             return True
         else:
@@ -272,9 +277,7 @@ class PicoDevice:
             return False
 
     def get_cap_count(self):
-        """Responsible for querying the picoscope to check how many traces have
-        been captured
-        """
+        """Query PicoScope to check how many traces have been captured."""
         caps = ctypes.c_uint32(0)
         ps.ps5000aGetNoOfCaptures(self.dev_conf.mode.handle, ctypes.byref(caps))
         self.seg_caps = caps.value
@@ -283,10 +286,8 @@ class PicoDevice:
         )
 
     def stop_scope(self):
-        """Responsible for telling the picoscope to stop its current activity
-        and to close the connection
-        """
-        if True:  # self.ping_scope():
+        """Tell scope to stop activity and close connection."""
+        if True:
             self.pico_status.stop = ps.ps5000aStop(self.dev_conf.mode.handle)
             self.pico_status.close = ps.ps5000aCloseUnit(self.dev_conf.mode.handle)
             if self.pico_status.stop == 0:
