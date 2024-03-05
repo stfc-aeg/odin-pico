@@ -19,8 +19,7 @@ class PicoAdapter(ApiAdapter):
         super(PicoAdapter, self).__init__(**kwargs)
 
         self.lock = threading.Lock()
-        update_loop = True  # bool(self.options.get('update_loop'))
-        # path = '/tmp/pico_captures/' #self.options.get
+        update_loop = True
         data_output_path = self.options.get("data_output_path", "/tmp/")
         self.pico_controller = PicoController(self.lock, update_loop, data_output_path)
 
@@ -28,6 +27,7 @@ class PicoAdapter(ApiAdapter):
     def get(self, path, request):
         """Handle a HTTP GET request."""
         try:
+            # Send the get request to the controller
             response = self.pico_controller.get(path)
             status_code = 200
         except ParameterTreeError as e:
@@ -47,6 +47,7 @@ class PicoAdapter(ApiAdapter):
         content_type = "application/json"
 
         try:
+            # Send the set request to the controller
             data = json_decode(request.body)
             self.pico_controller.set(path, data)
             response = self.pico_controller.get(path)
@@ -58,8 +59,6 @@ class PicoAdapter(ApiAdapter):
             response = {"error": f"Failed to decode PUT request body: {str(e)}"}
             status_code = 400
 
-        #        logging.debug(response)
-
         return ApiAdapterResponse(
             response, content_type=content_type, status_code=status_code
         )
@@ -68,8 +67,6 @@ class PicoAdapter(ApiAdapter):
         """Handle a HTTP DELETE request."""
         response = f"PicoAdapter: DELETE on path {path}"
         status_code = 200
-
-        #        logging.debug(response)
 
         return ApiAdapterResponse(response, status_code=status_code)
 

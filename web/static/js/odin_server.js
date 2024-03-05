@@ -45,7 +45,10 @@ var focusFlags = {
   "lv_range": false,
   "capture-time": false,
   "capture-mode-num": true,
-  "capture-mode-time": false
+  "capture-mode-time": false,
+  "repeat-amount": false,
+  "cap-repeat": false,
+  "delay-time": false,
 };
 // Initialize a timers object to keep track of the timers for each field
 var timers = {};
@@ -89,7 +92,8 @@ var pha_lower = document.getElementById("pha-lower-range")
 var pha_upper = document.getElementById("pha-upper-range")
 var time_textbox = document.getElementById("capture-time")
 var caps_textbox = document.getElementById("capture-count")
-textboxes = [pre_trig, post_trig, a_offset, b_offset, c_offset, d_offset, time_textbox, caps_textbox, trig_delay, trig_auto, bin_nums, pha_lower, pha_upper]
+var repeat_amount = document.getElementById("repeat-amount")
+textboxes = [pre_trig, post_trig, a_offset, b_offset, c_offset, d_offset, time_textbox, caps_textbox, trig_delay, trig_auto, bin_nums, pha_lower, pha_upper, repeat_amount]
 
 for (let i = 0; i < textboxes.length; i++) {
     textboxes[i].addEventListener("input", function() {
@@ -101,6 +105,14 @@ for (let i = 0; i < textboxes.length; i++) {
         }
     })
 }
+
+var delay_time = document.getElementById("delay-time")
+delay_time.addEventListener("input", function() {
+    var value = parseFloat(delay_time.value)
+    if (value < 0) {
+        delay_time.value = 0 - value
+    }
+})
 
 // Resize plotly graphs after window changes size
 function resize_plotly() {
@@ -308,6 +320,7 @@ function sync_with_adapter(){
 
         document.getElementById("capture-mode-time").checked = response.device.settings.capture.capture_mode
         document.getElementById("capture-mode-num").checked = !(response.device.settings.capture.capture_mode)
+        document.getElementById("cap-repeat").checked = response.device.settings.capture.capture_repeat
 
         if (!focusFlags["trigger-enable"]) {
             if (response.device.settings.trigger.active == true) {$("#trigger-enable").val("true")}
@@ -320,12 +333,14 @@ function sync_with_adapter(){
 
         var settings_3 = [settings_2[0].source, settings_2[0].direction, settings_2[0].threshold, settings_2[0].delay,
                         settings_2[0].auto_trigger, settings_2[1].pre_trig_samples, settings_2[1].post_trig_samples,
-                        settings_2[1].n_captures, settings_2[1].capture_time, settings_2[2].folder_name,
-                        settings_2[2].file_name, settings_2[3].num_bins, settings_2[3].lower_range, settings_2[3].upper_range]
+                        settings_2[1].n_captures, settings_2[1].capture_time, settings_2[1].repeat_amount,
+                        settings_2[1].capture_delay, settings_2[2].folder_name, settings_2[2].file_name,
+                        settings_2[3].num_bins, settings_2[3].lower_range, settings_2[3].upper_range]
 
         var focus_strings = ["trigger-source", "trigger-direction", "trigger-threshold", "trigger-delay","trigger-auto",
                         "capture-pretrig-samples", "capture-posttrig-samples", "capture-count", "capture-time",
-                        "capture-folder-name", "capture-file-name", "pha-num-bins", "pha-lower-range", "pha-upper-range"]
+                        "repeat-amount", "delay-time", "capture-folder-name", "capture-file-name", "pha-num-bins",
+                        "pha-lower-range", "pha-upper-range"]
 
         if (response.device.settings.capture.capture_mode == true) {
             document.getElementById("capture-count").disabled = true
@@ -333,6 +348,15 @@ function sync_with_adapter(){
         } else {
             document.getElementById("capture-count").disabled = false
             document.getElementById("capture-time").disabled = true
+        }
+
+        if (response.device.settings.capture.capture_repeat == true) {
+            document.getElementById("repeat-amount").disabled = false
+            document.getElementById("delay-time").disabled = false
+        } else {
+            document.getElementById("repeat-amount").disabled = true
+            document.getElementById("delay-time").disabled = true
+
         }
 
         for (var setting = 0; setting < focus_strings.length; setting++) {
@@ -406,7 +430,7 @@ function sync_with_adapter(){
         }
 
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
-        document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
+        document.getElementById("file-name-span").textContent = (response.device.settings.file.folder_name + response.device.settings.file.file_name)
 
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"
@@ -420,9 +444,12 @@ function sync_with_adapter(){
             document.getElementById("general-setup-row").className="danger"
         }
 
+        document.getElementById("chan-row").className = "danger"
+
         // Syncing channel setup panels
         if ((response.device.settings.channels.a.verified == true) && (response.device.settings.channels.a.active == true)) {
             document.getElementById("channel-a-set").className ="success"
+            document.getElementById("chan-row").className = "success"
         } else{
             document.getElementById("channel-a-set").className ="danger"
         }
@@ -430,18 +457,21 @@ function sync_with_adapter(){
 
         if ((response.device.settings.channels.b.verified == true) && (response.device.settings.channels.b.active == true)) {
             document.getElementById("channel-b-set").className ="success"
+            document.getElementById("chan-row").className = "success"
         } else{
             document.getElementById("channel-b-set").className ="danger";
         }
             
         if ((response.device.settings.channels.c.verified == true) && (response.device.settings.channels.c.active == true)) {
             document.getElementById("channel-c-set").className ="success";
+            document.getElementById("chan-row").className = "success"
         } else{
             document.getElementById("channel-c-set").className ="danger";
         }
 
         if ((response.device.settings.channels.d.verified == true) && (response.device.settings.channels.d.active == true)) {
             document.getElementById("channel-d-set").className ="success";
+            document.getElementById("chan-row").className = "success"
         } else{
             document.getElementById("channel-d-set").className ="danger";
         }
@@ -460,10 +490,11 @@ function sync_with_adapter(){
             document.getElementById("capture-row").className = "success"
             document.getElementById("file-row").className = "success"
             document.getElementById("file-info-row").className = "success"
+            document.getElementById("repeat-cap-row").className = "success"
             if (response.device.commands.run_user_capture == true) {
                 document.getElementById("cap-progress").className = "success"
             } else {
-                document.getElementById("cap-progress").className = "danger"
+                document.getElementById("cap-progress").className = ""
             }
         } else {
             document.getElementById("cap-progress").className = "danger"
@@ -471,6 +502,7 @@ function sync_with_adapter(){
             document.getElementById("capture-row").className = "danger"
             document.getElementById("file-row").className = "danger"
             document.getElementById("file-info-row").className = "danger"
+            document.getElementById("repeat-cap-row").className = "danger"
         }
 
         if (response.device.status.open_unit == 0){

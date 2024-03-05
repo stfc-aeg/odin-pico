@@ -248,10 +248,14 @@ class PicoController:
                     lambda: self.dev_conf.capture.capture_delay,
                     partial(self.set_dc_value, self.dev_conf.capture, "capture_delay"),
                 ),
+                "repeat_amount": (
+                    lambda: self.dev_conf.capture.repeat_amount,
+                    partial(self.set_dc_value, self.dev_conf.capture, "repeat_amount"),
+                ),
                 "capture_repeat": (
                     lambda: self.dev_conf.capture.capture_repeat,
                     partial(self.set_dc_value, self.dev_conf.capture, "capture_repeat"),
-                ),
+                )
             }
         )
 
@@ -550,26 +554,48 @@ class PicoController:
             self.check_res()
 
             if self.pico_status.flags.user_capture:
-                self.buffer_manager.pha_counts = [[]] * 4
+                self.file_writer.check_file_name()
 
-                if not self.dev_conf.capture.capture_type:
-                    self.pico_status.flags.system_state = (
-                        "Collecting Requested Captures"
-                    )
-                    self.user_capture(True)
-                    self.pico_status.flags.system_state = (
-                        "Captures Collected, File Written"
-                    )
+                if self.dev_conf.capture.capture_repeat:
+                    cap_loop = self.dev_conf.capture.repeat_amount
+                    delay = self.dev_conf.capture.capture_delay
                 else:
-                    self.pico_status.flags.system_state = (
-                        "Completing Time-Based Capture Collection"
-                    )
-                    self.tb_capture()
-                    self.pico_status.flags.system_state = (
-                        "File Written, Captures Collected: " + str(self.caps_collected)
-                    )
+                    cap_loop = 1
+                    delay = 0
 
+                for capture_run in range(cap_loop):
+                    self.buffer_manager.pha_counts = [[]] * 4
+
+                    if not self.dev_conf.capture.capture_type:
+                        if not self.pico_status.flags.abort_cap:
+                            self.pico_status.flags.system_state = (
+                                "Collecting Requested Captures"
+                            )
+                            self.user_capture(True)
+                            self.pico_status.flags.system_state = (
+                                "Captures Collected, File Written"
+                            )
+                    else:
+                        if not self.pico_status.flags.abort_cap:
+                            self.pico_status.flags.system_state = (
+                                "Completing Time-Based Capture Collection"
+                            )
+                            self.tb_capture()
+                            self.pico_status.flags.system_state = (
+                                "File Written, Captures Collected: " + str(self.caps_collected)
+                            )
+
+                    if capture_run != (cap_loop - 1):
+                        self.pico_status.flags.system_state = ("Delay Between Captures")
+                        start_time = time.time()
+                        while (time.time() - start_time) < delay:
+                            if self.pico_status.flags.abort_cap:
+                                delay = 0
+
+
+                self.file_writer.capture_number = 1
                 self.pico_status.flags.user_capture = False
+                self.pico_status.flags.abort_cap = False
 
             else:
                 self.pico_status.flags.system_state = "Collecting LV Data"
@@ -612,10 +638,10 @@ class PicoController:
                     )
                 else:
                     self.dev_conf.capture_run.caps_comp = captures
-                    self.pico_status.flags.abort_cap = False
+                    # self.pico_status.flags.abort_cap = False
 
             if save_file:
-                self.file_writer.writeHDF5()
+                self.file_writer.write_hdf5()
 
         self.dev_conf.capture_run.reset()
 
@@ -627,7 +653,7 @@ class PicoController:
             self.buffer_manager.active_channels
         )
         self.buffer_manager.save_lv_data()
-        self.analysis.pha_one_peak(False)
+        self.analysis.pha_one_peak()
 
     def tb_capture(self):
         """Run the necessary steps for a set of time-based captures."""
@@ -648,9 +674,9 @@ class PicoController:
                     self.capture_run()
                 else:
                     total_time = 0
-                    self.pico_status.flags.abort_cap = False
+                    # self.pico_status.flags.abort_cap = False
                 self.current_time = time.time() - start_time
-            self.file_writer.writeHDF5()
+            self.file_writer.write_hdf5()
 
         self.caps_collected = self.dev_conf.capture_run.caps_comp
         self.dev_conf.capture_run.reset()

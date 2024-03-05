@@ -12,4 +12,5 @@ class CaptureConfig:
     n_captures: int = 3
     capture_type: bool = False
     capture_delay: int = 0
-    capture_repeat: int = 1
+    capture_repeat: bool = False
+    repeat_amount: int = 1
