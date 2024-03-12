@@ -50,28 +50,29 @@ var focusFlags = {
   "cap-repeat": false,
   "delay-time": false,
 };
+
 // Initialize a timers object to keep track of the timers for each field
 var timers = {};
 
 // Time limit (in milliseconds) after which to blur the input
 var timeLimit = 10000; // 5 seconds
 
-// document.getElementById("cap-label").textContent = "Time Capture"
-
+// Initialise arrays to be used
 var pha_array = []
 var lv_data = []
 var active_channels_lv = []
 
+// Initialise variables for pausing the LV/PHA graphs
 play_button_lv = true;
 play_button_pha = true;
 
-//runs when the script is loaded
+// Run when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
 });
 
-//gets the most up to date api version
+// Get the most up to date api version
 function update_api_version() {
     $.getJSON('/api', function(response) {
         $('#api-version').html(response.api);
@@ -79,6 +80,7 @@ function update_api_version() {
     });
 }
 
+// Ensure the user cannot type negative numbers into the relevant boxes
 var pre_trig = document.getElementById("capture-pretrig-samples")
 var post_trig = document.getElementById("capture-posttrig-samples")
 var a_offset = document.getElementById("channel-a-offset")
@@ -106,6 +108,7 @@ for (let i = 0; i < textboxes.length; i++) {
     })
 }
 
+// Ensure the user cannot type negative numbers, or 0 into the delay time textbox
 var delay_time = document.getElementById("delay-time")
 delay_time.addEventListener("input", function() {
     var value = parseFloat(delay_time.value)
@@ -171,6 +174,7 @@ function toggle_play_lv() {
     const button_lv = document.getElementById('p_p_button_lv');
     play_button_lv = !play_button_lv;
     
+    // Change the icon depending on whether the graph is active or inactive
     if (play_button_lv) {
       button_lv.innerHTML = '<span class="material-icons">pause_circle_outline</span>'; 
     } else {
@@ -182,6 +186,7 @@ function toggle_play_pha() {
     const button_pha = document.getElementById('p_p_button_pha');
     play_button_pha = !play_button_pha;
 
+    // Change the icon depending on whether the graph is active or inactive
     if (play_button_pha) {
         button_pha.innerHTML = '<span class="material-icons">pause_circle_outline</span>';
     } else {
@@ -197,6 +202,7 @@ function update_pha_graph() {
 
         scope_pha = document.getElementById('scope_pha');
 
+        // Identify the data to be displayed on the graph
         for (var chan = 0; chan < 4; chan++) {
             if (pha_channels[chan] == true) {
                 pha_data.push({
@@ -209,6 +215,7 @@ function update_pha_graph() {
             }
         }
 
+        // Identify the layout to be used for the graph
         layout = {
             title: 'Current PHA Data',
             margin: { t: 50, b: 60 },
@@ -221,6 +228,7 @@ function update_pha_graph() {
             showlegend: true,
         }
 
+        // Create the graph
         Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
     }
 }
@@ -236,11 +244,13 @@ function update_lv_graph() {
 
         lv_data = []
 
+        // Create the values to be seen on the graph axes
         for (var i = -range; i <= range; i += (range / 4)) {
             tickVals.push(i);
             tickText.push(i.toFixed(1)); 
         }
 
+        // Identify the layout to be used
         layout = {
             title: 'Live View of PicoScope Traces',
             margin: { t: 50, b: 60 },
@@ -258,6 +268,7 @@ function update_lv_graph() {
             showlegend: true
         }
 
+        // Prepare the data to be shown on the graph
         for (var chan = 0; chan < active_channels_lv.length; chan++) {
             lv_data.push ({
                 x: x = data_array[chan].map((value, index)=> index),
@@ -268,6 +279,7 @@ function update_lv_graph() {
             })
         }
 
+        // Create the graph
         Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
     }
 }
@@ -307,6 +319,7 @@ function sync_with_adapter(){
 
         var chan_responses = [response.device.settings.channels.a, response.device.settings.channels.b, response.device.settings.channels.c, response.device.settings.channels.d]
 
+        // Ensure all the channel settings match with the values from the adapter
         for (var i = 0; i < 4; i++) {
             var channel = "channel-"+String.fromCharCode(i + 97)+"-"
             if (!focusFlags[channel+"range"]) {$("#"+channel+"range").val(chan_responses[i].range)}
@@ -327,10 +340,9 @@ function sync_with_adapter(){
             if (response.device.settings.trigger.active == false) {$("#trigger-enable").val("false")}
         }
         
+        // Ensure the settings match with the values from the adapter
         var settings = response.device.settings
-        
         var settings_2 = [settings.trigger, settings.capture, settings.file, settings.pha]
-
         var settings_3 = [settings_2[0].source, settings_2[0].direction, settings_2[0].threshold, settings_2[0].delay,
                         settings_2[0].auto_trigger, settings_2[1].pre_trig_samples, settings_2[1].post_trig_samples,
                         settings_2[1].n_captures, settings_2[1].capture_time, settings_2[1].repeat_amount,
@@ -342,6 +354,7 @@ function sync_with_adapter(){
                         "repeat-amount", "delay-time", "capture-folder-name", "capture-file-name", "pha-num-bins",
                         "pha-lower-range", "pha-upper-range"]
 
+        // Only allow the relevant boxes to be open, depending on capture mode chosen
         if (response.device.settings.capture.capture_mode == true) {
             document.getElementById("capture-count").disabled = true
             document.getElementById("capture-time").disabled = false
@@ -350,6 +363,7 @@ function sync_with_adapter(){
             document.getElementById("capture-time").disabled = true
         }
 
+        // Only allow the user to enter repetition settings if the repetition setting is on
         if (response.device.settings.capture.capture_repeat == true) {
             document.getElementById("repeat-amount").disabled = false
             document.getElementById("delay-time").disabled = false
@@ -365,12 +379,14 @@ function sync_with_adapter(){
 
         if (!focusFlags["lv_range"]) {$("#lv_range").val(response.device.live_view.lv_range)}
 
+        // Identify all of the channels that are LV active
         active_channels_lv = response.device.live_view.lv_active_channels
         active_channels_lv_letters = []
         for (let chan = 0; chan < active_channels_lv.length; chan++) {
             active_channels_lv_letters.push(String.fromCharCode(65+active_channels_lv[chan]))
         }
 
+        // Identify all of the channels that are PHA active
         pha_channels = [response.device.settings.channels.a.pha_active, response.device.settings.channels.b.pha_active,
                 response.device.settings.channels.c.pha_active, response.device.settings.channels.d.pha_active]
         active_channels_pha_letters = []
@@ -386,6 +402,7 @@ function sync_with_adapter(){
         pre_samples = response.device.settings.capture.pre_trig_samples
         post_samples = response.device.settings.capture.post_trig_samples
         
+        // Define the colour to be used on the graph for different channels
         channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 
         lv_range = response.device.live_view.lv_range
@@ -414,12 +431,23 @@ function sync_with_adapter(){
             console.log("Error in assigning PHA values, error: ",err.message)
         }
 
+        // If user capture is in progress, update the progress bar accordingly
         if (response.device.commands.run_user_capture == true){
             if (response.device.settings.capture.capture_mode == true) {
-                var cap_percent = ((response.device.live_view.current_tbdc_time / response.device.settings.capture.capture_time) * 100).toFixed(2)
+                var cap_percent = ((response.device.live_view.current_tbdc_time / response.device.settings.capture.capture_time) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
             } else {
-                var cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
+                var cap_percent = ((response.device.live_view.capture_count / response.device.live_view.captures_requested) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
+                // var cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
             }
+
+            var current_cap = response.device.live_view.current_capture
+
+            var percent_done = ((current_cap / response.device.settings.capture.repeat_amount) * 100).toFixed(2)
+            percent_done = parseFloat(percent_done)
+            cap_percent = parseFloat(cap_percent)
+
+            cap_percent = (cap_percent + percent_done)
+
             let progressBar = document.getElementById('capture-progress-bar');
             progressBar.style.width = cap_percent + '%';
             progressBar.innerHTML = cap_percent + '%';
@@ -430,14 +458,16 @@ function sync_with_adapter(){
         }
 
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
-        document.getElementById("file-name-span").textContent = (response.device.settings.file.folder_name + response.device.settings.file.file_name)
+        document.getElementById("file-name-span").textContent = ('capture/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
 
+        // Display the 'recorded' attribute as true if a capture has been recorded successfully
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"
         } else {
             document.getElementById("file-write-succ-span").textContent = "False"
         }
 
+        // Check if settings have been verifies
         if (response.device.status.pico_setup_verify == 0){
             document.getElementById("general-setup-row").className="success"
         }else{
@@ -476,6 +506,7 @@ function sync_with_adapter(){
             document.getElementById("channel-d-set").className ="danger";
         }
 
+        // Check if trigger settings have been verified
         if (response.device.status.channel_trigger_verify == 0){
             document.getElementById("trigger-row1").className ="success";
             document.getElementById("trigger-row2").className ="success";
@@ -485,6 +516,7 @@ function sync_with_adapter(){
             document.getElementById("trigger-row2").className ="danger";
         }
 
+        // Check if capture settings have been verified
         if (response.device.status.capture_settings_verify == 0){
             document.getElementById("pha-row").className ="success";
             document.getElementById("capture-row").className = "success"
@@ -505,18 +537,18 @@ function sync_with_adapter(){
             document.getElementById("repeat-cap-row").className = "danger"
         }
 
+        // Check if unit has been opened
         if (response.device.status.open_unit == 0){
             document.getElementById("connection_status").textContent = "True"
         } else {
             document.getElementById("connection_status").textContent = "False"
         }
 
+        // Change the capture type displayed depending on which capture type is being utilised
         if (response.device.commands.run_user_capture == true){
             document.getElementById("cap_type_status").textContent = "User"
         } else if (response.device.commands.time_capture == true){
             document.getElementById("cap_type_status").textContent = "Time-Based"
-        } else if (response.device.commands.test_run == true) {
-            document.getElementById("cap_type_status").textContent = "Test Run"
         } else if (response.device.commands.live_view_active) {
             document.getElementById("cap_type_status").textContent = "Live View"
         }
@@ -544,6 +576,7 @@ function commit_true_adapter(path,key){
 }
 
 function commit_to_adapter(id,path,key){
+    // Commit a boolean value to adapter
     var value = document.getElementById(id).value
     if (value == "true"){ value = true}
     if (value == "false"){ value = false}
@@ -552,6 +585,7 @@ function commit_to_adapter(id,path,key){
 }
 
 function commit_int_adapter(id,path,key){
+    // Commit integer value to adapter
     var input = parseInt(document.getElementById(id).value)
     console.log("Input: ",input,typeof(input))
     if (isNaN(input)){
@@ -563,11 +597,13 @@ function commit_int_adapter(id,path,key){
 }
 
 function commit_str_adapter(id,path,key){
+    // Commit string value to adapter
     var input = document.getElementById(id).value
     ajax_put(path,key,input)
 }
 
 function commit_float_adapter(id,path,key){
+    // Commit float value to adapter
     var input = parseFloat(document.getElementById(id).value)
     if (isNaN(input)){
         console.log("Invalid")
@@ -587,15 +623,13 @@ function commit_checked_adapter(id,path,key){
 }
 
 function activate_buttons(channel, checked) {
+    // Activate/deactivate buttons depending on whether it's channel is active
     document.getElementById("channel-"+channel+"-liveview").disabled = !checked
     document.getElementById("channel-"+channel+"-pha").disabled = !checked
 }
 
-function activate_pha_buttons(channel, checked) {
-    document.getElementById("channel-"+channel+"-pha").disabled = !checked
-}
-
 function activate_textbox(checked) {
+    // Activate/deactivate textboxes depending on capture mode chosen
     if (checked == false) {
         document.getElementById("cap-label").textContent = "No. Captures"
     } else {
@@ -627,7 +661,6 @@ function verify_float(id){
     }       
 }
 
-// May be useful to keep for picoscope ?
 function toSiUnit(num){
     numin = num
     pow = [-15,-12,-9,-6,-3,0]
@@ -651,6 +684,7 @@ function toSiUnit(num){
 
 // Makes writing an ajax_put cleaner
 function ajax_put(path,key,value){
+    // Put function for adapter, prevents repetition of code
     let data = {};
     data[key] = value;
     console.log(data,"data in ajax_put",JSON.stringify(data))
@@ -663,6 +697,7 @@ function ajax_put(path,key,value){
 }
 
 function openTab(tabID) {
+    // Close one tab, and open another
     var tabs = document.getElementsByClassName("tab-content")
     if (tabID == "one") {
       tabs[1].style.display = "block"
@@ -674,5 +709,6 @@ function openTab(tabID) {
 }
 
 function change_mode(time_based) {
+    // Change capture mode depending on what the user wants
     ajax_put('settings/capture','capture_mode',time_based)
 }

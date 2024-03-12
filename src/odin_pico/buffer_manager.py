@@ -46,6 +46,7 @@ class BufferManager:
         """Create the buffers that the picoscope will be mapped onto for data collection."""
         self.clear_arrays()
 
+        # Cycle through channels, checking if they are active, and then PHA and LV active
         for chan in self.channels:
             if chan.active is True:
                 self.active_channels.append(chan.channel_id)
@@ -55,7 +56,7 @@ class BufferManager:
                     self.pha_channels_active[chan.channel_id] = True
                     self.pha_active_channels.append(chan.channel_id)
 
-        # n_captures = self.dev_conf.capture.n_captures
+        # Set amount of captures the scope will expect
         n_captures = math.trunc(
             self.dev_conf.capture_run.caps_max / len(self.active_channels)
         )
@@ -67,6 +68,7 @@ class BufferManager:
             + self.dev_conf.capture.post_trig_samples
         )
 
+        # Create buffers, which will be recycled throughout
         for chan in self.channels:
             if chan.active is True:
                 self.np_channel_arrays.append(
@@ -84,6 +86,7 @@ class BufferManager:
             + self.dev_conf.capture.post_trig_samples
         )
 
+        # Create recyclable buffers
         for chan in self.channels:
             if chan.active is True:
                 self.np_channel_arrays.append(

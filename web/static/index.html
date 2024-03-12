@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>ODIN-Picoscope</title>
+    <title>Alpha-Spec</title>
 
     <!-- Bootstrap -->
     <link href="js/bootstrap-3.3.6-dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,8 +18,11 @@
     <nav id="custom-navbar" class="navbar navbar-inverse navbar-fixed-top">
       <div id="custom-container-fluid" class="container-fluid">
         <div id="custom-navbar-header" class="navbar-header">
-          <div id="custom-navbar-brand" class="navbar-brand">ODIN-Server | Picoscope</div>
-          <div id="separator"></div>
+          <div id="custom-navbar-brand" class="navbar-brand">ODIN-Control | Alpha-Spec</div>
+          <div style="background-color: white;">
+            <img src="logo.png" style="width: 90px">
+          </div>
+          <!-- <div id="separator"></div> -->
           <span id="custom-item-label">Status:</span>
           <span id="custom-item1">Connection: <span id="connection_status"></span></span>
           <span id="custom-item2">Capture Type: <span id="cap_type_status">True</span></span>
@@ -42,10 +45,10 @@
                         <div class="panel-heading panel-heading-nav">
                           <ul class="nav nav-tabs">
                             <li role="presentation" class="active" onclick = "openTab('one')">
-                              <a href="#" role="tab" data-toggle="tab">Setup</a>
+                              <a href="#setup" role="tab" data-toggle="tab">Setup</a>
                             </li>
                             <li role="presentation" onclick = "openTab('two')">
-                              <a href="#" role="tab" data-toggle="tab">Capture</a>
+                              <a href="#capture" role="tab" data-toggle="tab">Capture</a>
                             </li>
                           </ul>
                           <div class="col-sm-12">

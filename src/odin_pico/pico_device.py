@@ -1,7 +1,6 @@
 """Manage the PicoScope in preparing for, and extracting the data."""
 
 import ctypes
-import logging
 import time
 
 from picosdk.functions import mV2adc
@@ -40,17 +39,16 @@ class PicoDevice:
 
     def open_unit(self):
         """Initalise connection with the picoscope, and settings the status values."""
-        logging.debug("Trying to open Device")
+        # Open the PicoScope
         self.pico_status.open_unit = ps.ps5000aOpenUnit(
             ctypes.byref(self.dev_conf.mode.handle), None, self.dev_conf.mode.resolution
         )
+
+        # Set maximum values
         if self.pico_status.open_unit == 0:
             ps.ps5000aMaximumValue(
                 self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_adc)
             )
-        logging.debug(
-            f"open_unit value:{self.pico_status.open_unit} /nopen_unit() finished"
-        )
 
     def assign_pico_memory(self):
         """Give PicoScope memory locations for data to be extracted.
@@ -58,84 +56,90 @@ class PicoDevice:
         Map the local buffers in the buffer_manager to the picoscope for
         each individual trace to be captured on each channel by the picoscope.
         """
-        if True:
-            n_captures = self.dev_conf.capture_run.caps_in_run
-            ps.ps5000aMemorySegments(
-                self.dev_conf.mode.handle,
-                n_captures,
-                ctypes.byref(self.dev_conf.meta_data.samples_per_seg),
-            )
-            ps.ps5000aSetNoOfCaptures(self.dev_conf.mode.handle, n_captures)
-            samples = (
-                self.dev_conf.capture.pre_trig_samples
-                + self.dev_conf.capture.post_trig_samples
-            )
+        # Set the number of memory segments to be used
+        n_captures = self.dev_conf.capture_run.caps_in_run
+        ps.ps5000aMemorySegments(
+            self.dev_conf.mode.handle,
+            n_captures,
+            ctypes.byref(self.dev_conf.meta_data.samples_per_seg),
+        )
 
-            for c, b in zip(
-                self.buffer_manager.active_channels,
-                self.buffer_manager.np_channel_arrays,
-            ):
-                for i in range(self.dev_conf.capture_run.caps_in_run):
-                    buff = b[i]
-                    ps.ps5000aSetDataBuffer(
-                        self.dev_conf.mode.handle,
-                        c,
-                        buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)),
-                        samples,
-                        i - self.dev_conf.capture_run.caps_comp,
-                        0,
-                    )
+        # Set the number of captures to be requested
+        ps.ps5000aSetNoOfCaptures(self.dev_conf.mode.handle, n_captures)
+        samples = (
+            self.dev_conf.capture.pre_trig_samples
+            + self.dev_conf.capture.post_trig_samples
+        )
+
+        # Assign data buffers for the PicoScope to write to
+        for c, b in zip(
+            self.buffer_manager.active_channels,
+            self.buffer_manager.np_channel_arrays,
+        ):
+            for i in range(self.dev_conf.capture_run.caps_in_run):
+                buff = b[i]
+                ps.ps5000aSetDataBuffer(
+                    self.dev_conf.mode.handle,
+                    c,
+                    buff.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)),
+                    samples,
+                    i - self.dev_conf.capture_run.caps_comp,
+                    0,
+                )
 
     def set_trigger(self):
         """Responsible for setting the trigger information on the picoscope."""
-        if True:
-            channel_range = next(
-                (
-                    chan.range
-                    for chan in self.channels
-                    if chan.channel_id == self.dev_conf.trigger.source
-                ),
-                None,
+        # Find the channel ranges
+        channel_range = next(
+            (
+                chan.range
+                for chan in self.channels
+                if chan.channel_id == self.dev_conf.trigger.source
+            ),
+            None,
+        )
+
+        # Find the trigger threshold
+        threshold = int(
+            mV2adc(
+                self.dev_conf.trigger.threshold,
+                channel_range,
+                self.dev_conf.meta_data.max_adc,
             )
-            threshold = int(
-                mV2adc(
-                    self.dev_conf.trigger.threshold,
-                    channel_range,
-                    self.dev_conf.meta_data.max_adc,
-                )
-            )
-            ps.ps5000aSetSimpleTrigger(
-                self.dev_conf.mode.handle,
-                self.dev_conf.trigger.active,
-                self.dev_conf.trigger.source,
-                threshold,
-                self.dev_conf.trigger.direction,
-                self.dev_conf.trigger.delay,
-                self.dev_conf.trigger.auto_trigger_ms,
-            )
+        )
+
+        # Set up the trigger
+        ps.ps5000aSetSimpleTrigger(
+            self.dev_conf.mode.handle,
+            self.dev_conf.trigger.active,
+            self.dev_conf.trigger.source,
+            threshold,
+            self.dev_conf.trigger.direction,
+            self.dev_conf.trigger.delay,
+            self.dev_conf.trigger.auto_trigger_ms,
+        )
 
     def set_channels(self):
         """Set the channel information for each channel on the picoscope."""
-        if True:
-            for chan in self.channels:
-                max_v = ctypes.c_float(0)
-                min_v = ctypes.c_float(0)
-                ps.ps5000aGetAnalogueOffset(
-                    self.dev_conf.mode.handle,
-                    chan.range,
-                    chan.coupling,
-                    ctypes.byref(max_v),
-                    ctypes.byref(min_v),
-                )
+        for chan in self.channels:
+            max_v = ctypes.c_float(0)
+            min_v = ctypes.c_float(0)
+            ps.ps5000aGetAnalogueOffset(
+                self.dev_conf.mode.handle,
+                chan.range,
+                chan.coupling,
+                ctypes.byref(max_v),
+                ctypes.byref(min_v),
+            )
 
-                ps.ps5000aSetChannel(
-                    self.dev_conf.mode.handle,
-                    chan.channel_id,
-                    int(chan.active),
-                    chan.coupling,
-                    chan.range,
-                    chan.offset,
-                )
+            ps.ps5000aSetChannel(
+                self.dev_conf.mode.handle,
+                chan.channel_id,
+                int(chan.active),
+                chan.coupling,
+                chan.range,
+                chan.offset,
+            )
 
     def run_setup(self, *args):
         """Responsible for "setting up" the picoscope.
@@ -143,12 +147,11 @@ class PicoDevice:
         Call functions that apply local settings to the picoscope
         and for calling the buffer generating function.
         """
+        # Open the scope if not already open
         if self.pico_status.open_unit != 0:
-            # self.pico_status.flags.system_state = "Waiting for connection"
             self.open_unit()
 
         if self.pico_status.open_unit == 0:
-            # self.pico_status.flags.system_state = "Connected to Picoscope"
             self.set_channels()
             self.set_trigger()
 
@@ -160,12 +163,11 @@ class PicoDevice:
 
     def run_tb_setup(self):
         """Prepare the scope for a time-based capture."""
+        # Open the scope if not already open
         if self.pico_status.open_unit != 0:
-            # self.pico_status.flags.system_state = "Waiting for connection"
             self.open_unit()
 
         if self.pico_status.open_unit == 0:
-            # self.pico_status.flags.system_state = "Connected to Picoscope"
             self.set_channels()
             self.set_trigger()
             return True
@@ -180,76 +182,75 @@ class PicoDevice:
         self.prev_seg_caps = 0
         self.seg_caps = 0
 
-        # print(f'\n\npico_status when called: {self.pico_status.flags.system_state}')
+        # Keep track of time in case it takes too long
+        start_time = time.time()
+        t = time.time()
+        self.pico_status.block_ready = ctypes.c_int16(0)
+        self.dev_conf.meta_data.total_cap_samples = (
+            self.dev_conf.capture.pre_trig_samples
+            + self.dev_conf.capture.post_trig_samples
+        )
+        self.dev_conf.meta_data.max_samples = ctypes.c_int32(
+            self.dev_conf.meta_data.total_cap_samples
+        )
 
-        if True:
-            start_time = time.time()
-            t = time.time()
-            self.pico_status.block_ready = ctypes.c_int16(0)
-            self.dev_conf.meta_data.total_cap_samples = (
-                self.dev_conf.capture.pre_trig_samples
-                + self.dev_conf.capture.post_trig_samples
-            )
-            self.dev_conf.meta_data.max_samples = ctypes.c_int32(
-                self.dev_conf.meta_data.total_cap_samples
-            )
-            ps.ps5000aRunBlock(
+        # Send command to the scope to begin the rapid block mode
+        ps.ps5000aRunBlock(
+            self.dev_conf.mode.handle,
+            self.dev_conf.capture.pre_trig_samples,
+            self.dev_conf.capture.post_trig_samples,
+            self.dev_conf.mode.timebase,
+            None,
+            0,
+            None,
+            None,
+        )
+
+        # Waits until the scope has finished collecting all of the captures
+        while (
+            self.pico_status.block_ready.value == self.pico_status.block_check.value
+        ):
+            ps.ps5000aIsReady(
                 self.dev_conf.mode.handle,
-                self.dev_conf.capture.pre_trig_samples,
-                self.dev_conf.capture.post_trig_samples,
-                self.dev_conf.mode.timebase,
-                None,
-                0,
-                None,
-                None,
+                ctypes.byref(self.pico_status.block_ready),
             )
-            # self.pico_status.flags.system_state = "Collecting Data"
 
-            # 7a. To obtain data before rapid block capture has finished, call ps5000aStop and then
-            # ps5000aGetNoOfCaptures to find out how many captures were completed
+            if time.time() - t >= 0.25:
+                t = time.time()
+                self.get_cap_count()
+                print(f"Caps: {self.dev_conf.capture_run.live_cap_comp}")
 
-            while (
-                self.pico_status.block_ready.value == self.pico_status.block_check.value
-            ):
-                ps.ps5000aIsReady(
-                    self.dev_conf.mode.handle,
-                    ctypes.byref(self.pico_status.block_ready),
-                )
+            if (time.time() - start_time) > 10:
+                self.get_cap_count()
+                if self.seg_caps == 0:
+                    self.pico_status.flags.abort_cap = True
 
-                if time.time() - t >= 0.25:
-                    t = time.time()
-                    self.get_cap_count()
-                    print(f"Caps: {self.dev_conf.capture_run.live_cap_comp}")
-
-                if (time.time() - start_time) > 10:
-                    self.get_cap_count()
-                    if self.seg_caps == 0:
-                        self.pico_status.flags.abort_cap = True
-
-                if self.pico_status.flags.abort_cap:
-                    ps.ps5000aStop(self.dev_conf.mode.handle)
-                    self.pico_status.block_check.value = 1
-
-                time.sleep(0.05)
-                self.prev_seg_caps = self.seg_caps
-
-            self.get_cap_count()
-
+            # Stop scope if user chooses to abort capture
             if self.pico_status.flags.abort_cap:
-                seg_to_indx = self.seg_caps
-            else:
-                seg_to_indx = self.dev_conf.capture_run.caps_in_run - 1
+                ps.ps5000aStop(self.dev_conf.mode.handle)
+                self.pico_status.block_check.value = 1
 
-            ps.ps5000aGetValuesBulk(
-                self.dev_conf.mode.handle,
-                ctypes.byref(self.dev_conf.meta_data.max_samples),
-                0,
-                (seg_to_indx),
-                0,
-                0,
-                ctypes.byref(self.buffer_manager.overflow),
-            )
-            self.get_trigger_timing()
+            time.sleep(0.05)
+            self.prev_seg_caps = self.seg_caps
+
+        self.get_cap_count()
+
+        if self.pico_status.flags.abort_cap:
+            seg_to_indx = self.seg_caps
+        else:
+            seg_to_indx = self.dev_conf.capture_run.caps_in_run - 1
+
+        # Retrive the captures that have been collected
+        ps.ps5000aGetValuesBulk(
+            self.dev_conf.mode.handle,
+            ctypes.byref(self.dev_conf.meta_data.max_samples),
+            0,
+            (seg_to_indx),
+            0,
+            0,
+            ctypes.byref(self.buffer_manager.overflow),
+        )
+        self.get_trigger_timing()
 
     def get_trigger_timing(self):
         """Retrieve the trigger timing from the scope."""
@@ -273,7 +274,6 @@ class PicoDevice:
         if (ps.ps5000aPingUnit(self.dev_conf.mode.handle)) == 0:
             return True
         else:
-            # self.pico_status.open_unit = -1
             return False
 
     def get_cap_count(self):
@@ -287,8 +287,7 @@ class PicoDevice:
 
     def stop_scope(self):
         """Tell scope to stop activity and close connection."""
-        if True:
-            self.pico_status.stop = ps.ps5000aStop(self.dev_conf.mode.handle)
-            self.pico_status.close = ps.ps5000aCloseUnit(self.dev_conf.mode.handle)
-            if self.pico_status.stop == 0:
-                self.pico_status.open_unit = -1
+        self.pico_status.stop = ps.ps5000aStop(self.dev_conf.mode.handle)
+        self.pico_status.close = ps.ps5000aCloseUnit(self.dev_conf.mode.handle)
+        if self.pico_status.stop == 0:
+            self.pico_status.open_unit = -1

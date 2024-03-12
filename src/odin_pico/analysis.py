@@ -51,7 +51,7 @@ class PicoAnalysis:
                 self.buffer_manager.accumulate_pha(chan, self.np_array)
                 self.np_array += 1
         else:
-            for channel in self.buffer_manager.active_channels:
+            for channel in self.buffer_manager.pha_active_channels:
                 self.get_pha_data(channel)
                 self.buffer_manager.accumulate_pha(channel, self.np_array)
                 self.np_array += 1

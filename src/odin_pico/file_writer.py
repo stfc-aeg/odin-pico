@@ -32,7 +32,6 @@ class FileWriter:
 
     def check_file_name(self):
         """Identify the file path before collecting data."""
-
         # Check whether file name is empty, or file already exists
         if (self.dev_conf.file.file_name) == "" or (
             os.path.isfile(
@@ -50,6 +49,10 @@ class FileWriter:
             if not (self.dev_conf.file.file_name[-5:] == ".hdf5"):
                 self.dev_conf.file.file_name = self.dev_conf.file.file_name + ".hdf5"
 
+        self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-5]
+        self.dev_conf.file.file_name = self.dev_conf.file.file_name + "_0.hdf5"
+        self.capture_number = 1
+
         # Check if folder name is valid
         if (
             self.dev_conf.file.folder_name != ""
@@ -65,10 +68,6 @@ class FileWriter:
 
     def write_hdf5(self):
         """Create and write to a hdf5 file."""
-        self.pico_status.flags.system_state = (
-            "Connected to Picoscope, Writing hdf5 File"
-        )
-
         metadata = self.util.flatten_metadata_dict(
             {
                 "active_channels": self.buffer_manager.active_channels[:],
@@ -83,12 +82,9 @@ class FileWriter:
         )
 
         # Changes file name depending on how many times capture has been run
-        if self.capture_number == 1:
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-5]
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name + "_1.hdf5"
-        else:
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name + "_" + str(self.capture_number) + ".hdf5"
+        self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
+        file_name = self.dev_conf.file.file_name
+        self.dev_conf.file.file_name = file_name + "_" + str(self.capture_number) + ".hdf5"
         self.capture_number += 1
 
 
@@ -127,8 +123,4 @@ class FileWriter:
             self.dev_conf.file.last_write_success = False
             return
 
-        # Changes status to show user that file has been written
-        self.pico_status.flags.system_state = (
-            "Connected to Picoscope, hdf5 file written"
-        )
         self.dev_conf.file.last_write_success = True
