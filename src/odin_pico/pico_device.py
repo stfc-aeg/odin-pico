@@ -1,6 +1,7 @@
 """Manage the PicoScope in preparing for, and extracting the data."""
 
 import ctypes
+import numpy as np
 import time
 
 from picosdk.functions import mV2adc
@@ -18,6 +19,7 @@ class PicoDevice:
 
     def __init__(
         self,
+        max_samples,
         dev_conf=DeviceConfig(),
         pico_status=DeviceStatus(),
         buffer_manager=BufferManager(),
@@ -36,6 +38,9 @@ class PicoDevice:
             self.dev_conf.channel_c,
             self.dev_conf.channel_d,
         ]
+        self.max_samples = max_samples
+        self.rec_caps = 0
+        self.rec_time = 0
 
     def open_unit(self):
         """Initalise connection with the picoscope, and settings the status values."""
@@ -251,6 +256,7 @@ class PicoDevice:
             ctypes.byref(self.buffer_manager.overflow),
         )
         self.get_trigger_timing()
+        print("TIME FOR CAPTURE", (time.time() - start_time))
 
     def get_trigger_timing(self):
         """Retrieve the trigger timing from the scope."""
@@ -284,6 +290,61 @@ class PicoDevice:
         self.dev_conf.capture_run.live_cap_comp = (
             self.dev_conf.capture_run.caps_comp + caps.value
         )
+
+    def calc_max_caps(self):
+
+        active_chans = len(self.buffer_manager.active_channels)
+        if active_chans == 0:
+            active_chans = 1
+
+        total_caps = (self.max_samples / active_chans)
+        total_samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
+        self.rec_caps = int(round((total_caps / total_samples), 0))
+
+    def calc_max_time(self, av_time):
+
+        active_chans = len(self.buffer_manager.active_channels)
+        if active_chans == 0:
+            active_chans = 1
+
+        # print("BEFORE", self.buffer_manager.trigger_times)
+        # t_t = self.buffer_manager.trigger_times
+        # # start = self.buffer_manager.trigger_times
+        # # start.pop((len(start)) - 1)
+        # # print("START", start)
+        # # end = self.buffer_manager.trigger_times
+        # # end.pop(0)
+        # # print("END", end)
+        # # differences = np.array(end) - np.array(start)
+        # differences = []
+        # for i in range(9):
+        #     differences.append(t_t[i+1] - t_t[i])
+
+        # print("DIFFERENCE", differences)
+
+        # times = np.average(differences)
+        # print("times", times)
+        # print("TEST", (self.buffer_manager.trigger_times[1] - self.buffer_manager.trigger_times[0]))
+
+        # For 10 captures
+        times = av_time / 10
+        # print("AV_TIME", av_time)
+
+        samples = self.dev_conf.capture.pre_trig_samples + self.dev_conf.capture.post_trig_samples
+        caps = int(self.max_samples / (samples))
+
+        self.rec_time = float(round((times * caps), 2))
+
+        #### We want the same amount of captures as offered for the capture number mode
+        self.rec_caps
+        #### But, this is for each channel. How long extra does is it take for multiple channels?
+        #### This depends on the device, so we have to measure another way
+        #### By timing the lv, there must be a way of estimating the time to reach maximum samples
+        #### But, the caps_in_cycle will affect this, and there is no way of estimating this
+        #### If caps_in_cycle didn't change, it would be a lot simpler
+        #### 100 caps in cycle, take 10 capture lv cap run and multiply by 10
+
+
 
     def stop_scope(self):
         """Tell scope to stop activity and close connection."""

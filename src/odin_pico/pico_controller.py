@@ -23,19 +23,18 @@ class PicoController:
 
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
-    def __init__(self, lock, loop, path):
+    def __init__(self, lock, loop, path, max_caps):
         """Initialise the PicoController Class."""
         # Threading lock and control variables
         self.lock = lock
         self.update_loop_active = loop
-        self.lv_captures = 1
 
         # Initialise variables for data collection
         self.enable = False
-        self.lv_active = True
         self.caps_collected = 0
         self.current_time = 0
         self.current_capture = 0
+        self.file_error = False
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
         self.dev_conf = DeviceConfig()
@@ -57,7 +56,7 @@ class PicoController:
         self.analysis = PicoAnalysis(
             self.dev_conf, self.buffer_manager, self.pico_status
         )
-        self.pico = PicoDevice(self.dev_conf, self.pico_status, self.buffer_manager)
+        self.pico = PicoDevice(max_caps, self.dev_conf, self.pico_status, self.buffer_manager)
 
         # ParameterTrees to represent different parts of the system
         adapter_status = ParameterTree(
@@ -258,7 +257,9 @@ class PicoController:
                 "capture_repeat": (
                     lambda: self.dev_conf.capture.capture_repeat,
                     partial(self.set_dc_value, self.dev_conf.capture, "capture_repeat"),
-                )
+                ),
+                "max_captures": (lambda: self.pico.rec_caps, None),
+                "max_time": (lambda: self.pico.rec_time, None)
             }
         )
 
@@ -361,10 +362,6 @@ class PicoController:
                 "clear_pha": (
                     lambda: self.analysis.clear_pha,
                     partial(self.set_dc_value, self.analysis, "clear_pha"),
-                ),
-                "live_view_active": (
-                    lambda: self.lv_active,
-                    partial(self.set_dc_value, self, "lv_active"),
                 ),
             }
         )
@@ -568,70 +565,91 @@ class PicoController:
 
             # Check if user has requested a capture
             if self.pico_status.flags.user_capture:
-                self.file_writer.check_file_name()
+                if self.file_writer.check_file_name() == True:
 
-                # Check if user has requested the capture to be repeated
-                if self.dev_conf.capture.capture_repeat:
-                    cap_loop = self.dev_conf.capture.repeat_amount
-                    delay = self.dev_conf.capture.capture_delay
-                else:
-                    cap_loop = 1
-                    delay = 0
+                    self.file_error = False
 
-                for capture_run in range(cap_loop):
-                    self.buffer_manager.pha_counts = [[]] * 4
-
-                    self.buffer_manager.pha_counts = [[]] * 4
-                    self.current_capture = capture_run
-
-                    # Complete a capture run, with the scope collecting a defined amount of captures
-                    if not self.dev_conf.capture.capture_type:
-                        if not self.pico_status.flags.abort_cap:
-                            self.pico_status.flags.system_state = (
-                                "Collecting Requested Captures, Capture: " + str(capture_run + 1)
-                            )
-                            self.user_capture(True)
+                    # Check if user has requested the capture to be repeated
+                    if self.dev_conf.capture.capture_repeat:
+                        cap_loop = self.dev_conf.capture.repeat_amount
+                        delay = self.dev_conf.capture.capture_delay
                     else:
-                        # Complete a capture test, to determine capture frequency
-                        if capture_run == 0:
-                            self.pico_status.flags.system_state = ("Testing Capture Rate")
-                            self.caps_per_cycle()
+                        cap_loop = 1
+                        delay = 0
 
-                        # Complete a capture run, for a pre-determined amount of time
-                        if not self.pico_status.flags.abort_cap:
-                            self.pico_status.flags.system_state = (
-                                "Completing Time-Based Capture Collection, Capture: "
-                                + str(capture_run + 1)
-                            )
-                            self.tb_capture(False)
+                    for capture_run in range(cap_loop):
+                        start = time.time()
+                        self.buffer_manager.pha_counts = [[]] * 4
 
-                    # Delay between capture runs, if requested by user
-                    if capture_run != (cap_loop - 1):
-                        self.pico_status.flags.system_state = ("Delay Between Captures")
-                        start_time = time.time()
-                        while (time.time() - start_time) < delay:
-                            if self.pico_status.flags.abort_cap:
-                                delay = 0
-
-                    # Change system state, depends on if capture was repeated
-                    if (capture_run + 1) == cap_loop:
-                        if cap_loop == 1:
-                            self.pico_status.flags.system_state = (
-                                "Capture Collected, File Written")
-                        else:
-                            self.pico_status.flags.system_state = (
-                                "Captures Collected, Files Written"
-                            )
+                        self.buffer_manager.pha_counts = [[]] * 4
+                        self.current_capture = capture_run
                         self.current_time = 0
-                self.current_capture = 0
-                self.file_writer.capture_number = 1
-                self.pico_status.flags.user_capture = False
-                self.pico_status.flags.abort_cap = False
+                        # print("ONE", time.time() - start)
+
+                        # Complete a capture run, with the scope collecting a defined amount of captures
+                        if not self.dev_conf.capture.capture_type:
+                            if not self.pico_status.flags.abort_cap:
+                                self.pico_status.flags.system_state = (
+                                    "Collecting Requested Captures, Capture: " + str(capture_run + 1)
+                                )
+                                self.user_capture(True)
+                                # print("TWO", time.time() - start)
+                        else:
+                            # Complete a capture test, to determine capture frequency
+                            if capture_run == 0:
+                                self.pico_status.flags.system_state = ("Testing Capture Rate")
+                                self.caps_per_cycle()
+
+                            # Complete a capture run, for a pre-determined amount of time
+                            if not self.pico_status.flags.abort_cap:
+                                self.pico_status.flags.system_state = (
+                                    "Completing Time-Based Capture Collection, Capture: "
+                                    + str(capture_run + 1)
+                                )
+                                self.tb_capture(False)
+
+                        # Delay between capture runs, if requested by user
+                        if capture_run != (cap_loop - 1):
+                            self.pico_status.flags.system_state = ("Delay Between Captures")
+                            start_time = time.time()
+                            while (time.time() - start_time) < delay:
+                                if self.pico_status.flags.abort_cap:
+                                    delay = 0
+
+                        # Change system state, depends on if capture was repeated
+                        if (capture_run + 1) == cap_loop:
+                            # if cap_loop == 1:
+                            #     self.pico_status.flags.system_state = (
+                            #         "Capture Collected, File Written"
+                            #     )
+                            # else:
+                            #     self.pico_status.flags.system_state = (
+                            #         "Captures Collected, Files Written"
+                            #     )
+                            self.current_time = 0
+                    self.current_capture = 0
+                    self.file_writer.capture_number = 1
+                    self.pico_status.flags.user_capture = False
+                    self.pico_status.flags.abort_cap = False
+                    # print("CAPTURE TIME", time.time() - start)
+
+                else:
+                    self.file_error = True
+                    self.pico_status.flags.system_state = "File Name Empty or Already Exists. Fix and Re-Capture"
+                    self.pico_status.flags.user_capture = False
 
             # If user hasn't requested a capture, complete a LV capture run
             else:
-                self.pico_status.flags.system_state = "Collecting LV Data"
+                if not self.file_error:
+                    self.pico_status.flags.system_state = "Collecting LV Data"
+                self.pico.calc_max_caps()
+                cap_time = time.time()
                 self.user_capture(False)
+                # print("ALL CAP", time.time() - cap_time)
+                self.pico.calc_max_time(time.time() - cap_time)
+                # print("T_T", self.buffer_manager.trigger_times)
+                # print("TYPE", type(self.buffer_manager.trigger_times[1]))
+                # print("DIFF", (self.buffer_manager.trigger_times[2] - self.buffer_manager.trigger_times[1]))
 
         if (self.pico_status.open_unit == 0) and (
             self.pico_status.flags.verify_all is False
@@ -673,15 +691,24 @@ class PicoController:
     def capture_run(self):
         """Run the necessary steps for a capture."""
         # Run the scope, and update the captures completed
+        # print("START CAP RUN")
+        # one = time.time()
         self.pico.assign_pico_memory()
+        # two = time.time()
         self.pico.run_block()
+        # three = time.time()
         self.dev_conf.capture_run.caps_comp += self.pico.seg_caps * len(
             self.buffer_manager.active_channels
         )
 
         # Process the data, for the purposes of LV and PHA
         self.buffer_manager.save_lv_data()
+        # four = time.time()
         self.analysis.pha_one_peak()
+        # print("ONE", two-one)
+        # print("TWO", three-two)
+        # print("THREE", four-three)
+        # print("FOUR", time.time()-four)
 
     def tb_capture(self, test):
         """Run the necessary steps for a set of time-based captures."""
@@ -715,8 +742,8 @@ class PicoController:
             if not test:
                 self.file_writer.write_hdf5()
 
-
         self.caps_collected = self.dev_conf.capture_run.caps_comp
+        print("COLLECTED", self.caps_collected)
         if not test:
             self.dev_conf.capture_run.reset()
 
@@ -730,6 +757,7 @@ class PicoController:
 
         # Calculate the recommended caps_per_cycle depending on results
         caps_per_second = (self.dev_conf.capture_run.caps_comp / 10)
+        print("CPS", caps_per_second)
         self.dev_conf.capture.caps_in_cycle = ((caps_per_second * total_time) / 10)
         self.dev_conf.capture.capture_time = total_time
         self.dev_conf.capture_run.reset()

@@ -18,16 +18,16 @@
     <nav id="custom-navbar" class="navbar navbar-inverse navbar-fixed-top">
       <div id="custom-container-fluid" class="container-fluid">
         <div id="custom-navbar-header" class="navbar-header">
-          <div id="custom-navbar-brand" class="navbar-brand">ODIN-Control | Alpha-Spec</div>
-          <div style="background-color: white;">
+          <div style="color: white;" id="custom-navbar-brand" class="navbar-brand">ODIN-Control | Alpha-Spec</div>
+          <div style="background-color: whitesmoke;">
             <img src="logo.png" style="width: 90px">
           </div>
           <!-- <div id="separator"></div> -->
-          <span id="custom-item-label">Status:</span>
-          <span id="custom-item1">Connection: <span id="connection_status"></span></span>
-          <span id="custom-item2">Capture Type: <span id="cap_type_status">True</span></span>
-          <span id="custom-item3">Settings valid: <span id="settings_status"></span></span>
-          <span id="custom-item4">System State: <span id="system-state"></span></span>
+          <span style="color: white;" id="custom-item-label">Status:</span>
+          <span style="color: white;" id="custom-item1">Connection: <span id="connection_status"></span></span>
+          <span style="color: white;" id="custom-item2">Capture Type: <span id="cap_type_status">True</span></span>
+          <span style="color: white;" id="custom-item3">Settings valid: <span id="settings_status"></span></span>
+          <span style="color: white;" id="custom-item4">System State: <span id="system-state"></span></span>
         </div>
       </div>
     </nav>
@@ -361,38 +361,40 @@
                                 <div class="panel-body">
                                   <table class="table table-striped">
                                     <tr id ="capture-row">
-                                      <th style="padding-right: 30px;">
+                                      <th style="padding-right: 30px; width: 170px;">
                                         <input type="radio" id="capture-mode-num" oninput="change_mode(false)">
                                         <label for="capture-mode-num">Number of Caps</label>
                                         <input type="radio" id="capture-mode-time" oninput="change_mode(true)">
                                         <label for="capture-mode-time">Time-Based Cap</label><br>
                                       </th>
                                       <th style="padding-right: 0px;">
-                                        <label for="capture-count">Number of Caps:</label>
+                                        <label for="capture-count">Number of Captures:</label>
                                         <input id="capture-count" type="text" oninput="commit_int_adapter('capture-count','settings/capture/','n_captures')" />
+                                        <span>Recommended Max : </span><span id="suggest-caps"></span>
                                       </th>
                                       <th style="padding-right: 0px;">
                                         <label for="capture-time">Capture Time (Seconds):</label>
                                         <input id="capture-time" type="text" oninput="commit_int_adapter('capture-time','settings/capture/','capture_time')" />
+                                        <span>Recommended Max : </span><span id="suggest-time"></span>
                                       </th>
                                     </tr>
                                   </table>                           
                                 </div>  
                               </div>
                               <div id="setup-4" class="panel panel-default">
-                                <div class="panel-heading">Repeating Capture</div>
+                                <div class="panel-heading">Acquisition Settings</div>
                                 <div class="panel-body">
                                   <table class="table table-striped">
                                     <tr id="repeat-cap-row">
                                       <th>
-                                        <label for="cap-repeat">Repeat Capture:&nbsp;</label>
+                                        <label for="cap-repeat">Repeat Acquisition:&nbsp;</label>
                                         <label class="switch">
                                           <input type="checkbox" id="cap-repeat" onclick="commit_checked_adapter('cap-repeat','settings/capture/','capture_repeat')">
                                           <span class="slider round"></span>
                                         </label>
                                       </th>
                                       <th style="width: 260px;">
-                                        <label for="repeat-amount">Number of Repetitions:&nbsp;</label>
+                                        <label for="repeat-amount">Number of Acquisitions:&nbsp;</label>
                                         <input id="repeat-amount" type="text" oninput="commit_int_adapter('repeat-amount','settings/capture/','repeat_amount')" />
                                       </th>
                                       <th style="width: 260px;">
@@ -440,8 +442,8 @@
                                     </tr>
                                     <tr>
                                       <tr id="file-info-row">
-                                        <th><span>Recorded: </span><span id="file-write-succ-span">False</span></th>
-                                        <th style="padding-right: 4px;"><span>File: </span><span id="file-name-span"></span></th>
+                                        <th><span>File: </span><span id="file-name-span"></span></th>
+                                        <th><span>Recorded : </span><span id="file-write-succ-span">False</span></th>
                                       </tr>
                                       <tr id="cap-progress">
                                         <th colspan="3">
@@ -492,22 +494,7 @@
                                     </fieldset>
                                   </form>
                                 </div>
-                                <div class="col-sm-5">
-                                  <span>Liveview Range&nbsp;</span>
-                                  <select id="lv_range" onchange="commit_int_adapter('lv_range','live_view/','lv_range')">
-                                    <option value = "0">10 mV</option>
-                                    <option value = "1">20 mV</option> 
-                                    <option value = "2">50 mV</option>
-                                    <option value = "3">100 mV</option>
-                                    <option value = "4">200 mV</option>
-                                    <option value = "5">500 mV</option>
-                                    <option value = "6">1 V</option>
-                                    <option value = "7">2 V</option> 
-                                    <option value = "8">5 V</option>
-                                    <option value = "9">10 V</option>
-                                    <option value = "10">20 V</option>
-                                  </select>
-                                </div>
+                                <div class="col-sm-5"></div>
                                 <td class="toggle-container-lv">
                                   <button id="p_p_button_lv" class="icon-button" onclick="toggle_play_lv()">
                                     <span class="material-icons">pause_circle_outline</span>

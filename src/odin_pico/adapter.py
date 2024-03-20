@@ -21,7 +21,9 @@ class PicoAdapter(ApiAdapter):
         self.lock = threading.Lock()
         update_loop = True
         data_output_path = self.options.get("data_output_path", "/tmp/")
-        self.pico_controller = PicoController(self.lock, update_loop, data_output_path)
+        max_caps = self.options.get("max_caps", "/tmp/")
+
+        self.pico_controller = PicoController(self.lock, update_loop, data_output_path, int(max_caps))
 
     @response_types("application/json", default="application/json")
     def get(self, path, request):

@@ -40,18 +40,12 @@ class FileWriter:
                 + self.dev_conf.file.file_name
             )
         ):
-            # If file name is not valid, change file name to date/time
-            self.dev_conf.file.file_name = (str(datetime.now())).replace(
-                " ", "_"
-            ) + ".hdf5"
+            return False
+
         else:
             # Check if file is missing '.hdf5' at the end
             if not (self.dev_conf.file.file_name[-5:] == ".hdf5"):
                 self.dev_conf.file.file_name = self.dev_conf.file.file_name + ".hdf5"
-
-        self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-5]
-        self.dev_conf.file.file_name = self.dev_conf.file.file_name + "_0.hdf5"
-        self.capture_number = 1
 
         # Check if folder name is valid
         if (
@@ -65,6 +59,8 @@ class FileWriter:
             os.path.isdir(self.dev_conf.file.file_path + self.dev_conf.file.folder_name)
         ):
             os.mkdir(self.dev_conf.file.file_path + self.dev_conf.file.folder_name)
+
+        return True
 
     def write_hdf5(self):
         """Create and write to a hdf5 file."""
@@ -82,9 +78,13 @@ class FileWriter:
         )
 
         # Changes file name depending on how many times capture has been run
-        self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
+        if self.capture_number == 1:
+            self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-5]
+            self.dev_conf.file.file_name = self.dev_conf.file.file_name + "_" + str(self.capture_number) + ".hdf5"
+        else:
+            self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-6]
+            self.dev_conf.file.file_name = self.dev_conf.file.file_name + str(self.capture_number) + ".hdf5"
         file_name = self.dev_conf.file.file_name
-        self.dev_conf.file.file_name = file_name + "_" + str(self.capture_number) + ".hdf5"
         self.capture_number += 1
 
 

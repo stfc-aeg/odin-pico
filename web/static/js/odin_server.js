@@ -80,7 +80,7 @@ function update_api_version() {
     });
 }
 
-// Ensure the user cannot type negative numbers into the relevant boxes
+// Ensure the user cannot type negative numbers, or 0 into the relevant boxes
 var pre_trig = document.getElementById("capture-pretrig-samples")
 var post_trig = document.getElementById("capture-posttrig-samples")
 var a_offset = document.getElementById("channel-a-offset")
@@ -95,7 +95,7 @@ var pha_upper = document.getElementById("pha-upper-range")
 var time_textbox = document.getElementById("capture-time")
 var caps_textbox = document.getElementById("capture-count")
 var repeat_amount = document.getElementById("repeat-amount")
-textboxes = [pre_trig, post_trig, a_offset, b_offset, c_offset, d_offset, time_textbox, caps_textbox, trig_delay, trig_auto, bin_nums, pha_lower, pha_upper, repeat_amount]
+textboxes = [pre_trig, post_trig, a_offset, b_offset, c_offset, d_offset, caps_textbox, time_textbox, trig_delay, trig_auto, bin_nums, pha_lower, pha_upper, repeat_amount]
 
 for (let i = 0; i < textboxes.length; i++) {
     textboxes[i].addEventListener("input", function() {
@@ -108,7 +108,7 @@ for (let i = 0; i < textboxes.length; i++) {
     })
 }
 
-// Ensure the user cannot type negative numbers, or 0 into the delay time textbox
+// Ensure the user cannot type negative numbers into the delay time textbox
 var delay_time = document.getElementById("delay-time")
 delay_time.addEventListener("input", function() {
     var value = parseFloat(delay_time.value)
@@ -202,6 +202,8 @@ function update_pha_graph() {
 
         scope_pha = document.getElementById('scope_pha');
 
+        num_data = 0
+
         // Identify the data to be displayed on the graph
         for (var chan = 0; chan < 4; chan++) {
             if (pha_channels[chan] == true) {
@@ -240,7 +242,15 @@ function update_lv_graph() {
         var tickText = []
         var tickVals = []
 
-        let range = get_range_value_mv(lv_range)
+        var pre_samples = document.getElementById("capture-pretrig-samples").value
+        var post_samples = document.getElementById("capture-posttrig-samples").value
+
+        chan_ranges = chan_ranges
+
+        if (active_channels_lv.length > 0) {
+            let range = get_range_value_mv(active_channels_lv[0])
+        }
+            let range = get_range_value_mv(0)
 
         lv_data = []
 
@@ -250,13 +260,12 @@ function update_lv_graph() {
             tickText.push(i.toFixed(1)); 
         }
 
-        // Identify the layout to be used
         layout = {
             title: 'Live View of PicoScope Traces',
             margin: { t: 50, b: 60 },
             xaxis: {
                 title: 'Sample Interval',
-                range: [0, pre_samples + post_samples],
+                range: [-pre_samples, post_samples],
             },
             yaxis: {
                 title: ('Channel  Voltage (mV)'),
@@ -265,18 +274,65 @@ function update_lv_graph() {
                 tickvals: tickVals,
             },
             autosize: true,
-            showlegend: true
+            showlegend: true,
+            legend: {
+                orientation: 'h'
+            }
         }
+
+        var pre_samples = document.getElementById("capture-pretrig-samples").value
 
         // Prepare the data to be shown on the graph
         for (var chan = 0; chan < active_channels_lv.length; chan++) {
             lv_data.push ({
-                x: x = data_array[chan].map((value, index)=> index),
+                x: x = data_array[chan].map((value, index)=> (index - pre_samples)),
                 y: y = data_array[chan],
                 name: ('Channel '+ active_channels_lv_letters[chan]),
                 type: 'scatter',
-                line: {color: channel_colours[active_channels_lv[chan]]}
+                line: {color: channel_colours[active_channels_lv[chan]]},
             })
+            if (chan == 0) {
+                let range = get_range_value_mv(chan_ranges[active_channels_lv[0]])
+
+
+                tickText = []
+                tickVals = []
+                for (var i = -range; i <= range; i += (range / 4)) {
+                    tickVals.push(i);
+                    tickText.push(i.toFixed(1)); 
+                }
+       
+                lv_data[chan].yaxis = 'y1'
+
+                layout.yaxis = {
+                    title: ('Channel ' + active_channels_lv_letters[chan] + ' Voltage (mV)'),
+                    range: [-range, range],
+                    ticktext: tickText,
+                    tickvals: tickVals,
+                }
+
+            } else if (chan == 1) {
+                let range2 = get_range_value_mv(chan_ranges[active_channels_lv[1]])
+
+                tickText2 = []
+                tickVals2 = []
+
+                for (var i = -range2; i <= range2; i += (range2 / 4)) {
+                    tickVals2.push(i);
+                    tickText2.push(i.toFixed(1)); 
+                }
+
+                lv_data[chan].yaxis = 'y2'
+                layout.yaxis2 = {
+                    title: ('Channel ' + active_channels_lv_letters[chan] + ' Voltage (mV)'),
+                    side: 'right',
+                    overlaying: 'y',
+                    range: [-range2, range2],
+                    ticktext: tickText2,
+                    tickvals: tickVals2
+                }
+            }
+
         }
 
         // Create the graph
@@ -354,25 +410,6 @@ function sync_with_adapter(){
                         "repeat-amount", "delay-time", "capture-folder-name", "capture-file-name", "pha-num-bins",
                         "pha-lower-range", "pha-upper-range"]
 
-        // Only allow the relevant boxes to be open, depending on capture mode chosen
-        if (response.device.settings.capture.capture_mode == true) {
-            document.getElementById("capture-count").disabled = true
-            document.getElementById("capture-time").disabled = false
-        } else {
-            document.getElementById("capture-count").disabled = false
-            document.getElementById("capture-time").disabled = true
-        }
-
-        // Only allow the user to enter repetition settings if the repetition setting is on
-        if (response.device.settings.capture.capture_repeat == true) {
-            document.getElementById("repeat-amount").disabled = false
-            document.getElementById("delay-time").disabled = false
-        } else {
-            document.getElementById("repeat-amount").disabled = true
-            document.getElementById("delay-time").disabled = true
-
-        }
-
         for (var setting = 0; setting < focus_strings.length; setting++) {
             if (!focusFlags[focus_strings[setting]]) {$("#" + focus_strings[setting]).val(settings_3[setting])}
         }
@@ -402,6 +439,8 @@ function sync_with_adapter(){
         pre_samples = response.device.settings.capture.pre_trig_samples
         post_samples = response.device.settings.capture.post_trig_samples
         
+        chan_ranges = [chan_responses[0].range, chan_responses[1].range, chan_responses[2].range, chan_responses[3].range]
+
         // Define the colour to be used on the graph for different channels
         channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
 
@@ -414,7 +453,7 @@ function sync_with_adapter(){
                     data_array = response.device.live_view.lv_data
                 }
                 update_lv_graph()
-            }              
+            }
         } catch {
             console.log("Error in assigning and plotting LV values")
         }
@@ -433,11 +472,13 @@ function sync_with_adapter(){
 
         // If user capture is in progress, update the progress bar accordingly
         if (response.device.commands.run_user_capture == true){
+
+            lock_boxes(true)
+
             if (response.device.settings.capture.capture_mode == true) {
                 var cap_percent = ((response.device.live_view.current_tbdc_time / response.device.settings.capture.capture_time) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
             } else {
                 var cap_percent = ((response.device.live_view.capture_count / response.device.live_view.captures_requested) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
-                // var cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
             }
 
             var current_cap = response.device.live_view.current_capture
@@ -452,13 +493,37 @@ function sync_with_adapter(){
             progressBar.style.width = cap_percent + '%';
             progressBar.innerHTML = cap_percent + '%';
         } else {
+            lock_boxes(false)
+
             let progressBar = document.getElementById('capture-progress-bar');
             progressBar.style.width = 0 + '%';
             progressBar.innerHTML = 0 + '%';
+
+            // Only allow the user to enter repetition settings if the repetition setting is on
+            if (response.device.settings.capture.capture_repeat == true) {
+                document.getElementById("repeat-amount").disabled = false
+                document.getElementById("delay-time").disabled = false
+            } else {
+                document.getElementById("repeat-amount").disabled = true
+                document.getElementById("delay-time").disabled = true
+            }
+
+            // Only allow the relevant boxes to be open, depending on capture mode chosen
+            if (response.device.settings.capture.capture_mode == true) {
+                document.getElementById("capture-count").disabled = true
+                document.getElementById("capture-time").disabled = false
+            } else {
+                document.getElementById("capture-count").disabled = false
+                document.getElementById("capture-time").disabled = true
+            }
         }
 
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
-        document.getElementById("file-name-span").textContent = ('capture/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
+        document.getElementById("file-name-span").textContent = ('captures/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
+
+        // Display a recommended capture amount and time length
+        document.getElementById("suggest-caps").textContent = response.device.settings.capture.max_captures
+        document.getElementById("suggest-time").textContent = response.device.settings.capture.max_time        
 
         // Display the 'recorded' attribute as true if a capture has been recorded successfully
         if (response.device.settings.file.last_write_success == true){
@@ -635,8 +700,25 @@ function activate_textbox(checked) {
     } else {
         document.getElementById("cap-label").textContent = "Time Capture"
     }
+}
 
+function lock_boxes(lock) {
+    buttons = ["bit-mode-dropdown", "time-base-input", "capture-pretrig-samples", "capture-posttrig-samples",
+            "channel-a-active", "channel-a-coupl", "channel-a-range", "channel-a-offset",
+            "channel-b-active", "channel-b-coupl", "channel-b-range", "channel-b-offset",
+            "channel-c-active", "channel-c-coupl", "channel-c-range", "channel-c-offset",
+            "channel-d-active", "channel-d-coupl", "channel-d-range", "channel-d-offset", 
+            "trigger-enable", "trigger-source", "trigger-direction", "trigger-threshold",
+            "trigger-delay", "trigger-auto", "pha-num-bins", "pha-lower-range", "pha-upper-range",
+            "capture-mode-num", "capture-mode-time", "cap-repeat", "capture-folder-name", "capture-file-name"]
+    
+    if (lock == true) {
+        buttons.push("repeat-amount", "delay-time", "capture-count", "capture-time")
+    }
 
+    for (var i = 0; i < buttons.length; i++) {
+        document.getElementById(buttons[i]).disabled = lock
+    }
 }
 
 function verify_int(id){
