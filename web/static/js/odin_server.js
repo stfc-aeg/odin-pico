@@ -42,7 +42,6 @@ var focusFlags = {
   "pha-num-bins": false,
   "pha-lower-range": false,
   "pha-upper-range": false,
-  "lv_range": false,
   "capture-time": false,
   "capture-mode-num": true,
   "capture-mode-time": false,
@@ -79,44 +78,6 @@ function update_api_version() {
         api_version = response.api;
     });
 }
-
-// Ensure the user cannot type negative numbers, or 0 into the relevant boxes
-var pre_trig = document.getElementById("capture-pretrig-samples")
-var post_trig = document.getElementById("capture-posttrig-samples")
-var a_offset = document.getElementById("channel-a-offset")
-var b_offset = document.getElementById("channel-b-offset")
-var c_offset = document.getElementById("channel-c-offset")
-var d_offset = document.getElementById("channel-d-offset")
-var trig_delay = document.getElementById("trigger-delay")
-var trig_auto = document.getElementById("trigger-auto")
-var bin_nums = document.getElementById("pha-num-bins")
-var pha_lower = document.getElementById("pha-lower-range")
-var pha_upper = document.getElementById("pha-upper-range")
-var time_textbox = document.getElementById("capture-time")
-var caps_textbox = document.getElementById("capture-count")
-var repeat_amount = document.getElementById("repeat-amount")
-textboxes = [pre_trig, post_trig, a_offset, b_offset, c_offset, d_offset, caps_textbox, time_textbox, trig_delay, trig_auto, bin_nums, pha_lower, pha_upper, repeat_amount]
-
-for (let i = 0; i < textboxes.length; i++) {
-    textboxes[i].addEventListener("input", function() {
-        var value = parseFloat(textboxes[i].value)
-        if (value < 0) {
-            textboxes[i].value = (0 - value)
-        } else if (value < 1) {
-            textboxes[i].value = 1
-        }
-    })
-}
-
-// Ensure the user cannot type negative numbers into the delay time textbox
-var delay_time = document.getElementById("delay-time")
-delay_time.addEventListener("input", function() {
-    var value = parseFloat(delay_time.value)
-    if (value < 0) {
-        delay_time.value = 0 - value
-    }
-})
-
 // Resize plotly graphs after window changes size
 function resize_plotly() {
     let div_width = 0.9*(document.getElementById('setup-6')).offsetWidth;
@@ -245,8 +206,7 @@ function update_lv_graph() {
         var pre_samples = document.getElementById("capture-pretrig-samples").value
         var post_samples = document.getElementById("capture-posttrig-samples").value
 
-        chan_ranges = chan_ranges
-
+        // Use smallest range if no channels active
         if (active_channels_lv.length > 0) {
             let range = get_range_value_mv(active_channels_lv[0])
         }
@@ -260,6 +220,7 @@ function update_lv_graph() {
             tickText.push(i.toFixed(1)); 
         }
 
+        // Create a basic layout, designed for an empty graph with no data
         layout = {
             title: 'Live View of PicoScope Traces',
             margin: { t: 50, b: 60 },
@@ -291,6 +252,7 @@ function update_lv_graph() {
                 type: 'scatter',
                 line: {color: channel_colours[active_channels_lv[chan]]},
             })
+            // Check if a channel is active, change axis labels and assign data
             if (chan == 0) {
                 let range = get_range_value_mv(chan_ranges[active_channels_lv[0]])
 
@@ -310,7 +272,8 @@ function update_lv_graph() {
                     ticktext: tickText,
                     tickvals: tickVals,
                 }
-
+            
+            // Check if a second channel is active, change axis labels and assign data
             } else if (chan == 1) {
                 let range2 = get_range_value_mv(chan_ranges[active_channels_lv[1]])
 
@@ -346,6 +309,7 @@ function run_sync(){
 }
 
 function get_range_value_mv(key) {
+    // Compare the range key to the actual range
     var range_values = {
         0: 10,
         1: 20,
@@ -370,7 +334,6 @@ function sync_with_adapter(){
     return function(response){
 
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
-        
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
 
         var chan_responses = [response.device.settings.channels.a, response.device.settings.channels.b, response.device.settings.channels.c, response.device.settings.channels.d]
@@ -387,6 +350,7 @@ function sync_with_adapter(){
             activate_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
         }
 
+        // Ensure acquisition settings match adapter values
         document.getElementById("capture-mode-time").checked = response.device.settings.capture.capture_mode
         document.getElementById("capture-mode-num").checked = !(response.device.settings.capture.capture_mode)
         document.getElementById("cap-repeat").checked = response.device.settings.capture.capture_repeat
@@ -414,8 +378,6 @@ function sync_with_adapter(){
             if (!focusFlags[focus_strings[setting]]) {$("#" + focus_strings[setting]).val(settings_3[setting])}
         }
 
-        if (!focusFlags["lv_range"]) {$("#lv_range").val(response.device.live_view.lv_range)}
-
         // Identify all of the channels that are LV active
         active_channels_lv = response.device.live_view.lv_active_channels
         active_channels_lv_letters = []
@@ -433,9 +395,9 @@ function sync_with_adapter(){
             }
         }
 
+        // Keep track of lower and upper PHA range, and samples
         lower_range = response.device.settings.pha.lower_range
         upper_range = response.device.settings.pha.upper_range
-
         pre_samples = response.device.settings.capture.pre_trig_samples
         post_samples = response.device.settings.capture.post_trig_samples
         
@@ -443,8 +405,6 @@ function sync_with_adapter(){
 
         // Define the colour to be used on the graph for different channels
         channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
-
-        lv_range = response.device.live_view.lv_range
 
         // Assign LV & PHA data locally
         try {
@@ -521,9 +481,15 @@ function sync_with_adapter(){
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
         document.getElementById("file-name-span").textContent = ('captures/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
 
-        // Display a recommended capture amount and time length
+        // Update the recommended capture amount and time length
         document.getElementById("suggest-caps").textContent = response.device.settings.capture.max_captures
-        document.getElementById("suggest-time").textContent = response.device.settings.capture.max_time        
+        document.getElementById("suggest-time").textContent = response.device.settings.capture.max_time
+
+        // Display a N/A recommended caps/time if no channels are active
+        if (document.getElementById("suggest-caps").textContent == "0") {
+            document.getElementById("suggest-caps").textContent = "N / A"
+            document.getElementById("suggest-time").textContent = "N / A"
+        }
 
         // Display the 'recorded' attribute as true if a capture has been recorded successfully
         if (response.device.settings.file.last_write_success == true){
@@ -532,7 +498,7 @@ function sync_with_adapter(){
             document.getElementById("file-write-succ-span").textContent = "False"
         }
 
-        // Check if settings have been verifies
+        // Check if settings have been verified
         if (response.device.status.pico_setup_verify == 0){
             document.getElementById("general-setup-row").className="success"
         }else{
@@ -549,7 +515,6 @@ function sync_with_adapter(){
             document.getElementById("channel-a-set").className ="danger"
         }
         
-
         if ((response.device.settings.channels.b.verified == true) && (response.device.settings.channels.b.active == true)) {
             document.getElementById("channel-b-set").className ="success"
             document.getElementById("chan-row").className = "success"
@@ -581,7 +546,7 @@ function sync_with_adapter(){
             document.getElementById("trigger-row2").className ="danger";
         }
 
-        // Check if capture settings have been verified
+        // Check if capture settings have been verified, change colour of boxes accordingly
         if (response.device.status.capture_settings_verify == 0){
             document.getElementById("pha-row").className ="success";
             document.getElementById("capture-row").className = "success"
@@ -602,7 +567,7 @@ function sync_with_adapter(){
             document.getElementById("repeat-cap-row").className = "danger"
         }
 
-        // Check if unit has been opened
+        // Check if PicoScope unit has been opened, and connection has been established
         if (response.device.status.open_unit == 0){
             document.getElementById("connection_status").textContent = "True"
         } else {
@@ -703,6 +668,7 @@ function activate_textbox(checked) {
 }
 
 function lock_boxes(lock) {
+    // Lock boxes if a capture is currently in progress
     buttons = ["bit-mode-dropdown", "time-base-input", "capture-pretrig-samples", "capture-posttrig-samples",
             "channel-a-active", "channel-a-coupl", "channel-a-range", "channel-a-offset",
             "channel-b-active", "channel-b-coupl", "channel-b-range", "channel-b-offset",
@@ -764,7 +730,6 @@ function toSiUnit(num){
     }
 }
 
-// Makes writing an ajax_put cleaner
 function ajax_put(path,key,value){
     // Put function for adapter, prevents repetition of code
     let data = {};
@@ -788,9 +753,4 @@ function openTab(tabID) {
       tabs[1].style.display = "none"
       tabs[2].style.display = "block"
     }
-}
-
-function change_mode(time_based) {
-    // Change capture mode depending on what the user wants
-    ajax_put('settings/capture','capture_mode',time_based)
 }

@@ -96,9 +96,7 @@ class BufferManager:
     def accumulate_pha(self, chan, pha_data):
         """Add the new PHA data to the previous data, if there is any data."""
         current_pha_data = (self.pha_arrays[pha_data]).tolist()
-
         self.bin_edges = current_pha_data[0]
-
         pha_counts = (current_pha_data)[1]
 
         # Adds PHA to previous data, unless there is no previous data

@@ -362,9 +362,9 @@
                                   <table class="table table-striped">
                                     <tr id ="capture-row">
                                       <th style="padding-right: 30px; width: 170px;">
-                                        <input type="radio" id="capture-mode-num" oninput="change_mode(false)">
+                                        <input type="radio" id="capture-mode-num" oninput="ajax_put('settings/capture','capture_mode',false)">
                                         <label for="capture-mode-num">Number of Caps</label>
-                                        <input type="radio" id="capture-mode-time" oninput="change_mode(true)">
+                                        <input type="radio" id="capture-mode-time" oninput="ajax_put('settings/capture','capture_mode',true)">
                                         <label for="capture-mode-time">Time-Based Cap</label><br>
                                       </th>
                                       <th style="padding-right: 0px;">
@@ -374,7 +374,7 @@
                                       </th>
                                       <th style="padding-right: 0px;">
                                         <label for="capture-time">Capture Time (Seconds):</label>
-                                        <input id="capture-time" type="text" oninput="commit_int_adapter('capture-time','settings/capture/','capture_time')" />
+                                        <input id="capture-time" type="text" oninput="commit_float_adapter('capture-time','settings/capture/','capture_time')" />
                                         <span>Recommended Max : </span><span id="suggest-time"></span>
                                       </th>
                                     </tr>

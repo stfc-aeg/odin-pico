@@ -3,7 +3,6 @@
 import logging
 import os
 from dataclasses import asdict
-from datetime import datetime
 import h5py
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.DataClasses.device_config import DeviceConfig
@@ -32,20 +31,23 @@ class FileWriter:
 
     def check_file_name(self):
         """Identify the file path before collecting data."""
+        # Check if file is missing '.hdf5' at the end
+        if not (self.dev_conf.file.file_name[-5:] == ".hdf5"):
+            self.dev_conf.file.file_name = self.dev_conf.file.file_name + ".hdf5"
+
         # Check whether file name is empty, or file already exists
         if (self.dev_conf.file.file_name) == "" or (
             os.path.isfile(
                 self.dev_conf.file.file_path
                 + self.dev_conf.file.folder_name
                 + self.dev_conf.file.file_name
+            ) or (
+            os.path.isfile(self.dev_conf.file.file_path
+                + self.dev_conf.file.folder_name
+                + self.dev_conf.file.file_name[:-5] + "_1.hdf5")
             )
         ):
             return False
-
-        else:
-            # Check if file is missing '.hdf5' at the end
-            if not (self.dev_conf.file.file_name[-5:] == ".hdf5"):
-                self.dev_conf.file.file_name = self.dev_conf.file.file_name + ".hdf5"
 
         # Check if folder name is valid
         if (
@@ -77,16 +79,17 @@ class FileWriter:
             }
         )
 
-        # Changes file name depending on how many times capture has been run
-        if self.capture_number == 1:
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-5]
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name + "_" + str(self.capture_number) + ".hdf5"
-        else:
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-6]
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name + str(self.capture_number) + ".hdf5"
-        file_name = self.dev_conf.file.file_name
-        self.capture_number += 1
+        # Change file name depending on how many times capture has been run
+        if self.dev_conf.capture.capture_repeat:
 
+            if self.capture_number == 1:
+                self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-5]
+                self.dev_conf.file.file_name = self.dev_conf.file.file_name + "_" + (
+                    str(self.capture_number) + ".hdf5")
+            else:
+                self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-6]
+                self.dev_conf.file.file_name = self.dev_conf.file.file_name + (
+                    str(self.capture_number) + ".hdf5")
 
         # Take note of file path so it can be written to
         self.dev_conf.file.curr_file_name = (
@@ -123,4 +126,9 @@ class FileWriter:
             self.dev_conf.file.last_write_success = False
             return
 
+        if self.dev_conf.capture.capture_repeat:
+            if self.capture_number == self.dev_conf.capture.repeat_amount:
+                self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
+
+        self.capture_number += 1
         self.dev_conf.file.last_write_success = True
