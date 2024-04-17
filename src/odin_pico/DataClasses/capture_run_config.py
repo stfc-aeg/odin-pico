@@ -9,7 +9,7 @@ class CaptureRunConfig:
     caps_in_run: int = 0
     caps_remaining: int = 0
     caps_max: int = 0
-    live_cap_comp: int = 0
+    live_cap_comp: int = 100
 
     def reset(self):
         for field in fields(self):

@@ -17,12 +17,14 @@
 
     <nav id="custom-navbar" class="navbar navbar-inverse navbar-fixed-top">
       <div id="custom-container-fluid" class="container-fluid">
-        <div id="custom-navbar-header" class="navbar-header">
-          <div style="color: white;" id="custom-navbar-brand" class="navbar-brand">ODIN-Control | Alpha-Spec</div>
-          <div style="background-color: whitesmoke;">
-            <img src="logo.png" style="width: 90px">
+        <div id="custom-navbar-header" class="navbar-header" style="height: 50px;">
+          <!-- <div style="color: white;" id="custom-navbar-brand" class="navbar-brand">ODIN-Control | Alpha-Spec</div> -->
+          <div> 
+            <img src="odin.png" style="filter: drop-shadow(0px 0px 5px white);">
           </div>
-          <!-- <div id="separator"></div> -->
+          <div>
+            <img src="logo.png" style="width: 120px">
+          </div>
           <span style="color: white;" id="custom-item-label">Status:</span>
           <span style="color: white;" id="custom-item1">Connection: <span id="connection_status"></span></span>
           <span style="color: white;" id="custom-item2">Capture Type: <span id="cap_type_status">True</span></span>
@@ -119,8 +121,8 @@
                                         <th>
                                           <select id = "channel-a-coupl" onchange="commit_int_adapter('channel-a-coupl','settings/channels/a/','coupling')"  >
                                             <option value="" selected disabled hidden> </option>
-                                            <option value = "1">DC</option>
                                             <option value = "0">AC</option> 
+                                            <option value = "1">DC</option>
                                           </select>
                                         </th>
                                         <th>
@@ -155,8 +157,8 @@
                                         <th>
                                           <select id = "channel-b-coupl" onchange="commit_int_adapter('channel-b-coupl','settings/channels/b/','coupling')"  >
                                             <option value="" selected disabled hidden> </option>
-                                            <option value = "1">DC</option>
                                             <option value = "0">AC</option> 
+                                            <option value = "1">DC</option>
                                           </select>
                                         </th>
                                         <th>
@@ -191,8 +193,8 @@
                                         <th>
                                           <select id = "channel-c-coupl" onchange="commit_int_adapter('channel-c-coupl','settings/channels/c/','coupling')"  >
                                             <option value="" selected disabled hidden> </option>
-                                            <option value = "1">DC</option>
                                             <option value = "0">AC</option> 
+                                            <option value = "1">DC</option>
                                           </select>
                                         </th>
                                         <th>
@@ -227,8 +229,8 @@
                                         <th>
                                           <select id = "channel-d-coupl" onchange="commit_int_adapter('channel-d-coupl','settings/channels/d/','coupling')"  >
                                             <option value="" selected disabled hidden> </option>
-                                            <option value = "1">DC</option>
                                             <option value = "0">AC</option> 
+                                            <option value = "1">DC</option>
                                           </select>
                                         </th>
                                         <th>

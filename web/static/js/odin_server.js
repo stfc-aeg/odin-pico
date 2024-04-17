@@ -404,7 +404,7 @@ function sync_with_adapter(){
         chan_ranges = [chan_responses[0].range, chan_responses[1].range, chan_responses[2].range, chan_responses[3].range]
 
         // Define the colour to be used on the graph for different channels
-        channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(252, 232, 5)']
+        channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(255, 230, 0)']
 
         // Assign LV & PHA data locally
         try {
@@ -479,7 +479,7 @@ function sync_with_adapter(){
         }
 
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
-        document.getElementById("file-name-span").textContent = ('captures/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
+        document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
 
         // Update the recommended capture amount and time length
         document.getElementById("suggest-caps").textContent = response.device.settings.capture.max_captures

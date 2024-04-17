@@ -25,29 +25,38 @@ class FileWriter:
         self.pico_status = pico_status
         self.util = PicoUtil()
         self.capture_number = 1
-
-        if not (os.path.isdir(self.dev_conf.file.file_path)):
-            os.mkdir(self.dev_conf.file.file_path)
+        self.file_error = False
 
     def check_file_name(self):
-        """Identify the file path before collecting data."""
+        """Identify and check the file path before collecting data."""
+        # Check whether file name is empty, or file already exists
+
+        if self.dev_conf.file.file_name == "":
+            return False
+
+        if self.dev_conf.file.file_name[-5:] == ".hdf5":
+            if os.path.isfile(self.dev_conf.file.file_path
+                              + self.dev_conf.file.folder_name
+                              + self.dev_conf.file.file_name
+                              ) or os.path.isfile(self.dev_conf.file.file_path
+                                                  + self.dev_conf.file.folder_name
+                                                  + self.dev_conf.file.file_name[-5:]
+                                                  + "_1.hdf5"):
+                return False
+
+        else:
+            if os.path.isfile(self.dev_conf.file.file_path
+                              + self.dev_conf.file.folder_name
+                              + self.dev_conf.file.file_name
+                              + ".hdf5") or os.path.isfile(self.dev_conf.file.file_path
+                                                           + self.dev_conf.file.folder_name
+                                                           + self.dev_conf.file.file_name
+                                                           + "_1.hdf5"):
+                return False
+
         # Check if file is missing '.hdf5' at the end
         if not (self.dev_conf.file.file_name[-5:] == ".hdf5"):
             self.dev_conf.file.file_name = self.dev_conf.file.file_name + ".hdf5"
-
-        # Check whether file name is empty, or file already exists
-        if (self.dev_conf.file.file_name) == "" or (
-            os.path.isfile(
-                self.dev_conf.file.file_path
-                + self.dev_conf.file.folder_name
-                + self.dev_conf.file.file_name
-            ) or (
-            os.path.isfile(self.dev_conf.file.file_path
-                + self.dev_conf.file.folder_name
-                + self.dev_conf.file.file_name[:-5] + "_1.hdf5")
-            )
-        ):
-            return False
 
         # Check if folder name is valid
         if (
@@ -78,6 +87,10 @@ class FileWriter:
                 "timebase": self.dev_conf.mode.timebase,
             }
         )
+
+        # Update system state, and keep track of previous system state
+        old_system_state = self.pico_status.flags.system_state
+        self.pico_status.flags.system_state = "Captures Collected, Writing HDF5 File"
 
         # Change file name depending on how many times capture has been run
         if self.dev_conf.capture.capture_repeat:
@@ -126,9 +139,11 @@ class FileWriter:
             self.dev_conf.file.last_write_success = False
             return
 
+        # Remove '_x' from file name if last capture in acquisition group
         if self.dev_conf.capture.capture_repeat:
             if self.capture_number == self.dev_conf.capture.repeat_amount:
                 self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
 
         self.capture_number += 1
         self.dev_conf.file.last_write_success = True
+        self.pico_status.flags.system_state = old_system_state

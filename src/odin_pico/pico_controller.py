@@ -34,7 +34,6 @@ class PicoController:
         self.caps_collected = 0
         self.current_time = 0
         self.current_capture = 0
-        self.file_error = False
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
         self.dev_conf = DeviceConfig()
@@ -50,13 +49,12 @@ class PicoController:
         self.util = PicoUtil()
         self.pico_status = DeviceStatus()
         self.buffer_manager = BufferManager(self.dev_conf)
-        self.file_writer = FileWriter(
-            self.dev_conf, self.buffer_manager, self.pico_status
-        )
+        self.file_writer = FileWriter(self.dev_conf, self.buffer_manager, self.pico_status)
         self.analysis = PicoAnalysis(
             self.dev_conf, self.buffer_manager, self.pico_status
         )
-        self.pico = PicoDevice(max_caps, self.dev_conf, self.pico_status, self.buffer_manager)
+        self.pico = PicoDevice(max_caps, self.dev_conf, self.pico_status,
+                               self.buffer_manager, self.file_writer)
 
         # ParameterTrees to represent different parts of the system
         adapter_status = ParameterTree(
@@ -461,6 +459,7 @@ class PicoController:
             try:
                 channel_dc = getattr(obj, chan_name)
                 setattr(channel_dc, "live_view", value)
+                setattr(channel_dc, 'pha_active', value)
                 setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
@@ -582,7 +581,7 @@ class PicoController:
             if self.pico_status.flags.user_capture:
                 if self.file_writer.check_file_name():
 
-                    self.file_error = False
+                    self.file_writer.file_error = False
 
                     # Check if user has requested the capture to be repeated
                     if self.dev_conf.capture.capture_repeat:
@@ -611,7 +610,7 @@ class PicoController:
                             # Complete a capture test, to determine capture frequency
                             if capture_run == 0:
                                 self.pico_status.flags.system_state = ("Testing Capture Rate")
-                                self.caps_per_cycle()
+                                # self.caps_per_cycle()
                                 self.buffer_manager.pha_counts = [[]] * 4
 
                             # Complete a capture run, for a pre-determined amount of time
@@ -620,7 +619,7 @@ class PicoController:
                                     "Completing Time-Based Capture Collection, Capture: "
                                     + str(capture_run + 1)
                                 )
-                                self.tb_capture(False)
+                                self.tb_capture()
 
                         # Delay between capture runs, if requested by user
                         if capture_run != (cap_loop - 1):
@@ -640,18 +639,18 @@ class PicoController:
                     self.pico_status.flags.abort_cap = False
 
                 else:
-                    self.file_error = True
+                    self.file_writer.file_error = True
                     self.pico_status.flags.system_state = (
                         "File Name Empty or Already Exists. Fix and Re-Capture")
                     self.pico_status.flags.user_capture = False
 
             # If user hasn't requested a capture, complete a LV capture run
             else:
-                if not self.file_error:
+                if not self.file_writer.file_error:
                     self.pico_status.flags.system_state = "Collecting LV Data"
                 self.pico.calc_max_caps()
                 self.user_capture(False)
-                self.pico.calc_max_time()
+                self.pico_status.flags.abort_cap = False
 
         if (self.pico_status.open_unit == 0) and (
             self.pico_status.flags.verify_all is False
@@ -701,15 +700,15 @@ class PicoController:
         )
 
         # Process the data, for the purposes of LV and PHA
-        self.buffer_manager.save_lv_data()
-        self.analysis.pha_one_peak()
+        if not self.pico_status.flags.abort_cap:
+            self.buffer_manager.save_lv_data()
+            self.analysis.pha_one_peak()
 
 
-    def tb_capture(self, test):
+    def tb_capture(self):
         """Run the necessary steps for a set of time-based captures."""
         self.buffer_manager.clear_arrays()
         self.buffer_manager.check_channels()
-
         total_time = self.dev_conf.capture.capture_time
 
         # Calculate the amount of captures to be collected per run
@@ -727,33 +726,15 @@ class PicoController:
                     self.capture_run()
                 else:
                     total_time = 0
-                    # self.pico_status.flags.abort_cap = False
-                if not test:
-                    if (time.time() - start_time > total_time):
-                        self.current_time = total_time
-                    else:
-                        self.current_time = time.time() - start_time
+
+                if (time.time() - start_time > total_time):
+                    self.current_time = total_time
+                else:
+                    self.current_time = time.time() - start_time
             # Save data to file if requested
-            if not test:
-                self.file_writer.write_hdf5()
+            self.file_writer.write_hdf5()
 
         self.caps_collected = self.dev_conf.capture_run.caps_comp
-
-        if not test:
-            self.dev_conf.capture_run.reset()
-
-    def caps_per_cycle(self):
-        """Test current settings and find a sensible caps_per_cycle."""
-        # Prepare for and complete a capture test
-        total_time = self.dev_conf.capture.capture_time
-        self.dev_conf.capture.caps_in_cycle = 100
-        self.dev_conf.capture.capture_time = 10
-        self.tb_capture(True)
-
-        # Calculate the recommended caps_per_cycle depending on results
-        caps_per_second = (self.dev_conf.capture_run.caps_comp / 10)
-        self.dev_conf.capture.caps_in_cycle = caps_per_second
-        self.dev_conf.capture.capture_time = total_time
         self.dev_conf.capture_run.reset()
 
     ##### Adapter specific functions below #####

@@ -11,6 +11,7 @@ from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.DataClasses.device_status import DeviceStatus
 from odin_pico.pico_util import PicoUtil
 from odin_pico.PS5000A_Trigger_Info import Trigger_Info
+from odin_pico.file_writer import FileWriter
 
 
 class PicoDevice:
@@ -22,12 +23,14 @@ class PicoDevice:
         dev_conf=DeviceConfig(),
         pico_status=DeviceStatus(),
         buffer_manager=BufferManager(),
+        file_writer=FileWriter()
     ):
         """Initialise the PicoDevice class."""
         self.util = PicoUtil()
         self.dev_conf = dev_conf
         self.pico_status = pico_status
         self.buffer_manager = buffer_manager
+        self.file_writer = file_writer
         self.cap_time = 30
         self.seg_caps = 0
         self.prev_seg_caps = 0
@@ -185,7 +188,6 @@ class PicoDevice:
         """
         self.prev_seg_caps = 0
         self.seg_caps = 0
-
         # Keep track of time in case it takes too long
         start_time = time.time()
         t = time.time()
@@ -210,9 +212,11 @@ class PicoDevice:
             None,
         )
 
+        collect = True
         # Waits until the scope has finished collecting all of the captures
         while (
-            self.pico_status.block_ready.value == self.pico_status.block_check.value
+            self.pico_status.block_ready.value == self.pico_status.block_check.value and
+            collect
         ):
             ps.ps5000aIsReady(
                 self.dev_conf.mode.handle,
@@ -220,9 +224,9 @@ class PicoDevice:
             )
 
             if time.time() - t >= 0.25:
+                self.pico_status.flags.system_state = "Waiting for Trigger"
                 t = time.time()
                 self.get_cap_count()
-                print(f"Caps: {self.dev_conf.capture_run.live_cap_comp}")
 
             if (time.time() - start_time) > 10:
                 self.get_cap_count()
@@ -232,12 +236,14 @@ class PicoDevice:
             # Stop scope if user chooses to abort capture
             if self.pico_status.flags.abort_cap:
                 ps.ps5000aStop(self.dev_conf.mode.handle)
-                self.pico_status.block_check.value = 1
+                collect = False
 
             time.sleep(0.05)
             self.prev_seg_caps = self.seg_caps
 
         self.get_cap_count()
+        if not self.file_writer.file_error and not self.pico_status.flags.user_capture:
+            self.pico_status.flags.system_state = "Collecting LV Data"
 
         if self.pico_status.flags.abort_cap:
             seg_to_indx = self.seg_caps
@@ -245,17 +251,19 @@ class PicoDevice:
             seg_to_indx = self.dev_conf.capture_run.caps_in_run - 1
 
         # Retrive the captures that have been collected
-        ps.ps5000aGetValuesBulk(
-            self.dev_conf.mode.handle,
-            ctypes.byref(self.dev_conf.meta_data.max_samples),
-            0,
-            (seg_to_indx),
-            0,
-            0,
-            ctypes.byref(self.buffer_manager.overflow),
-        )
 
-        self.get_trigger_timing()
+        if not self.pico_status.flags.abort_cap:
+            ps.ps5000aGetValuesBulk(
+                self.dev_conf.mode.handle,
+                ctypes.byref(self.dev_conf.meta_data.max_samples),
+                0,
+                (seg_to_indx),
+                0,
+                0,
+                ctypes.byref(self.buffer_manager.overflow),
+            )
+
+            self.get_trigger_timing()
 
     def get_trigger_timing(self):
         """Retrieve the trigger timing from the scope."""
@@ -315,7 +323,7 @@ class PicoDevice:
             active_chans = 1
 
         times = sum(self.buffer_manager.trigger_times)
-
+        
         self.rec_time = float(round((times * self.rec_caps), 2))
 
     def stop_scope(self):

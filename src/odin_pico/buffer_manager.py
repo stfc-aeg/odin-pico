@@ -135,14 +135,14 @@ class BufferManager:
                 self.chan_range[c],
                 self.dev_conf.meta_data.max_adc,
             )
-            current_offset = self.chan_offsets[c]
-            current_range = self.util.get_range_value_mv(self.chan_range[c])
-            offset_key = (current_offset / 100) * current_range
+            # current_offset = self.chan_offsets[c]
+            # current_range = self.util.get_range_value_mv(self.chan_range[c])
+            # offset_key = (current_offset / 100) * current_range
 
-            # Adjust values for offset, unless offset is 0
-            if current_offset != 0:
-                for value in range(len(values)):
-                    values[value] = values[value] + offset_key
+            # # Adjust values for offset, unless offset is 0
+            # if current_offset != 0:
+            #     for value in range(len(values)):
+            #         values[value] = values[value] + offset_key
 
             current_lv_array.append(values)
 
