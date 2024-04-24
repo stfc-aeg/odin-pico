@@ -21,7 +21,7 @@ class PicoAdapter(ApiAdapter):
         self.lock = threading.Lock()
         update_loop = True
         data_output_path = self.options.get("data_output_path", "/tmp/")
-        max_caps = int(self.options.get("max_caps", "/tmp/"))
+        max_caps = int(self.options.get("max_caps", 100000000))
 
         self.pico_controller = PicoController(self.lock, update_loop, data_output_path, max_caps)
 
