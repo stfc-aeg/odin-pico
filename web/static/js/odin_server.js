@@ -20,6 +20,14 @@ var focusFlags = {
   "channel-b-offset": false,
   "channel-c-offset": false,
   "channel-d-offset": false,
+  "channel-a-liveview": false,
+  "channel-b-liveview": false,
+  "channel-c-liveview": false,
+  "channel-d-liveview": false,
+  "channel-a-pha": false,
+  "channel-b-pha": false,
+  "channel-c-pha": false,
+  "channel-d-pha": false,
   "trigger-enable": false,
   "trigger-source": false,
   "trigger-direction": false,
@@ -34,33 +42,42 @@ var focusFlags = {
   "pha-num-bins": false,
   "pha-lower-range": false,
   "pha-upper-range": false,
-  "lv-source": false,
+  "capture-time": false,
+  "capture-mode-num": true,
+  "capture-mode-time": false,
+  "repeat-amount": false,
+  "cap-repeat": false,
+  "delay-time": false,
 };
+
 // Initialize a timers object to keep track of the timers for each field
 var timers = {};
 
 // Time limit (in milliseconds) after which to blur the input
 var timeLimit = 10000; // 5 seconds
 
-data_array = new Int16Array()
-counts = new Int16Array()
-bin_edges = new Int16Array()
-play_button = true;
+// Initialise arrays to be used
+var pha_array = []
+var lv_data = []
+var active_channels_lv = []
 
-//runs when the script is loaded
+// Initialise variables for pausing the LV/PHA graphs
+play_button_lv = true;
+play_button_pha = true;
+
+// Run when the script is loaded
 $( document ).ready(function() {
     update_api_version();
     run_sync();
 });
 
-//gets the most up to date api version
+// Get the most up to date api version
 function update_api_version() {
     $.getJSON('/api', function(response) {
         $('#api-version').html(response.api);
         api_version = response.api;
     });
 }
-
 // Resize plotly graphs after window changes size
 function resize_plotly() {
     let div_width = 0.9*(document.getElementById('setup-6')).offsetWidth;
@@ -114,57 +131,175 @@ Object.keys(focusFlags).forEach(function(key) {
     });
   });
 
-function toggle_play() {
-    const button = document.getElementById('p_p_button');
-    play_button = !play_button;
+function toggle_play_lv() {
+    const button_lv = document.getElementById('p_p_button_lv');
+    play_button_lv = !play_button_lv;
     
-    if (play_button) {
-      button.innerHTML = '<span class="material-icons">pause</span>'; 
+    // Change the icon depending on whether the graph is active or inactive
+    if (play_button_lv) {
+      button_lv.innerHTML = '<span class="material-icons">pause_circle_outline</span>'; 
     } else {
-      button.innerHTML = '<span class="material-icons">play_arrow</span>';
+      button_lv.innerHTML = '<span class="material-icons">play_circle_outline</span>';
     }
   }
 
-function plotly_liveview(ranges){
-    channel = parseInt(document.getElementById('lv-source').value)
-    let range = get_range_value_mv(ranges[channel])
+function toggle_play_pha() {
+    const button_pha = document.getElementById('p_p_button_pha');
+    play_button_pha = !play_button_pha;
 
-    var tickVals = [];
-    var tickText = [];
-    var stepSize = 2 * range / 8;
-
-    for (var i = -range; i <= range; i += stepSize) {
-        tickVals.push(i);
-        tickText.push(i.toFixed(2)); 
+    // Change the icon depending on whether the graph is active or inactive
+    if (play_button_pha) {
+        button_pha.innerHTML = '<span class="material-icons">pause_circle_outline</span>';
+    } else {
+        button_pha.innerHTML = '<span class="material-icons">play_circle_outline</span>';
     }
+}
 
-    if (play_button){
-        scope_lv = document.getElementById('scope_lv');
-        Plotly.newPlot( scope_lv, [{
-            x: x = data_array.map((value, index) => index),                
-            y: data_array }], {
-                title: 'Live view of PicoScope traces',
-                margin: { t: 40, b: 40 },
-                xaxis: { title: 'Sample Interval' },
-                yaxis: { title: 'Voltage (mV)',
-                        range: [-range, range],
-                        tickvals: tickVals,
-                        ticktext: tickText },
-                height: 300,
-                autosize: true                    
-                });
+function update_pha_graph() {
+
+    if (play_button_pha) {
+
+        pha_data = []
 
         scope_pha = document.getElementById('scope_pha');
-        Plotly.newPlot( scope_pha, [{
-            x: bin_edges,
-            y: counts }], {
-                title: 'Last PHA from recorded traces',
-                margin: { t: 40, b: 40 },
-                yaxis: { title: 'Counts'},
-                xaxis: { title: 'Energy level (ADC_Counts)'} });
+
+        num_data = 0
+
+        // Identify the data to be displayed on the graph
+        for (var chan = 0; chan < 4; chan++) {
+            if (pha_channels[chan] == true) {
+                pha_data.push({
+                    x: x = bin_edges,
+                    y: y = pha_array[chan],
+                    name: ('Channel ' + String.fromCharCode(chan+65)),
+                    type: 'scatter',
+                    line: {color: channel_colours[chan]}
+                })
+            }
+        }
+
+        // Identify the layout to be used for the graph
+        layout = {
+            title: 'Current PHA Data',
+            margin: { t: 50, b: 60 },
+            xaxis: {
+                title: 'Energy Level (ADC_Counts)',
+                range: [lower_range, upper_range],
+            },
+            yaxis: {title: 'Counts'},
+            autosize: true,
+            showlegend: true,
+        }
+
+        // Create the graph
+        Plotly.newPlot((document.getElementById('scope_pha')), pha_data, layout, {scrollZoom: true})
     }
-    else {
-        return;
+}
+
+function update_lv_graph() {
+
+    if (play_button_lv) {
+
+        var tickText = []
+        var tickVals = []
+
+        var pre_samples = document.getElementById("capture-pretrig-samples").value
+        var post_samples = document.getElementById("capture-posttrig-samples").value
+
+        // Use smallest range if no channels active
+        if (active_channels_lv.length > 0) {
+            let range = get_range_value_mv(active_channels_lv[0])
+        }
+            let range = get_range_value_mv(0)
+
+        lv_data = []
+
+        // Create the values to be seen on the graph axes
+        for (var i = -range; i <= range; i += (range / 4)) {
+            tickVals.push(i);
+            tickText.push(i.toFixed(1)); 
+        }
+
+        // Create a basic layout, designed for an empty graph with no data
+        layout = {
+            title: 'Live View of PicoScope Traces',
+            margin: { t: 50, b: 60 },
+            xaxis: {
+                title: 'Sample Interval',
+                range: [-pre_samples, post_samples],
+            },
+            yaxis: {
+                title: ('Channel  Voltage (mV)'),
+                range: [-range, range],
+                ticktext: tickText,
+                tickvals: tickVals,
+            },
+            autosize: true,
+            showlegend: true,
+            legend: {
+                orientation: 'h'
+            }
+        }
+
+        var pre_samples = document.getElementById("capture-pretrig-samples").value
+
+        // Prepare the data to be shown on the graph
+        for (var chan = 0; chan < active_channels_lv.length; chan++) {
+            lv_data.push ({
+                x: x = data_array[chan].map((value, index)=> (index - pre_samples)),
+                y: y = data_array[chan],
+                name: ('Channel '+ active_channels_lv_letters[chan]),
+                type: 'scatter',
+                line: {color: channel_colours[active_channels_lv[chan]]},
+            })
+            // Check if a channel is active, change axis labels and assign data
+            if (chan == 0) {
+                let range = get_range_value_mv(chan_ranges[active_channels_lv[0]])
+
+
+                tickText = []
+                tickVals = []
+                for (var i = -range; i <= range; i += (range / 4)) {
+                    tickVals.push(i);
+                    tickText.push(i.toFixed(1)); 
+                }
+       
+                lv_data[chan].yaxis = 'y1'
+
+                layout.yaxis = {
+                    title: ('Channel ' + active_channels_lv_letters[chan] + ' Voltage (mV)'),
+                    range: [-range, range],
+                    ticktext: tickText,
+                    tickvals: tickVals,
+                }
+            
+            // Check if a second channel is active, change axis labels and assign data
+            } else if (chan == 1) {
+                let range2 = get_range_value_mv(chan_ranges[active_channels_lv[1]])
+
+                tickText2 = []
+                tickVals2 = []
+
+                for (var i = -range2; i <= range2; i += (range2 / 4)) {
+                    tickVals2.push(i);
+                    tickText2.push(i.toFixed(1)); 
+                }
+
+                lv_data[chan].yaxis = 'y2'
+                layout.yaxis2 = {
+                    title: ('Channel ' + active_channels_lv_letters[chan] + ' Voltage (mV)'),
+                    side: 'right',
+                    overlaying: 'y',
+                    range: [-range2, range2],
+                    ticktext: tickText2,
+                    tickvals: tickVals2
+                }
+            }
+
+        }
+
+        // Create the graph
+        Plotly.newPlot((document.getElementById('scope_lv')), lv_data, layout, {scrollZoom: true})
     }
 }
 
@@ -174,6 +309,7 @@ function run_sync(){
 }
 
 function get_range_value_mv(key) {
+    // Compare the range key to the actual range
     var range_values = {
         0: 10,
         1: 20,
@@ -194,175 +330,270 @@ function get_range_value_mv(key) {
 }
 
 function sync_with_adapter(){
+
     return function(response){
+
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
-        
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
-        
-        if (!focusFlags["channel-a-active"]) {document.getElementById("channel-a-active").checked=(response.device.settings.channels.a.active)}
-        if (!focusFlags["channel-b-active"]) {document.getElementById("channel-b-active").checked=(response.device.settings.channels.b.active)}
-        if (!focusFlags["channel-c-active"]) {document.getElementById("channel-c-active").checked=(response.device.settings.channels.c.active)}
-        if (!focusFlags["channel-d-active"]) {document.getElementById("channel-d-active").checked=(response.device.settings.channels.d.active)}
-        
-        if (!focusFlags["channel-a-coupl"]) {$("#channel-a-coupl").val(response.device.settings.channels.a.coupling)}
-        if (!focusFlags["channel-b-coupl"]) {$("#channel-b-coupl").val(response.device.settings.channels.b.coupling)}
-        if (!focusFlags["channel-c-coupl"]) {$("#channel-c-coupl").val(response.device.settings.channels.c.coupling)}
-        if (!focusFlags["channel-d-coupl"]) {$("#channel-d-coupl").val(response.device.settings.channels.d.coupling)}
-        
-        if (!focusFlags["channel-a-range"]) {$("#channel-a-range").val(response.device.settings.channels.a.range)}
-        if (!focusFlags["channel-b-range"]) {$("#channel-b-range").val(response.device.settings.channels.b.range)}
-        if (!focusFlags["channel-c-range"]) {$("#channel-c-range").val(response.device.settings.channels.c.range)}
-        if (!focusFlags["channel-d-range"]) {$("#channel-d-range").val(response.device.settings.channels.d.range)}
-        
-        if (!focusFlags["channel-a-offset"]) {$("#channel-a-offset").val(response.device.settings.channels.a.offset)}
-        if (!focusFlags["channel-b-offset"]) {$("#channel-b-offset").val(response.device.settings.channels.b.offset)}
-        if (!focusFlags["channel-c-offset"]) {$("#channel-c-offset").val(response.device.settings.channels.c.offset)}
-        if (!focusFlags["channel-d-offset"]) {$("#channel-d-offset").val(response.device.settings.channels.d.offset)}
-        
+
+        var chan_responses = [response.device.settings.channels.a, response.device.settings.channels.b, response.device.settings.channels.c, response.device.settings.channels.d]
+
+        // Ensure all the channel settings match with the values from the adapter
+        for (var i = 0; i < 4; i++) {
+            var channel = "channel-"+String.fromCharCode(i + 97)+"-"
+            if (!focusFlags[channel+"range"]) {$("#"+channel+"range").val(chan_responses[i].range)}
+            if (!focusFlags[channel+"coupl"]) {$("#"+channel+"coupl").val(chan_responses[i].coupling)}
+            if (!focusFlags[channel+"offset"]) {$("#"+channel+"offset").val(chan_responses[i].offset)}
+            if (!focusFlags[channel+"active"]) {document.getElementById(channel+"active").checked=(chan_responses[i].active)}
+            if (!focusFlags[channel+"liveview"]) {document.getElementById(channel+"liveview").checked=(chan_responses[i].live_view)}
+            if (!focusFlags[channel+"pha"]) {document.getElementById(channel+"pha").checked=(chan_responses[i].pha_active)}
+            activate_buttons(String.fromCharCode(i + 97), chan_responses[i].active)
+        }
+
+        // Ensure acquisition settings match adapter values
+        document.getElementById("capture-mode-time").checked = response.device.settings.capture.capture_mode
+        document.getElementById("capture-mode-num").checked = !(response.device.settings.capture.capture_mode)
+        document.getElementById("cap-repeat").checked = response.device.settings.capture.capture_repeat
+
         if (!focusFlags["trigger-enable"]) {
-            if (response.device.settings.trigger.active == true){$("#trigger-enable").val("true")}
-            if (response.device.settings.trigger.active == false){$("#trigger-enable").val("false")}
+            if (response.device.settings.trigger.active == true) {$("#trigger-enable").val("true")}
+            if (response.device.settings.trigger.active == false) {$("#trigger-enable").val("false")}
         }
         
-        if (!focusFlags["trigger-source"]) {$("#trigger-source").val(response.device.settings.trigger.source)}
-        if (!focusFlags["trigger-direction"]) {$("#trigger-direction").val(response.device.settings.trigger.direction)}
-        if (!focusFlags["trigger-threshold"]) {$("#trigger-threshold").val(response.device.settings.trigger.threshold)}
-        if (!focusFlags["trigger-delay"]) {$("#trigger-delay").val(response.device.settings.trigger.delay)}
-        if (!focusFlags["trigger-auto"]) {$("#trigger-auto").val(response.device.settings.trigger.auto_trigger)}
-        
-        if (!focusFlags["capture-pretrig-samples"]) {$("#capture-pretrig-samples").val(response.device.settings.capture.pre_trig_samples)}
-        if (!focusFlags["capture-posttrig-samples"]) {$("#capture-posttrig-samples").val(response.device.settings.capture.post_trig_samples)}
-        if (!focusFlags["capture-count"]) {$("#capture-count").val(response.device.settings.capture.n_captures)}
-        
-        if (!focusFlags["capture-folder-name"]) {$("#capture-folder-name").val(response.device.settings.file.folder_name)}
-        if (!focusFlags["capture-file-name"]) {$("#capture-file-name").val(response.device.settings.file.file_name)}
-        
-        if (!focusFlags["pha-num-bins"]) {$("#pha-num-bins").val(response.device.settings.pha.num_bins)}
-        if (!focusFlags["pha-lower-range"]) {$("#pha-lower-range").val(response.device.settings.pha.lower_range)}
-        if (!focusFlags["pha-upper-range"]) {$("#pha-upper-range").val(response.device.settings.pha.upper_range)}
+        // Ensure the settings match with the values from the adapter
+        var settings = response.device.settings
+        var settings_2 = [settings.trigger, settings.capture, settings.file, settings.pha]
+        var settings_3 = [settings_2[0].source, settings_2[0].direction, settings_2[0].threshold, settings_2[0].delay,
+                        settings_2[0].auto_trigger, settings_2[1].pre_trig_samples, settings_2[1].post_trig_samples,
+                        settings_2[1].n_captures, settings_2[1].capture_time, settings_2[1].repeat_amount,
+                        settings_2[1].capture_delay, settings_2[2].folder_name, settings_2[2].file_name,
+                        settings_2[3].num_bins, settings_2[3].lower_range, settings_2[3].upper_range]
 
-        // Check the lv_data array contains data, if it does, assign the data locally
-        try{
-            if ((response.device.live_view.lv_data).length != 0) {
-                data_array = response.device.live_view.lv_data
-            } else {
-                console.log("\n\nEmpty LV Array not updating graph")
+        var focus_strings = ["trigger-source", "trigger-direction", "trigger-threshold", "trigger-delay","trigger-auto",
+                        "capture-pretrig-samples", "capture-posttrig-samples", "capture-count", "capture-time",
+                        "repeat-amount", "delay-time", "capture-folder-name", "capture-file-name", "pha-num-bins",
+                        "pha-lower-range", "pha-upper-range"]
+
+        for (var setting = 0; setting < focus_strings.length; setting++) {
+            if (!focusFlags[focus_strings[setting]]) {$("#" + focus_strings[setting]).val(settings_3[setting])}
+        }
+
+        // Identify all of the channels that are LV active
+        active_channels_lv = response.device.live_view.lv_active_channels
+        active_channels_lv_letters = []
+        for (let chan = 0; chan < active_channels_lv.length; chan++) {
+            active_channels_lv_letters.push(String.fromCharCode(65+active_channels_lv[chan]))
+        }
+
+        // Identify all of the channels that are PHA active
+        pha_channels = [response.device.settings.channels.a.pha_active, response.device.settings.channels.b.pha_active,
+                response.device.settings.channels.c.pha_active, response.device.settings.channels.d.pha_active]
+        active_channels_pha_letters = []
+        for (let chan = 0; chan < pha_channels.length; chan++) {
+            if (pha_channels[chan] == true) {
+                active_channels_pha_letters.push(String.fromCharCode(65+chan))
+            }
+        }
+
+        // Keep track of lower and upper PHA range, and samples
+        lower_range = response.device.settings.pha.lower_range
+        upper_range = response.device.settings.pha.upper_range
+        pre_samples = response.device.settings.capture.pre_trig_samples
+        post_samples = response.device.settings.capture.post_trig_samples
+        
+        chan_ranges = [chan_responses[0].range, chan_responses[1].range, chan_responses[2].range, chan_responses[3].range]
+
+        // Define the colour to be used on the graph for different channels
+        channel_colours = ['rgb(0, 110, 255)', 'rgb(255, 17, 0)', 'rgb(83, 181, 13)', 'rgb(255, 230, 0)']
+
+        // Assign LV & PHA data locally
+        try {
+            if (response.device.live_view.lv_data != undefined) {
+                if ((response.device.live_view.lv_data.toString()) != (lv_data.toString())) {
+                    data_array = response.device.live_view.lv_data
+                }
+                update_lv_graph()
             }
         } catch {
-                console.log("Error in assigning LV values")
+            console.log("Error in assigning and plotting LV values")
+        }
+        
+        try {
+            if (response.device.live_view.pha_counts != undefined) {
+                if ((response.device.live_view.pha_counts.toString()) != (pha_array.toString())) {
+                    pha_array = response.device.live_view.pha_counts
+                    bin_edges = response.device.live_view.pha_bin_edges
+                    update_pha_graph()
+                }
             }
-
-        try{   
-            if ((response.device.live_view.pha_data).length != 0){
-                bin_edges = response.device.live_view.pha_data[0]
-                counts = response.device.live_view.pha_data[1]
-                console.log("PHA DATA:",bin_edges[50], counts[50])
-                console.log("pha response: ", response.device.live_view.pha_data)
-            } else {
-                console.log("\n\nEmpty PHA Array not updating graph")
-            }
-
         } catch (err){
             console.log("Error in assigning PHA values, error: ",err.message)
         }
-        
+
+        // If user capture is in progress, update the progress bar accordingly
         if (response.device.commands.run_user_capture == true){
-            let cap_percent = ((100/response.device.live_view.captures_requested) * response.device.live_view.capture_count).toFixed(2)
+
+            lock_boxes(true)
+
+            if (response.device.settings.capture.capture_mode == true) {
+                var cap_percent = ((response.device.live_view.current_tbdc_time / response.device.settings.capture.capture_time) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
+            } else {
+                var cap_percent = ((response.device.live_view.capture_count / response.device.live_view.captures_requested) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
+            }
+
+            var current_cap = response.device.live_view.current_capture
+
+            var percent_done = ((current_cap / response.device.settings.capture.repeat_amount) * 100).toFixed(2)
+            percent_done = parseFloat(percent_done)
+            cap_percent = parseFloat(cap_percent)
+
+            cap_percent = (cap_percent + percent_done)
+
             let progressBar = document.getElementById('capture-progress-bar');
             progressBar.style.width = cap_percent + '%';
             progressBar.innerHTML = cap_percent + '%';
         } else {
+            lock_boxes(false)
+
             let progressBar = document.getElementById('capture-progress-bar');
             progressBar.style.width = 0 + '%';
             progressBar.innerHTML = 0 + '%';
+
+            // Only allow the user to enter repetition settings if the repetition setting is on
+            if (response.device.settings.capture.capture_repeat == true) {
+                document.getElementById("repeat-amount").disabled = false
+                document.getElementById("delay-time").disabled = false
+            } else {
+                document.getElementById("repeat-amount").disabled = true
+                document.getElementById("delay-time").disabled = true
+            }
+
+            // Only allow the relevant boxes to be open, depending on capture mode chosen
+            if (response.device.settings.capture.capture_mode == true) {
+                document.getElementById("capture-count").disabled = true
+                document.getElementById("capture-time").disabled = false
+            } else {
+                document.getElementById("capture-count").disabled = false
+                document.getElementById("capture-time").disabled = true
+            }
         }
 
-        
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
+        folder_name = response.device.settings.file.folder_name  //document.getElementById("capture-folder-name").textContent
+        if ((folder_name[folder_name.length - 1] == '/') || (folder_name.length == 0)) {
+            document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
+        } else {
+            document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + '/' + response.device.settings.file.file_name)
+        }
 
-        document.getElementById('lv-source').value = response.device.live_view.preview_channel
-        document.getElementById("file-name-span").textContent = response.device.settings.file.curr_file_name
+        // Update the recommended capture amount and time length
+        document.getElementById("suggest-caps").textContent = response.device.settings.capture.max_captures
+        document.getElementById("suggest-time").textContent = response.device.settings.capture.max_time
+
+        // Display a N/A recommended caps/time if no channels are active
+        if (document.getElementById("suggest-caps").textContent == "0") {
+            document.getElementById("suggest-caps").textContent = "N / A"
+            document.getElementById("suggest-time").textContent = "N / A"
+        }
+
+        // Display the 'recorded' attribute as true if a capture has been recorded successfully
         if (response.device.settings.file.last_write_success == true){
             document.getElementById("file-write-succ-span").textContent = "True"
         } else {
             document.getElementById("file-write-succ-span").textContent = "False"
         }
 
-
+        // Check if settings have been verified
         if (response.device.status.pico_setup_verify == 0){
-            document.getElementById("pico-setup-row").className="success"
+            document.getElementById("general-setup-row").className="success"
         }else{
-            document.getElementById("pico-setup-row").className="danger"
+            document.getElementById("general-setup-row").className="danger"
         }
 
-            // Syncing channel setup panels
-            if (response.device.settings.channels.a.verified == true){
-                document.getElementById("channel-a-set").className ="success"
-                } else{
-                    document.getElementById("channel-a-set").className ="danger"
-                }
+        document.getElementById("chan-row").className = "danger"
+
+        // Syncing channel setup panels
+        if ((response.device.settings.channels.a.verified == true) && (response.device.settings.channels.a.active == true)) {
+            document.getElementById("channel-a-set").className ="success"
+            document.getElementById("chan-row").className = "success"
+        } else{
+            document.getElementById("channel-a-set").className ="danger"
+        }
+        
+        if ((response.device.settings.channels.b.verified == true) && (response.device.settings.channels.b.active == true)) {
+            document.getElementById("channel-b-set").className ="success"
+            document.getElementById("chan-row").className = "success"
+        } else{
+            document.getElementById("channel-b-set").className ="danger";
+        }
             
+        if ((response.device.settings.channels.c.verified == true) && (response.device.settings.channels.c.active == true)) {
+            document.getElementById("channel-c-set").className ="success";
+            document.getElementById("chan-row").className = "success"
+        } else{
+            document.getElementById("channel-c-set").className ="danger";
+        }
 
-            if (response.device.settings.channels.b.verified == true){
-                document.getElementById("channel-b-set").className ="success"
-                } else{
-                    document.getElementById("channel-b-set").className ="danger";
-                }
-            
-
-            if (response.device.settings.channels.c.verified == true){
-                document.getElementById("channel-c-set").className ="success";
-                } else{
-                    document.getElementById("channel-c-set").className ="danger";
-                }
-
-            if (response.device.settings.channels.d.verified == true){
+        if ((response.device.settings.channels.d.verified == true) && (response.device.settings.channels.d.active == true)) {
             document.getElementById("channel-d-set").className ="success";
-            } else{
-                document.getElementById("channel-d-set").className ="danger";
-            }
+            document.getElementById("chan-row").className = "success"
+        } else{
+            document.getElementById("channel-d-set").className ="danger";
+        }
 
+        // Check if trigger settings have been verified
+        if (response.device.status.channel_trigger_verify == 0){
+            document.getElementById("trigger-row1").className ="success";
+            document.getElementById("trigger-row2").className ="success";
 
-            if (response.device.status.channel_trigger_verify == 0){
-                document.getElementById("trigger-row1").className ="success";
-                document.getElementById("trigger-row2").className ="success";
+        } else{
+            document.getElementById("trigger-row1").className ="danger";
+            document.getElementById("trigger-row2").className ="danger";
+        }
 
-                } else{
-                    document.getElementById("trigger-row1").className ="danger";
-                    document.getElementById("trigger-row2").className ="danger";
-                }
-
-
-            if (response.device.status.capture_settings_verify == 0){
-            document.getElementById("capture-row").className ="success";
+        // Check if capture settings have been verified, change colour of boxes accordingly
+        if (response.device.status.capture_settings_verify == 0){
+            document.getElementById("pha-row").className ="success";
+            document.getElementById("capture-row").className = "success"
+            document.getElementById("file-row").className = "success"
+            document.getElementById("file-info-row").className = "success"
+            document.getElementById("repeat-cap-row").className = "success"
+            if (response.device.commands.run_user_capture == true) {
+                document.getElementById("cap-progress").className = "success"
             } else {
-                document.getElementById("capture-row").className ="danger";
-
+                document.getElementById("cap-progress").className = ""
             }
-            console.log("open_unit:",response.device.status.open_unit)
+        } else {
+            document.getElementById("cap-progress").className = "danger"
+            document.getElementById("pha-row").className ="danger";
+            document.getElementById("capture-row").className = "danger"
+            document.getElementById("file-row").className = "danger"
+            document.getElementById("file-info-row").className = "danger"
+            document.getElementById("repeat-cap-row").className = "danger"
+        }
 
-            if (response.device.status.open_unit == 0){
-                document.getElementById("connection_status").textContent = "True"
-            } else {
-                document.getElementById("connection_status").textContent = "False"
-            }
+        // Check if PicoScope unit has been opened, and connection has been established
+        if (response.device.status.open_unit == 0){
+            document.getElementById("connection_status").textContent = "True"
+        } else {
+            document.getElementById("connection_status").textContent = "False"
+        }
 
-            if (response.device.commands.run_user_capture == true){
-                document.getElementById("cap_type_status").textContent = "User"
-            } else {
-                document.getElementById("cap_type_status").textContent = "LiveView"
-            }
+        // Change the capture type displayed depending on which capture type is being utilised
+        if (response.device.commands.run_user_capture == true){
+            document.getElementById("cap_type_status").textContent = "User"
+        } else if (response.device.commands.time_capture == true){
+            document.getElementById("cap_type_status").textContent = "Time-Based"
+        } else if (response.device.commands.live_view_active) {
+            document.getElementById("cap_type_status").textContent = "Live View"
+        }
 
-            if (response.device.status.settings_verified == true){
-                document.getElementById("settings_status").textContent = "True"
-            } else {
-                document.getElementById("settings_status").textContent = "False"
-            }
-            document.getElementById("system-state").textContent = response.device.flags.system_state
-
-            ranges=[response.device.settings.channels.a.range, response.device.settings.channels.b.range,
-                response.device.settings.channels.c.range, response.device.settings.channels.d.range]
-            plotly_liveview(ranges);
+        if (response.device.status.settings_verified == true){
+            document.getElementById("settings_status").textContent = "True"
+        } else {
+            document.getElementById("settings_status").textContent = "False"
+        }
+        document.getElementById("system-state").textContent = response.device.flags.system_state
     }
 }
 
@@ -380,6 +611,7 @@ function commit_true_adapter(path,key){
 }
 
 function commit_to_adapter(id,path,key){
+    // Commit a boolean value to adapter
     var value = document.getElementById(id).value
     if (value == "true"){ value = true}
     if (value == "false"){ value = false}
@@ -388,28 +620,27 @@ function commit_to_adapter(id,path,key){
 }
 
 function commit_int_adapter(id,path,key){
+    // Commit integer value to adapter
     var input = parseInt(document.getElementById(id).value)
-    console.log("Input: ",input,typeof(input))
     if (isNaN(input)){
         console.log("Invalid")
     } else {
-        console.log("Valid")
         ajax_put(path,key,input)
     }
 }
 
 function commit_str_adapter(id,path,key){
+    // Commit string value to adapter
     var input = document.getElementById(id).value
     ajax_put(path,key,input)
 }
 
 function commit_float_adapter(id,path,key){
+    // Commit float value to adapter
     var input = parseFloat(document.getElementById(id).value)
-    console.log(input)
     if (isNaN(input)){
         console.log("Invalid")
     } else {
-        console.log("Valid")
         ajax_put(path,key,input)
     }
 }
@@ -417,6 +648,45 @@ function commit_float_adapter(id,path,key){
 function commit_checked_adapter(id,path,key){
     var checked = document.getElementById(id).checked
     ajax_put(path,key,checked)
+
+    if (key == "capture_mode") {
+        activate_textbox(checked)
+    }
+}
+
+function activate_buttons(channel, checked) {
+    // Activate/deactivate buttons depending on whether it's channel is active
+    document.getElementById("channel-"+channel+"-liveview").disabled = !checked
+    document.getElementById("channel-"+channel+"-pha").disabled = !checked
+}
+
+function activate_textbox(checked) {
+    // Activate/deactivate textboxes depending on capture mode chosen
+    if (checked == false) {
+        document.getElementById("cap-label").textContent = "No. Captures"
+    } else {
+        document.getElementById("cap-label").textContent = "Time Capture"
+    }
+}
+
+function lock_boxes(lock) {
+    // Lock boxes if a capture is currently in progress
+    buttons = ["bit-mode-dropdown", "time-base-input", "capture-pretrig-samples", "capture-posttrig-samples",
+            "channel-a-active", "channel-a-coupl", "channel-a-range", "channel-a-offset",
+            "channel-b-active", "channel-b-coupl", "channel-b-range", "channel-b-offset",
+            "channel-c-active", "channel-c-coupl", "channel-c-range", "channel-c-offset",
+            "channel-d-active", "channel-d-coupl", "channel-d-range", "channel-d-offset", 
+            "trigger-enable", "trigger-source", "trigger-direction", "trigger-threshold",
+            "trigger-delay", "trigger-auto", "pha-num-bins", "pha-lower-range", "pha-upper-range",
+            "capture-mode-num", "capture-mode-time", "cap-repeat", "capture-folder-name", "capture-file-name"]
+    
+    if (lock == true) {
+        buttons.push("repeat-amount", "delay-time", "capture-count", "capture-time")
+    }
+
+    for (var i = 0; i < buttons.length; i++) {
+        document.getElementById(buttons[i]).disabled = lock
+    }
 }
 
 function verify_int(id){
@@ -441,7 +711,6 @@ function verify_float(id){
     }       
 }
 
-// May be useful to keep for picoscope ?
 function toSiUnit(num){
     numin = num
     pow = [-15,-12,-9,-6,-3,0]
@@ -463,8 +732,8 @@ function toSiUnit(num){
     }
 }
 
-// Makes writing an ajax_put cleaner
 function ajax_put(path,key,value){
+    // Put function for adapter, prevents repetition of code
     let data = {};
     data[key] = value;
     console.log(data,"data in ajax_put",JSON.stringify(data))
@@ -474,4 +743,16 @@ function ajax_put(path,key,value){
         contentType: "application/json",
         data: JSON.stringify(data),
     });
+}
+
+function openTab(tabID) {
+    // Close one tab, and open another
+    var tabs = document.getElementsByClassName("tab-content")
+    if (tabID == "one") {
+      tabs[1].style.display = "block"
+      tabs[2].style.display = "none"
+    } else if (tabID == "two") {
+      tabs[1].style.display = "none"
+      tabs[2].style.display = "block"
+    }
 }

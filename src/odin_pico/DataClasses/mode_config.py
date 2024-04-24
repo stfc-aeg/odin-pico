@@ -1,6 +1,10 @@
+"""Store generic settings for the PicoScope set-up."""
+
 import ctypes
 from dataclasses import dataclass, field
+
 from odin_pico.pico_util import PicoUtil
+
 
 @dataclass
 class ModeConfig:
@@ -14,7 +18,7 @@ class ModeConfig:
     @property
     def resolution(self) -> int:
         return self._resolution
-    
+
     @resolution.setter
     def resolution(self, value: int):
         if value in self.util.ps_resolution:

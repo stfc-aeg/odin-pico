@@ -1,7 +1,10 @@
-from dataclasses import dataclass, field
+"""Store settings for PicoScope setting verification."""
+
 import ctypes
+from dataclasses import dataclass, field
 
 from odin_pico.DataClasses.device_flags import DeviceFlags
+
 
 @dataclass
 class DeviceStatus:

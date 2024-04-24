@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict
+
 
 @dataclass
 class ChannelConfig:
@@ -19,11 +19,17 @@ class ChannelConfig:
         self.offset = 0.0
 
     def default_channel_configs():
-        return {name: ChannelConfig(id, name) for (id, name) in enumerate(['A', 'B', 'C', 'D'])}
+        return {
+            name: ChannelConfig(id, name)
+            for (id, name) in enumerate(["A", "B", "C", "D"])
+        }
+
 
 @dataclass
 class DeviceConfig:
-    channel_config: Dict[str, ChannelConfig] = field(default_factory=ChannelConfig.default_channel_configs)
+    channel_config: dict[str, ChannelConfig] = field(
+        default_factory=ChannelConfig.default_channel_configs
+    )
 
     @property
     def num_channels(self):
@@ -31,31 +37,21 @@ class DeviceConfig:
 
     @property
     def channel_names(self):
-
         return list(self.channel_config.keys())
 
 
-
-
-
-
-
-
-
 def main():
-
     device = DeviceConfig()
 
-    #print(f"Device config has {device.num_channels} channels with names: {', '.join(device.channel_names)}")
+    # for channel in device.channel_names:
+    # print(device.channel_config[channel])
 
-    #for channel in device.channel_names:
-        #print(device.channel_config[channel])
+    device.channel_config["A"].offset = 1.0
 
-    device.channel_config['A'].offset = 1.0
-
-    #print(device.channel_config['A'])
+    # print(device.channel_config['A'])
 
     print(device)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

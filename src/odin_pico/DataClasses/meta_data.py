@@ -1,6 +1,8 @@
+"""Store settings for the PicoScope metadata."""
+
 import ctypes
 from dataclasses import dataclass
-from typing import Any
+
 
 @dataclass
 class MetaDataConfig:
