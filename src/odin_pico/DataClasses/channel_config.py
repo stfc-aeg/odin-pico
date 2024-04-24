@@ -13,7 +13,7 @@ class ChannelConfig:
     verified: bool = False
     live_view: bool = False
     offset: float = 0.0
-    _coupling: int = 0
+    _coupling: int = 1
     _range: int = 0
     pha_active: bool = False
 

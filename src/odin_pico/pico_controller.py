@@ -650,6 +650,7 @@ class PicoController:
                     self.pico_status.flags.system_state = "Collecting LV Data"
                 self.pico.calc_max_caps()
                 self.user_capture(False)
+                self.pico.calc_max_time()
                 self.pico_status.flags.abort_cap = False
 
         if (self.pico_status.open_unit == 0) and (

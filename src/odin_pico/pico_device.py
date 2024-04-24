@@ -212,6 +212,8 @@ class PicoDevice:
             None,
         )
 
+        current_system_state = self.pico_status.flags.system_state
+
         collect = True
         # Waits until the scope has finished collecting all of the captures
         while (
@@ -223,7 +225,7 @@ class PicoDevice:
                 ctypes.byref(self.pico_status.block_ready),
             )
 
-            if time.time() - t >= 0.25:
+            if time.time() - t >= 2.5:
                 self.pico_status.flags.system_state = "Waiting for Trigger"
                 t = time.time()
                 self.get_cap_count()
@@ -241,6 +243,7 @@ class PicoDevice:
             time.sleep(0.05)
             self.prev_seg_caps = self.seg_caps
 
+        self.pico_status.flags.system_state = current_system_state
         self.get_cap_count()
         if not self.file_writer.file_error and not self.pico_status.flags.user_capture:
             self.pico_status.flags.system_state = "Collecting LV Data"
@@ -323,7 +326,7 @@ class PicoDevice:
             active_chans = 1
 
         times = sum(self.buffer_manager.trigger_times)
-        
+
         self.rec_time = float(round((times * self.rec_caps), 2))
 
     def stop_scope(self):

@@ -479,7 +479,12 @@ function sync_with_adapter(){
         }
 
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
-        document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
+        folder_name = response.device.settings.file.folder_name  //document.getElementById("capture-folder-name").textContent
+        if ((folder_name[folder_name.length - 1] == '/') || (folder_name.length == 0)) {
+            document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
+        } else {
+            document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + '/' + response.device.settings.file.file_name)
+        }
 
         // Update the recommended capture amount and time length
         document.getElementById("suggest-caps").textContent = response.device.settings.capture.max_captures
@@ -617,11 +622,9 @@ function commit_to_adapter(id,path,key){
 function commit_int_adapter(id,path,key){
     // Commit integer value to adapter
     var input = parseInt(document.getElementById(id).value)
-    console.log("Input: ",input,typeof(input))
     if (isNaN(input)){
         console.log("Invalid")
     } else {
-        console.log("Valid")
         ajax_put(path,key,input)
     }
 }
@@ -638,7 +641,6 @@ function commit_float_adapter(id,path,key){
     if (isNaN(input)){
         console.log("Invalid")
     } else {
-        console.log("Valid")
         ajax_put(path,key,input)
     }
 }
