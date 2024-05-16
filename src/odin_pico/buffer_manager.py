@@ -128,7 +128,7 @@ class BufferManager:
 
         current_lv_array = []
 
-        for c, b in zip(self.lv_channels_active, self.np_channel_arrays):
+        for c, b in zip(self.active_channels, self.np_channel_arrays):
             # Find current data, along with channel range and offset
             values = adc2mV(
                 b[(self.dev_conf.capture_run.caps_in_run - 1)],
@@ -143,8 +143,8 @@ class BufferManager:
             # if current_offset != 0:
             #     for value in range(len(values)):
             #         values[value] = values[value] + offset_key
-
-            current_lv_array.append(values)
+            if self.channels[c].live_view:
+                current_lv_array.append(values)
 
         # Replaces current data as long as new data is not blank
         if current_lv_array != []:

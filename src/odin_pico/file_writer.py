@@ -88,6 +88,20 @@ class FileWriter:
             }
         )
 
+        chans = ['a','b','c','d']
+        old_dict = ['trigger__direction', 'trigger__source']
+        new_dict = ['trigger_direction', 'trigger_source']
+        for chan in range(len(chans)):
+            old_dict.append('channel_' + chans[chan] + '__coupling')
+            old_dict.append('channel_' + chans[chan] + '__range')
+            new_dict.append('channel_' + chans[chan] + '_coupling')
+            new_dict.append('channel_' + chans[chan] + '_range')
+
+        for key in range(len(old_dict)):
+            value = metadata[old_dict[key]]
+            metadata[new_dict[key]] = value
+            del metadata[old_dict[key]]
+
         # Update system state, and keep track of previous system state
         old_system_state = self.pico_status.flags.system_state
         self.pico_status.flags.system_state = "Captures Collected, Writing HDF5 File"
