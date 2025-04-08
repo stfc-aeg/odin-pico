@@ -1,6 +1,7 @@
 """Manage the PicoScope in preparing for, and extracting the data."""
 
 import ctypes
+import logging
 import time
 
 from picosdk.functions import mV2adc
@@ -83,7 +84,8 @@ class PicoDevice:
             self.buffer_manager.active_channels,
             self.buffer_manager.np_channel_arrays,
         ):
-            for i in range(self.dev_conf.capture_run.caps_in_run):
+            for i in range(self.dev_conf.capture_run.caps_comp, 
+                           (self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run)):
                 buff = b[i]
                 ps.ps5000aSetDataBuffer(
                     self.dev_conf.mode.handle,
@@ -138,14 +140,15 @@ class PicoDevice:
                 ctypes.byref(max_v),
                 ctypes.byref(min_v),
             )
-
+            
+            offset = self.util.calc_offset(chan.range, chan.offset)
             ps.ps5000aSetChannel(
                 self.dev_conf.mode.handle,
                 chan.channel_id,
                 int(chan.active),
                 chan.coupling,
                 chan.range,
-                chan.offset,
+                offset,
             )
 
     def run_setup(self, *args):
@@ -233,7 +236,9 @@ class PicoDevice:
             if (time.time() - start_time) > 10:
                 self.get_cap_count()
                 if self.seg_caps == 0:
+                    logging.debug("Aborting due to waiting for over 10s for trigger")
                     self.pico_status.flags.abort_cap = True
+                    collect = False
 
             # Stop scope if user chooses to abort capture
             if self.pico_status.flags.abort_cap:
@@ -265,7 +270,6 @@ class PicoDevice:
                 0,
                 ctypes.byref(self.buffer_manager.overflow),
             )
-
             self.get_trigger_timing()
 
     def get_trigger_timing(self):

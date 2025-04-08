@@ -1,6 +1,8 @@
 """File with several useful methods for the use of the scope."""
 
 import math
+import logging
+import numpy as np
 
 from picosdk.ps5000a import ps5000a as ps
 
@@ -184,8 +186,8 @@ class PicoUtil:
         """Calculate the offset, depending on range of channel."""
         try:
             range_mv = self.get_range_value_mv(range)
-            return (math.ceil(range_mv / (100 / off_per))) * pow(10, -3)
-        except Exception:
+            return((math.ceil(range_mv/(100/off_per)))*pow(10,-3))
+        except:
             return 0
 
     def max_samples(self, resolution):
@@ -212,3 +214,32 @@ class PicoUtil:
             elif not isinstance(value, PicoUtil):
                 flat_d[key] = value
         return flat_d
+    
+    def adc2mV(bufferADC, range, maxADC):
+        """
+        Convert a buffer of raw ADC count values into millivolts.
+        
+        :param bufferADC : numpy.ndarray or list/array-like Buffer of raw ADC count values (int16)
+        :param range : Index into the channelInputRanges list
+        :param maxADC : c_uint16 Maximum ADC count value
+        
+        :return: numpy.ndarray or list Buffer values converted to millivolts (float64)
+        """
+        channelInputRanges = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000]
+        vRange = channelInputRanges[range]
+        
+        # Division in Python 3 returns a float, avoiding any integer overflow
+        scaling_factor = vRange / maxADC.value
+        
+        # Check if the input is a NumPy array
+        if isinstance(bufferADC, np.ndarray):
+            # Apply the scaling factor to the entire array at once
+            # Convert to float64 before any calculations to avoid overflow
+            bufferV = bufferADC.astype(np.float64) * scaling_factor
+        else:
+            # For non-NumPy arrays (lists, C arrays, etc.), use list comprehension
+            # Explicitly convert each value to float before any operations
+            # Return a regular Python list of float values
+            bufferV = [float(x) * scaling_factor for x in bufferADC]
+        
+        return bufferV

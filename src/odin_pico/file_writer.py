@@ -66,6 +66,7 @@ class FileWriter:
             self.dev_conf.file.folder_name = self.dev_conf.file.folder_name + "/"
 
         # Makes a new directory if it does not already exist
+        logging.debug(f"file_path:{self.dev_conf.file.file_path}")
         if not (
             os.path.isdir(self.dev_conf.file.file_path + self.dev_conf.file.folder_name)
         ):
@@ -78,30 +79,16 @@ class FileWriter:
         metadata = self.util.flatten_metadata_dict(
             {
                 "active_channels": self.buffer_manager.active_channels[:],
-                "channel_a": asdict(self.dev_conf.channel_a),
-                "channel_b": asdict(self.dev_conf.channel_b),
-                "channel_c": asdict(self.dev_conf.channel_c),
-                "channel_d": asdict(self.dev_conf.channel_d),
-                "trigger": asdict(self.dev_conf.trigger),
+                "channel_a": self.dev_conf.channel_a.custom_asdict(),
+                "channel_b": self.dev_conf.channel_b.custom_asdict(),
+                "channel_c": self.dev_conf.channel_c.custom_asdict(),
+                "channel_d": self.dev_conf.channel_d.custom_asdict(),
+                "trigger": self.dev_conf.trigger.custom_asdict(),
                 "resolution": self.dev_conf.mode.resolution,
                 "timebase": self.dev_conf.mode.timebase,
             }
         )
-
-        chans = ['a','b','c','d']
-        old_dict = ['trigger__direction', 'trigger__source']
-        new_dict = ['trigger_direction', 'trigger_source']
-        for chan in range(len(chans)):
-            old_dict.append('channel_' + chans[chan] + '__coupling')
-            old_dict.append('channel_' + chans[chan] + '__range')
-            new_dict.append('channel_' + chans[chan] + '_coupling')
-            new_dict.append('channel_' + chans[chan] + '_range')
-
-        for key in range(len(old_dict)):
-            value = metadata[old_dict[key]]
-            metadata[new_dict[key]] = value
-            del metadata[old_dict[key]]
-
+        
         # Update system state, and keep track of previous system state
         old_system_state = self.pico_status.flags.system_state
         self.pico_status.flags.system_state = "Captures Collected, Writing HDF5 File"

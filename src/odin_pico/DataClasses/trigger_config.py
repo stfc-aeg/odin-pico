@@ -33,3 +33,25 @@ class TriggerConfig:
     def direction(self, value: int):
         if value in self.util.ps_direction:
             self._direction = value
+    active: bool = True
+    threshold: int = 0
+    delay: int = 0
+    auto_trigger_ms: int = 0
+    _source: int = 0
+    _direction: int = 2
+
+    def custom_asdict(self):
+        """
+        Convert the dataclass to a dictionary, using property names where applicable
+        instead of private attributes.
+        """
+        #use property names for source and direction and not private attributes
+        dict = {
+            "active": self.active,
+            "threshold": self.threshold,
+            "delay": self.delay,
+            "auto_trigger_ms": self.auto_trigger_ms,
+            "source": self.source,  # Uses the property, not _source
+            "direction": self.direction,  # Uses the property, not _direction
+        }
+        return dict 

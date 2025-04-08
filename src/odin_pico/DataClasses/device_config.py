@@ -19,7 +19,6 @@ class DeviceConfig:
     config_folder_path: str = "/tmp/configs/"
     capture_folder_path: str = "/tmp/captures/"
     channel_names: list[str] = field(default_factory=list)
-
     mode: ModeConfig = field(default_factory=ModeConfig)
     trigger: TriggerConfig = field(default_factory=TriggerConfig)
     capture: CaptureConfig = field(default_factory=CaptureConfig)

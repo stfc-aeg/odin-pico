@@ -17,7 +17,6 @@ from odin_pico.file_writer import FileWriter
 from odin_pico.pico_device import PicoDevice
 from odin_pico.pico_util import PicoUtil
 
-
 class PicoController:
     """Class which holds parameter trees and manages the PicoScope capture process."""
 
@@ -48,7 +47,7 @@ class PicoController:
         # Initialise objects
         self.util = PicoUtil()
         self.pico_status = DeviceStatus()
-        self.buffer_manager = BufferManager(self.dev_conf)
+        self.buffer_manager = BufferManager(self.channels, self.dev_conf)
         self.file_writer = FileWriter(self.dev_conf, self.buffer_manager, self.pico_status)
         self.analysis = PicoAnalysis(
             self.dev_conf, self.buffer_manager, self.pico_status
@@ -512,38 +511,30 @@ class PicoController:
                 return False
         return True
 
-    def set_capture_run_limits(self, captures):
+    def set_capture_run_limits(self):
         """Set the value for maximum amount of captures that can fit into the picoscope memory."""
         # Calculate the amount of samples in a capture
         capture_samples = (
             self.dev_conf.capture.pre_trig_samples
             + self.dev_conf.capture.post_trig_samples
         )
-
         # Calculate the maximum amount of captures depending on settings
         self.dev_conf.capture_run.caps_max = math.floor(
             self.util.max_samples(self.dev_conf.mode.resolution) / capture_samples
         )
-        self.dev_conf.capture_run.caps_remaining = captures
+
+        if len(self.buffer_manager.active_channels) > 0:
+            self.dev_conf.capture_run.caps_max /= len(self.buffer_manager.active_channels)
+
+        self.dev_conf.capture_run.caps_remaining = self.dev_conf.capture.n_captures
 
     def set_capture_run_length(self):
-        """Set the captures to be completed in each "run" based on the maximum allowed captures."""
-        # Avoid dividing by zero, set max caps depending on active channels
-        if len(self.buffer_manager.active_channels) > 0:
-            max_caps = math.trunc(
-                (self.dev_conf.capture_run.caps_max)
-                / (len(self.buffer_manager.active_channels))
-            )
-        else:
-            max_caps = self.dev_conf.capture_run.caps_max
+        """Sets the captures to be completed in each "run" based on the maximum allowed captures, and the amount of captures left to be collected"""
 
-        # Calculate captures left to collect
-        if self.dev_conf.capture_run.caps_remaining <= max_caps:
-            self.dev_conf.capture_run.caps_in_run = (
-                self.dev_conf.capture_run.caps_remaining
-            )
+        if self.dev_conf.capture_run.caps_remaining <= self.dev_conf.capture_run.caps_max:
+            self.dev_conf.capture_run.caps_in_run = self.dev_conf.capture_run.caps_remaining
         else:
-            self.dev_conf.capture_run.caps_in_run = max_caps
+            self.dev_conf.capture_run.caps_in_run = self.dev_conf.capture_run.caps_max
 
     def calc_samp_time(self):
         """Calculate the sample interval based on the resolution and timebase."""
@@ -592,6 +583,7 @@ class PicoController:
                         delay = 0
 
                     for capture_run in range(cap_loop):
+                        ##why are pha_counts being appended twice? why here and not in buffer_manager?
                         self.buffer_manager.pha_counts = [[]] * 4
 
                         self.buffer_manager.pha_counts = [[]] * 4
@@ -620,7 +612,7 @@ class PicoController:
                                     + str(capture_run + 1)
                                 )
                                 self.tb_capture()
-
+                        
                         # Delay between capture runs, if requested by user
                         if capture_run != (cap_loop - 1):
                             self.pico_status.flags.system_state = ("Delay Between Captures")
@@ -671,10 +663,19 @@ class PicoController:
         if save_file:
             captures = self.dev_conf.capture.n_captures
         else:
-            captures = 10
-        self.set_capture_run_limits(captures)
+            captures = 1
+            
+        self.set_capture_run_limits()
+        
+        #set caps_remaining for liveview mode
+        if not save_file:
+            self.dev_conf.capture_run.caps_remaining = 1
+            
+        self.set_capture_run_length()
+    
 
-        if self.pico.run_setup():
+        # checks run_setup completes successfully, calls it with captures if save_file is not true
+        if self.pico.run_setup() if save_file else self.pico.run_setup(captures):
             while self.dev_conf.capture_run.caps_comp < captures:
                 if not self.pico_status.flags.abort_cap:
                     self.set_capture_run_length()
