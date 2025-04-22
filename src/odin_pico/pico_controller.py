@@ -706,38 +706,19 @@ class PicoController:
             self.buffer_manager.save_lv_data()
             self.analysis.pha_one_peak()
 
-
     def tb_capture(self):
-        """Run the necessary steps for a set of time-based captures."""
+        """
+        """
+        # validate this method of calculating max captures!
+        self.set_capture_run_limits()
+        self.dev_conf.capture_run.caps_in_run = int(self.dev_conf.capture_run.caps_max/2)
         self.buffer_manager.clear_arrays()
         self.buffer_manager.check_channels()
-        total_time = self.dev_conf.capture.capture_time
-
-        # Calculate the amount of captures to be collected per run
-        self.dev_conf.capture_run.caps_in_run = math.trunc(
-            self.dev_conf.capture.caps_in_cycle
-            / (len(self.buffer_manager.active_channels))
-        )
-
-        self.buffer_manager.generate_tb_arrays()
-        if self.pico.run_tb_setup():
-            start_time = time.time()
-            # Run the capture runs until the time is up
-            while (time.time() - start_time) < total_time:
-                if not self.pico_status.flags.abort_cap:
-                    self.capture_run()
-                else:
-                    total_time = 0
-
-                if (time.time() - start_time > total_time):
-                    self.current_time = total_time
-                else:
-                    self.current_time = time.time() - start_time
-            # Save data to file if requested
-            self.file_writer.write_hdf5()
-
-        self.caps_collected = self.dev_conf.capture_run.caps_comp
-        self.dev_conf.capture_run.reset()
+        self.pico.run_tb_setup()
+        self.pico.run_time_based_capture(
+            self.dev_conf.capture.capture_time
+            )
+        self.file_writer.write_hdf5(write_accumulated=True)
 
     ##### Adapter specific functions below #####
 

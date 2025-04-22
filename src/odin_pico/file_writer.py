@@ -74,7 +74,7 @@ class FileWriter:
 
         return True
 
-    def write_hdf5(self):
+    def write_hdf5(self, write_accumulated=False):
         """Create and write to a hdf5 file."""
         metadata = self.util.flatten_metadata_dict(
             {
@@ -118,10 +118,14 @@ class FileWriter:
                 for key, value in metadata.items():
                     metadata_group.attrs[key] = value
 
-                # Add the collected data to the created file
+                if write_accumulated:
+                    source = self.buffer_manager.accumulated_arrays
+                else:
+                    source = self.buffer_manager.np_channel_arrays
+
                 for c, b in zip(
                     self.buffer_manager.active_channels,
-                    self.buffer_manager.np_channel_arrays,
+                    source,
                 ):
                     f.create_dataset(("adc_counts_" + str(c)), data=b)
 

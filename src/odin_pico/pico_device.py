@@ -64,8 +64,13 @@ class PicoDevice:
         Map the local buffers in the buffer_manager to the picoscope for
         each individual trace to be captured on each channel by the picoscope.
         """
+
+        ps.ps5000aStop(self.dev_conf.mode.handle)
         # Set the number of memory segments to be used
         n_captures = self.dev_conf.capture_run.caps_in_run
+        logging.debug(f"captures in run: {n_captures}")
+        logging.debug(f"samples: {self.dev_conf.capture.pre_trig_samples, self.dev_conf.capture.post_trig_samples}")
+        logging.debug(f"samples_per_seg:{self.dev_conf.meta_data.samples_per_seg}")
         ps.ps5000aMemorySegments(
             self.dev_conf.mode.handle,
             n_captures,
@@ -80,12 +85,15 @@ class PicoDevice:
         )
 
         # Assign data buffers for the PicoScope to write to
+        buffer_counter = 0
         for c, b in zip(
             self.buffer_manager.active_channels,
             self.buffer_manager.np_channel_arrays,
         ):
+            logging.debug(f"captures in run: {self.dev_conf.capture_run.caps_in_run}")
             for i in range(self.dev_conf.capture_run.caps_comp, 
                            (self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run)):
+                buffer_counter+=1
                 buff = b[i]
                 ps.ps5000aSetDataBuffer(
                     self.dev_conf.mode.handle,
@@ -95,6 +103,7 @@ class PicoDevice:
                     i - self.dev_conf.capture_run.caps_comp,
                     0,
                 )
+        logging.debug(f"mapped {buffer_counter} buffers")
 
     def set_trigger(self):
         """Responsible for setting the trigger information on the picoscope."""
@@ -175,12 +184,25 @@ class PicoDevice:
         """Prepare the scope for a time-based capture."""
         # Open the scope if not already open
         if self.pico_status.open_unit != 0:
-            self.open_unit()
-
+            self.open_unit()      
         if self.pico_status.open_unit == 0:
             self.set_channels()
             self.set_trigger()
-            return True
+            
+            caps_in_run = self.dev_conf.capture_run.caps_in_run
+            logging.debug(f"setting memory segments to:{caps_in_run} with samples:{self.dev_conf.meta_data.samples_per_seg.value}")
+
+            ps.ps5000aMemorySegments(
+                self.dev_conf.mode.handle,
+                caps_in_run,
+                ctypes.byref(self.dev_conf.meta_data.samples_per_seg),
+            )
+
+            ps.ps5000aSetNoOfCaptures(self.dev_conf.mode.handle, caps_in_run)
+            self.buffer_manager.generate_arrays(caps_in_run)
+            logging.debug(f"np_arry shape: {self.buffer_manager.np_channel_arrays[0].shape}")
+            self.assign_pico_memory()
+            logging.debug("Setup complete")
 
     def run_block(self):
         """Complete a PicoScope capture run using the rapid block mode.
@@ -271,6 +293,137 @@ class PicoDevice:
                 ctypes.byref(self.buffer_manager.overflow),
             )
             self.get_trigger_timing()
+            
+    def run_time_based_capture(self, total_time: float):
+        """
+        Perform repeated rapid-block captures until 'total_time' is up 
+        or user aborts, creating and assigning new data buffers before each run.
+        This avoids any reuse of old buffers that might cause memory corruption.
+        """
+        logging.debug("entering tbcap")
+        start_time = time.time()
+        block_running = False
+
+        self.prev_seg_caps = 0
+        self.seg_caps = 0
+
+        self.dev_conf.meta_data.total_cap_samples = (
+            self.dev_conf.capture.pre_trig_samples
+            + self.dev_conf.capture.post_trig_samples
+        )
+        self.dev_conf.meta_data.max_samples = ctypes.c_int32(
+            self.dev_conf.meta_data.total_cap_samples
+        )
+
+        self.pico_status.block_ready = ctypes.c_int16(0)
+
+        logging.debug(f"ready value:{self.pico_status.block_ready.value} check value:{self.pico_status.block_check.value}")
+
+        while True:
+            #check user/time abort at top of each loop iteration
+            if self.pico_status.flags.abort_cap:
+                if block_running:
+                    ps.ps5000aStop(self.dev_conf.mode.handle)
+                    self._retrieve_partial_data()
+                break
+
+            elapsed = time.time() - start_time
+            logging.debug(f"running for: {elapsed}")
+            if elapsed >= total_time:
+                self.pico_status.flags.abort_cap = True
+                logging.debug("User time exceeded, aborting")
+                if block_running:
+                    ps.ps5000aStop(self.dev_conf.mode.handle)
+                    self._retrieve_partial_data()
+                break
+
+            # If not currently capturing, start a new block run
+            if not block_running:
+                logging.debug("Not running a capture")
+
+                self.run_tb_setup()
+
+                self.pico_status.block_ready = ctypes.c_int16(0)
+                # 3) Now run the block
+                ps.ps5000aRunBlock(
+                    self.dev_conf.mode.handle,
+                    self.dev_conf.capture.pre_trig_samples,
+                    self.dev_conf.capture.post_trig_samples,
+                    self.dev_conf.mode.timebase,
+                    None,
+                    0,
+                    None,
+                    None,
+                )
+                block_running = True
+                block_start_time = time.time()
+                
+
+            else:
+                ps.ps5000aIsReady(
+                    self.dev_conf.mode.handle,
+                    ctypes.byref(self.pico_status.block_ready)
+                )
+
+                # If scope signals it's done
+                if (self.pico_status.block_ready.value != 
+                        self.pico_status.block_check.value):
+                    logging.debug(f"BLOCK READY CHANGED, ready value:{self.pico_status.block_ready.value} check value:{self.pico_status.block_check.value}")
+                    self._retrieve_partial_data()
+                    block_running = False
+
+                else:
+                    # 5) Check "10s no trigger" logic
+                    if (time.time() - block_start_time) > 10:
+                        self.get_cap_count()  # seg_caps
+                        if self.seg_caps == 0:
+                            # No triggers arrived, abort
+                            self.pico_status.flags.abort_cap = True
+                            ps.ps5000aStop(self.dev_conf.mode.handle)
+                            self._retrieve_partial_data()
+                            break
+                               
+            time.sleep(0.05)
+
+        # End of loop => if we still have a block running, stop & retrieve partial
+        if block_running:
+            logging.debug("final block running checked")
+            ps.ps5000aStop(self.dev_conf.mode.handle)
+            self._retrieve_partial_data()
+
+
+    def _retrieve_partial_data(self):
+        """
+        ps5000aGetNoOfCaptures -> ps5000aGetValuesBulk,
+        then buffer_manager.accumulate_tb_data(...) to store them.
+        """
+        self.get_cap_count()
+        logging.debug(f"captures completed: {self.seg_caps}")
+        if self.seg_caps == 0:
+            return
+
+        seg_to_idx = self.seg_caps - 1
+
+        total_samples = (
+            self.dev_conf.capture.pre_trig_samples +
+            self.dev_conf.capture.post_trig_samples
+        )
+        self.dev_conf.meta_data.max_samples = ctypes.c_int32(total_samples)
+
+        ps.ps5000aGetValuesBulk(
+            self.dev_conf.mode.handle,
+            ctypes.byref(self.dev_conf.meta_data.max_samples),
+            0,
+            seg_to_idx,
+            0,
+            0,
+            ctypes.byref(self.buffer_manager.overflow),
+        )
+
+        self.get_trigger_timing()
+
+        # Accumulate the newly captured waveforms so we don't lose them
+        self.buffer_manager.accumulate_tb_data(self.seg_caps)
 
     def get_trigger_timing(self):
         """Retrieve the trigger timing from the scope."""
