@@ -27,11 +27,19 @@ class PicoController:
         # Threading lock and control variables
         self.lock = lock
         self.update_loop_active = loop
+    
+        self.gpib_avail = False
+        self.gpib_control = False
+        self.tec_devices = None
+        self.selected_tec = None
+
+        self.temp_setpoint = None
+        self.voltage_limit = None
+        self.current_limit = None
 
         # Initialise variables for data collection
         self.enable = False
         self.caps_collected = 0
-        self.current_time = 0
         self.current_capture = 0
 
         # Objects for handling configuration, data storage and representing the PicoScope 5444D
@@ -53,7 +61,13 @@ class PicoController:
             self.dev_conf, self.buffer_manager, self.pico_status
         )
         self.pico = PicoDevice(max_caps, self.dev_conf, self.pico_status,
-                               self.buffer_manager, self.file_writer)
+                               self.buffer_manager, self.analysis, self.file_writer)
+        
+        self.param_tree = None
+        self.gpib_tree = ParameterTree({
+                    "gpib_avail": (lambda: self.gpib_avail, None),
+                    "gpib_control": (lambda: self.gpib_control, lambda value: setattr(self, 'gpib_control', value)),
+        })
 
         # ParameterTrees to represent different parts of the system
         adapter_status = ParameterTree(
@@ -252,7 +266,7 @@ class PicoController:
                     partial(self.set_dc_value, self.dev_conf.capture, "capture_repeat"),
                 ),
                 "max_captures": (lambda: self.pico.rec_caps, None),
-                "max_time": (lambda: self.pico.rec_time, None)
+                "max_time": (lambda: self.buffer_manager.estimate_max_time(), None)
             }
         )
 
@@ -333,15 +347,15 @@ class PicoController:
                 "captures_requested": (lambda: self.dev_conf.capture.n_captures, None),
                 "lv_data": (lambda: self.buffer_manager.lv_channel_arrays, None),
                 "pha_bin_edges": (lambda: self.buffer_manager.bin_edges, None),
-                "lv_range": (
-                    lambda: self.buffer_manager.lv_range,
-                    partial(self.set_dc_value, self.buffer_manager, "lv_range"),
-                ),
+                # "lv_range": (
+                #     lambda: self.buffer_manager.lv_range,
+                #     partial(self.set_dc_value, self.buffer_manager, "lv_range"),
+                # ),
                 "pha_active_channels": (
                     lambda: self.buffer_manager.pha_active_channels,
                     None,
                 ),
-                "current_tbdc_time": (lambda: self.current_time, None),
+                "current_tbdc_time": (lambda: self.pico.elapsed_time, None),
                 "current_capture": (lambda: self.current_capture, None),
             }
         )
@@ -379,7 +393,7 @@ class PicoController:
             }
         )
 
-        self.param_tree = ParameterTree({"device": self.pico_param_tree})
+        self.device_tree = ParameterTree({"device": self.pico_param_tree})
 
         # Initalise the "update_loop" if control variable passed to the Pico_Controller is True
         if self.update_loop_active:
@@ -387,6 +401,96 @@ class PicoController:
 
         # Set initial state of the verification system
         self.verify_settings()
+
+    def initialize_adapters(self, adapters):
+        """Get access to all of the other adapters. If the GPIB adapter is running, 
+        build a paramtree for a currently selected device."""
+        try:
+            self.gpib = adapters['gpib'] if adapters else None
+        except:
+            pass
+
+        if self.gpib:
+            devices = self.util.iac_get(self.gpib, "devices")
+            self.tec_devices = [name for name, info in devices.items()
+                if info.get("type") == "K2510"]
+
+            self.gpib_avail = self.verify_gpib()
+
+            if self.tec_devices:
+                self.selected_tec = self.tec_devices[0]
+
+                self.gpib_info = ParameterTree({
+                    "tec_setpoint": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/info/tec_setpoint"))), None),
+                    "tec_volt_lim": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/info/tec_volt_lim"))), None),
+                    "tec_curr_lim": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/info/tec_curr_lim"))), None),
+                    "tec_current": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/info/tec_current"))), None),
+                    "tec_voltage": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/info/tec_voltage"))), None),
+                    "tec_power": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/info/tec_power"))), None),
+                    "tec_temp_meas": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/info/tec_temp_meas"))), None),
+                })
+
+                self.gpib_set = ParameterTree({
+                    "temp": (lambda: (self.util.iac_get(self.gpib, 
+                                ("devices/"+self.selected_tec+"/set/temp_set"))), 
+                            lambda value: self.util.iac_set(self.gpib, 
+                                ("devices/"+self.selected_tec+"/set/temp_set", float(value)))),
+                    "c_lim": (lambda: (self.util.iac_get(self.gpib, 
+                                ("devices/"+self.selected_tec+"/set/c_lim_set"))), 
+                            lambda value: self.util.iac_set(self.gpib, 
+                                ("devices/"+self.selected_tec+"/set/c_lim_set", float(value)))),
+                    "v_lim": (lambda: (self.util.iac_get(self.gpib, 
+                                ("devices/"+self.selected_tec+"/set/v_lim_set"))), 
+                            lambda value: self.util.iac_set(self.gpib, 
+                                ("devices/"+self.selected_tec+"/set/v_lim_set", float(value))))
+                })
+                
+                self.gpib_tree = ParameterTree(
+                {
+                    "gpib_avail": (lambda: self.gpib_avail, None),
+                    "gpib_control": (lambda: self.gpib_control, lambda value: setattr(self, 'gpib_control', value)),
+                    "available_tecs": (lambda: self.tec_devices, None),
+                    "selected_tec": (lambda: self.selected_tec, lambda value: setattr(self, 'selected_tec', value)),
+                    "device_control_state": (lambda: (self.util.iac_get(self.gpib, 
+                                                ("devices/"+self.selected_tec+"/device_control_state"))), 
+                                            lambda value: self.util.iac_set(self.gpib, 
+                                                ("devices/"+self.selected_tec+"/"), {"device_control_state": value})),
+                    "output_state": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/output_state"))), 
+                                    lambda value: self.util.iac_set(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/"), {"output_state": value})),
+                    "temp_over_state": (lambda: (self.util.iac_get(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/temp_over_state"))), 
+                                    lambda value: self.util.iac_set(self.gpib, 
+                                        ("devices/"+self.selected_tec+"/"), {"temp_over_state": value})),
+                    "set": self.gpib_set,
+                    "info": self.gpib_info
+                })
+
+        self.param_tree = ParameterTree({
+            "device": self.pico_param_tree,
+            "gpib": self.gpib_tree
+        })
+
+    def verify_gpib(self):
+        """verify that GPIB drivers are installed, USB Device is connected,
+        Adapter is loaded and valid K2510 device is connected"""
+        try:
+            return (
+                bool(self.gpib) and
+                bool(self.gpib.gpibmanager.driver_available) and
+                bool(self.gpib.gpibmanager.device_available) and
+                bool(self.tec_devices)
+            )
+        except AttributeError:
+            return False
 
     def get_dc_value(self, obj, chan_name, attr_name):
         """Retrive values for the live-view settings."""
@@ -523,8 +627,14 @@ class PicoController:
             self.util.max_samples(self.dev_conf.mode.resolution) / capture_samples
         )
 
-        if len(self.buffer_manager.active_channels) > 0:
+        logging.debug(f"{self.dev_conf.capture_run.caps_max} caps for {self.util.max_samples(self.dev_conf.mode.resolution)}:max {capture_samples}:requested ")
+
+        if len(self.buffer_manager.active_channels) > 1:
             self.dev_conf.capture_run.caps_max /= len(self.buffer_manager.active_channels)
+
+        logging.debug(f"active chans: len{len(self.buffer_manager.active_channels)} chans:{self.buffer_manager.active_channels}")
+
+        logging.debug(f"after div: {self.dev_conf.capture_run.caps_max} caps for {self.util.max_samples(self.dev_conf.mode.resolution)}:max {capture_samples}:requested ")
 
         self.dev_conf.capture_run.caps_remaining = self.dev_conf.capture.n_captures
 
@@ -588,7 +698,6 @@ class PicoController:
 
                         self.buffer_manager.pha_counts = [[]] * 4
                         self.current_capture = capture_run
-                        self.current_time = 0
 
                         # Complete a capture run, based on capture number
                         if not self.dev_conf.capture.capture_type:
@@ -642,7 +751,6 @@ class PicoController:
                     self.pico_status.flags.system_state = "Collecting LV Data"
                 self.pico.calc_max_caps()
                 self.user_capture(False)
-                self.pico.calc_max_time()
                 self.pico_status.flags.abort_cap = False
 
         if (self.pico_status.open_unit == 0) and (
@@ -663,17 +771,16 @@ class PicoController:
         if save_file:
             captures = self.dev_conf.capture.n_captures
         else:
-            captures = 1
+            captures = 2
             
         self.set_capture_run_limits()
         
         #set caps_remaining for liveview mode
         if not save_file:
-            self.dev_conf.capture_run.caps_remaining = 1
+            self.dev_conf.capture_run.caps_remaining = 2
             
         self.set_capture_run_length()
     
-
         # checks run_setup completes successfully, calls it with captures if save_file is not true
         if self.pico.run_setup() if save_file else self.pico.run_setup(captures):
             while self.dev_conf.capture_run.caps_comp < captures:
@@ -712,14 +819,12 @@ class PicoController:
         # validate this method of calculating max captures!
         self.set_capture_run_limits()
         self.dev_conf.capture_run.caps_in_run = int(self.dev_conf.capture_run.caps_max/2)
-        self.buffer_manager.clear_arrays()
-        self.buffer_manager.check_channels()
-        self.pico.run_tb_setup()
         self.pico.run_time_based_capture(
             self.dev_conf.capture.capture_time
             )
         self.file_writer.write_hdf5(write_accumulated=True)
-
+        self.buffer_manager.clear_arrays()
+        
     ##### Adapter specific functions below #####
 
     @run_on_executor

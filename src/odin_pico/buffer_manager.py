@@ -2,10 +2,13 @@
 
 import ctypes
 import logging
-import math
+from collections import deque
+from typing import List
 import numpy as np
 from odin_pico.DataClasses.device_config import DeviceConfig
 from odin_pico.pico_util import PicoUtil
+import psutil
+import math
 
 class BufferManager:
     """Class which manages the buffers that are filled with data by the PicoScope."""
@@ -13,74 +16,82 @@ class BufferManager:
     def __init__(self, channels=[], dev_conf=DeviceConfig()):
         """Initialise the BufferManager Class."""
         self.dev_conf = dev_conf
-        self.util = PicoUtil()
-        self.overflow = None
         self.channels = channels
         self.active_channels = []
+        self.util = PicoUtil()
+
+        self.overflow = None
         self.np_channel_arrays = []
-        #self.buffer_references = []
         self.pha_arrays = []
         self.trigger_times = []
+        self.capture_blocks: List[List[np.ndarray]] = []
+        self.trigger_blocks:  List[np.ndarray]   = []
 
-        self.accumulated_arrays = []
-        self.accumulated_trigger_times = []
+        ### Add to self.options
+        self.trigger_intervals = deque(maxlen=500)
 
-        # Holds currrent PHA and LV data
         self.lv_channel_arrays = []
-
         self.lv_channels_active = []
+
         self.pha_channels_active = [False] * 4
         self.pha_active_channels = []
         self.current_pha_channels = []
         self.bin_edges = []
         self.pha_counts = [[]] * 4
-        self.lv_range = 0
+
+    def estimate_max_time(self):
+        """
+        Return estimated seconds of acquisition that can still fit into RAM,
+        or 0 if avg trigger times unavailable.
+        """
+        avg_dt = self.avg_trigger_dt()
+        if avg_dt is None:
+            return 0
+
+        n_chan = len(self.active_channels) or 1
+        samples_per_cap = (
+            self.dev_conf.capture.pre_trig_samples +
+            self.dev_conf.capture.post_trig_samples
+        )
+        capture_dur  = samples_per_cap * self.dev_conf.mode.samp_time
+        bytes_per_cap = samples_per_cap * 2 * n_chan
+
+        # allowing for reserving 25% of current free memmory
+        allowed = psutil.virtual_memory().available * 0.75
+        if bytes_per_cap == 0 or bytes_per_cap > allowed:
+            return 0
+
+        max_caps = allowed // bytes_per_cap
+        return math.trunc(max_caps * (capture_dur + avg_dt))
+
+    def add_trigger_intervals(self, deltas):
+        """Append trigger timing values to the deque."""
+        if deltas is None or len(deltas) == 0:
+            return
+        # skip first element of trigger intervals, from looking at trigger data, it seems to be inaccurate
+        self.trigger_intervals.extend(deltas[1:] if len(deltas) > 1 else deltas)
+        
+    def avg_trigger_dt(self):
+        """Mean of stored intervals; returns 0 if deque empty."""
+        if not self.trigger_intervals:
+            return 0
+        return sum(self.trigger_intervals) / len(self.trigger_intervals)
 
     def generate_arrays(self, *args):
-        """
-        Create the buffers that the PicoScope will map onto for data collection.
-        """
-        self.clear_arrays()       # Clears old references too
+        """Create the buffers that the picoscope will be mapped onto for data collection."""
+        self.clear_arrays()
         self.check_channels()
-
         if args:
             n_captures = args[0]
         else:
             n_captures = self.dev_conf.capture.n_captures
-
+        
         self.overflow = (ctypes.c_int16 * n_captures)()
+        samples = (self.dev_conf.capture.pre_trig_samples
+            + self.dev_conf.capture.post_trig_samples)
 
-        samples = (
-            self.dev_conf.capture.pre_trig_samples +
-            self.dev_conf.capture.post_trig_samples
-        )
-
-        # Create new arrays & store them in BOTH self.np_channel_arrays
-        # and self.buffer_references so they don't get garbage-collected
-        for _ in range(len(self.active_channels)):
-            # Make a fresh buffer for this channel with shape [n_captures, samples]
-            arr = np.zeros((n_captures, samples), dtype=np.int16)
-            # Keep a reference so Python won't free it
-            #self.buffer_references.append(arr)
-
-            self.np_channel_arrays.append(arr)
-
-    def generate_tb_arrays(self):
-        """Create the buffers that the PicoScope uses during time-based data collection."""
-        n_captures = self.dev_conf.capture_run.caps_in_run
-
-        self.overflow = (ctypes.c_int16 * n_captures)()
-
-        samples = (
-            self.dev_conf.capture.pre_trig_samples
-            + self.dev_conf.capture.post_trig_samples
-        )
-
-        # Create recyclable buffers
         for i in range(len(self.active_channels)):
-            self.np_channel_arrays.append(
-                np.zeros(shape=(n_captures,samples), dtype=np.int16)
-                )
+            self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
 
     def accumulate_pha(self, chan, pha_data):
         """Add the new PHA data to the previous data, if there is any data."""
@@ -99,6 +110,7 @@ class BufferManager:
 
     def check_channels(self):
         """Check which channels are active, LV active and PHA active."""
+        self.active_channels.clear()
         for chan in self.channels:
             if chan.active:
                 self.active_channels.append(chan.channel_id)
@@ -122,50 +134,47 @@ class BufferManager:
             if self.channels[c].live_view:
                 self.lv_channel_arrays.append(values)
 
-    def accumulate_tb_data(self, seg_caps):
+    def create_tb_block(self, caps_in_run: int) -> int:
         """
-        Append the newly captured seg_caps waveforms from each channel's
-        np_channel_arrays to accumulated arrays indexed by channel position.
-        
-        Only valid captures (up to seg_caps) are stored, preserving shape and
-        minimising copying operations.
-        
-        :param seg_caps: int, number of valid captures in the current dataset
+        Allocate one NumPy buffer per active channel and append it to
+        capture_blocks. Assigns np_channel_arrays to the blocks so that assign_memory
+        in picodevice can pick up these arrays without changes. 
         """
-        # Skip if no valid captures
-        if seg_caps <= 0:
-            logging.debug(f"No valid captures to accumulate (seg_caps={seg_caps})")
+        self.check_channels()
+        samples_per_cap = (
+            self.dev_conf.capture.pre_trig_samples +
+            self.dev_conf.capture.post_trig_samples
+        )
+
+        block = [
+            np.empty((caps_in_run, samples_per_cap), dtype=np.int16)
+            for _ in self.active_channels
+        ]
+        self.capture_blocks.append(block)
+        self.trigger_blocks.append(np.empty(caps_in_run, dtype=np.float64))
+
+        # reference to the newly created block to use in assign_memory in pico_device
+        self.np_channel_arrays = block
+
+        self.overflow = (ctypes.c_int16 * caps_in_run)()
+
+        return len(self.capture_blocks) - 1
+
+    def slice_block_to_valid(self, block_idx: int, seg_caps: int):
+        """
+        After a rapid-block run finishes with `seg_caps < caps_in_run`,
+        discard the never-filled tail rows for every channel and the
+        corresponding trigger-time array.
+        """
+        if seg_caps == self.capture_blocks[block_idx][0].shape[0]:
             return
-          
-        # Ensure array has enough slots for all active channels
-        while len(self.accumulated_arrays) < len(self.active_channels):
-            self.accumulated_arrays.append(None)
-        
-        # Process each active channel
-        for idx, chan_id in enumerate(self.active_channels):
-            # if idx >= len(self.np_channel_arrays):
-            #     logging.error(f"Channel index {idx} out of range for np_channel_arrays")
-            
-            # Extract only the valid data (view, not copy)
-            valid_data = self.np_channel_arrays[idx][:seg_caps]
-            
-            # Either initialise or append to existing array
-            if self.accumulated_arrays[idx] is None:
-                # First data for this channel - copy to avoid reference issues
-                self.accumulated_arrays[idx] = valid_data.copy()
-            else:
-                # Concatenate with existing data (more efficient than vstack)
-                self.accumulated_arrays[idx] = np.concatenate(
-                    (self.accumulated_arrays[idx], valid_data),
-                    axis=0
-                )
-            
-            logging.debug(f"Channel {chan_id}: Added {valid_data.shape[0]} captures. "
-                        f"Total: {self.accumulated_arrays[idx].shape[0]}")
-        
-            # Only add valid trigger times
-            valid_times = self.trigger_times[:seg_caps]
-            self.accumulated_trigger_times.extend(valid_times)
+
+        for ch in range(len(self.active_channels)):
+            self.capture_blocks[block_idx][ch] = \
+                self.capture_blocks[block_idx][ch][:seg_caps]
+
+        self.trigger_blocks[block_idx] = \
+            self.trigger_blocks[block_idx][:seg_caps]
 
     def clear_arrays(self):
         """Remove previously created buffers from the buffer_manager."""
@@ -174,10 +183,10 @@ class BufferManager:
             self.trigger_times,
             self.np_channel_arrays,
             self.lv_channels_active,
-            self.pha_active_channels,
-            self.accumulated_arrays,
-            self.accumulated_trigger_times
+            self.pha_active_channels
         ]
         for array in arrays:
             array.clear()
+        self.capture_blocks: List[List[np.ndarray]] = []
+        self.trigger_blocks:  List[np.ndarray]   = []
         self.pha_channels_active = [False] * 4

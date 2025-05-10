@@ -1,5 +1,6 @@
 """Adapter for a PicoScope 5444D."""
 
+import logging
 import threading
 from odin.adapters.adapter import (
     ApiAdapter,
@@ -24,6 +25,12 @@ class PicoAdapter(ApiAdapter):
         max_caps = int(self.options.get("max_caps", 100000000))
 
         self.pico_controller = PicoController(self.lock, update_loop, data_output_path, max_caps)
+   
+    def initialize(self, adapters):
+        """Initialize the adapter after it has been loaded."""
+        self.adapters = dict((k, v) for k, v in adapters.items() if v is not self)
+        logging.debug(f"adapters loaded:{self.adapters}")
+        self.pico_controller.initialize_adapters(self.adapters)
 
     @response_types("application/json", default="application/json")
     def get(self, path, request):
