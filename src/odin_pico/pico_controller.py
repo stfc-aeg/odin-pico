@@ -704,6 +704,8 @@ class PicoController:
                         delay = 0
 
                     for capture_run in range(cap_loop):
+                        # reset abort flag if its been set by TB capture
+                        self.pico_status.flags.abort_cap = False
                         ##why are pha_counts being appended twice? why here and not in buffer_manager?
                         self.buffer_manager.pha_counts = [[]] * 4
                         self.current_capture = capture_run
