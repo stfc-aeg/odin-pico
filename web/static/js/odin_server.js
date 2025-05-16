@@ -48,6 +48,13 @@ var focusFlags = {
   "repeat-amount": false,
   "cap-repeat": false,
   "delay-time": false,
+  "gpib-enable": false,
+  "sweep-active": false,
+  "sweep-start": false,
+  "sweep-end": false,
+  "sweep-step": false,
+  "sweep-tol": false,
+  "gpib-device-select": false
 };
 
 // Initialize a timers object to keep track of the timers for each field
@@ -304,7 +311,7 @@ function update_lv_graph() {
 }
 
 function run_sync(){
-    $.getJSON('/api/' + api_version + '/pico/device/', sync_with_adapter());
+    $.getJSON('/api/' + api_version + '/pico/', sync_with_adapter());
     setTimeout(run_sync, 150);
 }
 
@@ -333,6 +340,66 @@ function sync_with_adapter(){
 
     return function(response){
 
+        const tab  = document.getElementById("gpib-tab");
+        const pane = document.getElementById("three");
+
+        if (response.gpib && response.gpib.gpib_avail === true) {
+
+            // reveal the tab
+            tab.style.display = "block";
+
+            // master toggle
+            if (!focusFlags["gpib-enable"]) {
+                document.getElementById("gpib-enable").checked =
+                    Boolean(response.gpib.gpib_control);
+            }
+
+            // device selector 
+            const devSel = document.getElementById("gpib-device-select");
+            if (devSel) {
+                const devs   = response.gpib.available_tecs || [];
+                devSel.innerHTML = "";
+                devs.forEach(d => {
+                    const opt = document.createElement("option");
+                    opt.value = d;
+                    opt.text  = d;
+                    devSel.appendChild(opt);
+                });
+                if (!focusFlags["gpib-device-select"]) {
+                    devSel.value = response.gpib.selected_tec || "";
+                }
+            }
+
+            // sweep-active toggle
+            if (!focusFlags["sweep-active"]) {
+                document.getElementById("sweep-active").checked =
+                    Boolean(response.gpib.temp_sweep.active);
+            }
+
+            // sweep parameters
+            const sweep_params = response.gpib.temp_sweep;
+            const map = {
+                "sweep-active": String(sweep_params.active),
+                "sweep-start":  sweep_params.t_start,
+                "sweep-end":    sweep_params.t_end,
+                "sweep-step":   sweep_params.t_step,
+                "sweep-tol":    sweep_params.tol
+            };
+            for (const id in map) {
+                if (!focusFlags[id]) $("#" + id).val(map[id]);
+            }
+
+            $("#tec-set").text(response.gpib.info.tec_setpoint);
+            $("#tec-meas").text(response.gpib.info.tec_temp_meas);
+            $("#tec-amp").text(response.gpib.info.tec_current);
+            $("#tec-volt").text(response.gpib.info.tec_voltage);
+
+        } else {
+            // hide tab & pane if GPIB unavailable
+            tab.style.display  = "none";
+            pane.style.display = "none";
+        }
+
         if (!focusFlags["bit-mode-dropdown"]) {$("#bit-mode-dropdown").val(response.device.settings.mode.resolution)}
         if (!focusFlags["time-base-input"]) {$("#time-base-input").val(response.device.settings.mode.timebase)}
 
@@ -356,8 +423,7 @@ function sync_with_adapter(){
         document.getElementById("cap-repeat").checked = response.device.settings.capture.capture_repeat
 
         if (!focusFlags["trigger-enable"]) {
-            if (response.device.settings.trigger.active == true) {$("#trigger-enable").val("true")}
-            if (response.device.settings.trigger.active == false) {$("#trigger-enable").val("false")}
+            $("#trigger-enable").val(String(response.device.settings.trigger.active));
         }
         
         // Ensure the settings match with the values from the adapter
@@ -437,6 +503,7 @@ function sync_with_adapter(){
 
             if (response.device.settings.capture.capture_mode == true) {
                 var cap_percent = ((response.device.live_view.current_tbdc_time / response.device.settings.capture.capture_time) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
+                console.log("percent: ", cap_percent)
             } else {
                 var cap_percent = ((response.device.live_view.capture_count / response.device.live_view.captures_requested) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
             }
@@ -678,10 +745,15 @@ function lock_boxes(lock) {
             "channel-d-active", "channel-d-coupl", "channel-d-range", "channel-d-offset", 
             "trigger-enable", "trigger-source", "trigger-direction", "trigger-threshold",
             "trigger-delay", "trigger-auto", "pha-num-bins", "pha-lower-range", "pha-upper-range",
-            "capture-mode-num", "capture-mode-time", "cap-repeat", "capture-folder-name", "capture-file-name"]
+            "capture-mode-num", "capture-mode-time", "cap-repeat", "capture-folder-name", "capture-file-name",
+            "gpib-enable", "gpib-device-select", "sweep-active","sweep-start", "sweep-end", 
+            "sweep-step", "sweep-tol"]
     
     if (lock == true) {
         buttons.push("repeat-amount", "delay-time", "capture-count", "capture-time")
+        // disable GPIB controls during a capture
+        // buttons.push("gpib-enable", "gpib-device-select", "sweep-active","sweep-start", "sweep-end", 
+        //     "sweep-step", "sweep-tol");
     }
 
     for (var i = 0; i < buttons.length; i++) {
@@ -732,14 +804,17 @@ function toSiUnit(num){
     }
 }
 
-function ajax_put(path,key,value){
+function ajax_put(path, key, value) {
     // Put function for adapter, prevents repetition of code
     let data = {};
     data[key] = value;
-    console.log(data,"data in ajax_put",JSON.stringify(data))
+
+    // choose prefix automatically 
+    const prefix = path.startsWith("gpib/") ? "" : "device/";
+
     $.ajax({
         type: "PUT",
-        url: '/api/' + api_version + '/pico/device/' + path,
+        url: '/api/' + api_version + '/pico/' + prefix + path,
         contentType: "application/json",
         data: JSON.stringify(data),
     });
@@ -747,12 +822,21 @@ function ajax_put(path,key,value){
 
 function openTab(tabID) {
     // Close one tab, and open another
-    var tabs = document.getElementsByClassName("tab-content")
+    var one   = document.getElementById("one");
+    var two   = document.getElementById("two");
+    var three = document.getElementById("three");
+
     if (tabID == "one") {
-      tabs[1].style.display = "block"
-      tabs[2].style.display = "none"
+        one.style.display   = "block";
+        two.style.display   = "none";
+        if (three) three.style.display = "none";
     } else if (tabID == "two") {
-      tabs[1].style.display = "none"
-      tabs[2].style.display = "block"
+        one.style.display   = "none";
+        two.style.display   = "block";
+        if (three) three.style.display = "none";
+    } else if (tabID == "three") {
+        one.style.display   = "none";
+        two.style.display   = "none";
+        if (three) three.style.display = "block";
     }
 }

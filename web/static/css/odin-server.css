@@ -265,3 +265,14 @@ input:checked + .slider:before {
 .white-text {
   color: white;
 }
+
+/* GPIB temperature-sweep responsive layout */
+#sweep-table tr {
+  display: flex;
+  flex-wrap: wrap;
+}
+#sweep-table th {
+  flex: 1 1 180px;
+  white-space: nowrap;
+  padding-right: 15px;
+}

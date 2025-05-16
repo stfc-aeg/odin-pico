@@ -52,6 +52,10 @@
                             <li role="presentation" onclick = "openTab('two')">
                               <a href="#capture" role="tab" data-toggle="tab">Capture</a>
                             </li>
+                            <li id="gpib-tab" role="presentation" style="display:none"
+                              onclick="openTab('three')">
+                              <a href="#gpib-pane" role="tab" data-toggle="tab">GPIB</a>
+                            </li>
                           </ul>
                           <div class="col-sm-12">
                             <span>&nbsp;</span>
@@ -463,6 +467,95 @@
                                 </div>
                               </div>
                             </div>      
+                          </div>
+                          <div role="tabpanel" class="tab-content" id="three" style="display:none;">
+
+                            <div id="gpib-pane" class="col-sm-12">
+                          
+                              <div class="panel-body">
+
+                              
+
+                              </div>
+                              <div class="panel panel-default">
+                                <div class="panel-heading">Control</div>
+                                <div class="panel-body">
+                                  <table id="sweep-table" class="table table-striped">
+                                    <tr>
+                                      <th>
+                                        <!-- enable toggle -->
+                                        <label>Enable:&nbsp;</label>
+                                        <label class="switch">
+                                          <input type="checkbox" id="gpib-enable"
+                                                onclick="commit_checked_adapter(
+                                                  'gpib-enable','gpib/','gpib_control')">
+                                          <span class="slider round"></span>
+                                        </label>
+                                      </th>
+                                      <th>
+                                        <!-- device selector -->
+                                        <span style="margin-left: 20px;"></span>
+                                        <label>Device:&nbsp;</label>
+                                        <select id="gpib-device-select"
+                                                onchange="commit_str_adapter(
+                                                  'gpib-device-select','gpib/','selected_tec')">
+                                        </select>
+                                      </th>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </div>
+                          
+                              <!-- temperature-sweep controls -->
+                              <div class="panel panel-default">
+                                <div class="panel-heading">Temperature Sweep</div>
+                                <div class="panel-body">
+                                  <table id="sweep-table" class="table table-striped">
+                                    <tr>
+                                      <th>
+                                        <label>Active:&nbsp;</label>
+                                        <label class="switch">
+                                          <input type="checkbox" id="sweep-active"
+                                                 onclick="commit_checked_adapter(
+                                                   'sweep-active','gpib/temp_sweep/','active')">
+                                          <span class="slider round"></span>
+                                        </label>
+                                      </th>
+                                      <th><label for="sweep-start">Start&nbsp;°C:</label>
+                                          <input id="sweep-start" type="text" class="small-text"
+                                                 oninput="commit_float_adapter(
+                                                   'sweep-start','gpib/temp_sweep/','t_start')"/></th>
+                                      <th><label for="sweep-end">End&nbsp;°C:</label>
+                                          <input id="sweep-end" type="text" class="small-text"
+                                                 oninput="commit_float_adapter(
+                                                   'sweep-end','gpib/temp_sweep/','t_end')"/></th>
+                                      <th><label for="sweep-step">Step&nbsp;°C:</label>
+                                          <input id="sweep-step" type="text" class="small-text"
+                                                 oninput="commit_float_adapter(
+                                                   'sweep-step','gpib/temp_sweep/','t_step')"/></th>
+                                      <th><label for="sweep-tol">Tol&nbsp;°C:</label>
+                                          <input id="sweep-tol" type="text" class="small-text"
+                                                 oninput="commit_float_adapter(
+                                                   'sweep-tol','gpib/temp_sweep/','tol')"/></th>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </div>
+                          
+                              <!-- read-only TEC info -->
+                              <div class="panel panel-default">
+                                <div class="panel-heading">TEC Status</div>
+                                <div class="panel-body">
+                                  <table class="table table-striped">
+                                    <tr><th>Set-point&nbsp;°C</th><td id="tec-set"></td></tr>
+                                    <tr><th>Measured&nbsp;°C</th><td id="tec-meas"></td></tr>
+                                    <tr><th>Current&nbsp;A</th>  <td id="tec-amp"></td></tr>
+                                    <tr><th>Voltage&nbsp;V</th>  <td id="tec-volt"></td></tr>
+                                  </table>
+                                </div>
+                              </div>
+                          
+                            </div>
                           </div>
                         </div>                                               
                       </div>

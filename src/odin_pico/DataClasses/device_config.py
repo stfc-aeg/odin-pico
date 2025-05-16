@@ -11,6 +11,7 @@ from odin_pico.DataClasses.meta_data import MetaDataConfig
 from odin_pico.DataClasses.mode_config import ModeConfig
 from odin_pico.DataClasses.pha_config import PHAConfig
 from odin_pico.DataClasses.trigger_config import TriggerConfig
+from odin_pico.DataClasses.temp_sweep_config import TempSweepConfig
 
 
 @dataclass
@@ -26,7 +27,8 @@ class DeviceConfig:
     meta_data: MetaDataConfig = field(default_factory=MetaDataConfig)
     file: FileConfig = field(default_factory=FileConfig)
     pha: PHAConfig = field(default_factory=PHAConfig)
-
+    temp_sweep: TempSweepConfig = field(default_factory=TempSweepConfig)
+    
     def __post_init__(self):
         for name, channel in ChannelConfig.default_channel_configs().items():
             setattr(self, f"channel_{name}", channel)

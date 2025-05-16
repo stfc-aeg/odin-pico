@@ -22,7 +22,7 @@ class PicoController:
 
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
-    def __init__(self, lock, loop, path, max_caps):
+    def __init__(self, lock, loop, path, max_caps, simulate):
         """Initialise the PicoController Class."""
         # Threading lock and control variables
         self.lock = lock
@@ -32,6 +32,7 @@ class PicoController:
         self.gpib_control = False
         self.tec_devices = None
         self.selected_tec = None
+        self.simulate = simulate
 
         self.temp_setpoint = None
         self.voltage_limit = None
@@ -451,6 +452,21 @@ class PicoController:
                             lambda value: self.util.iac_set(self.gpib, 
                                 ("devices/"+self.selected_tec+"/set/v_lim_set", float(value))))
                 })
+
+                self.gpib_temp_sweep = ParameterTree({
+                    "active" : (lambda: self.dev_conf.temp_sweep.active,
+                                lambda v: self.set_dc_value(self.dev_conf.temp_sweep, "active",  v)),
+                    "t_start": (lambda: self.dev_conf.temp_sweep.t_start,
+                                lambda v: self.set_dc_value(self.dev_conf.temp_sweep, "t_start", v)),
+                    "t_end"  : (lambda: self.dev_conf.temp_sweep.t_end,
+                                lambda v: self.set_dc_value(self.dev_conf.temp_sweep, "t_end",   v)),
+                    "t_step" : (lambda: self.dev_conf.temp_sweep.t_step,
+                                lambda v: self.set_dc_value(self.dev_conf.temp_sweep, "t_step",  v)),
+                    "tol"    : (lambda: self.dev_conf.temp_sweep.tol,
+                                lambda v: self.set_dc_value(self.dev_conf.temp_sweep, "tol",     v)),
+                    "poll_s" : (lambda: self.dev_conf.temp_sweep.poll_s,
+                                lambda v: self.set_dc_value(self.dev_conf.temp_sweep, "poll_s",  v)),
+                })
                 
                 self.gpib_tree = ParameterTree(
                 {
@@ -471,7 +487,8 @@ class PicoController:
                                     lambda value: self.util.iac_set(self.gpib, 
                                         ("devices/"+self.selected_tec+"/"), {"temp_over_state": value})),
                     "set": self.gpib_set,
-                    "info": self.gpib_info
+                    "info": self.gpib_info,
+                    "temp_sweep": self.gpib_temp_sweep
                 })
 
         self.param_tree = ParameterTree({
@@ -627,14 +644,8 @@ class PicoController:
             self.util.max_samples(self.dev_conf.mode.resolution) / capture_samples
         )
 
-        logging.debug(f"{self.dev_conf.capture_run.caps_max} caps for {self.util.max_samples(self.dev_conf.mode.resolution)}:max {capture_samples}:requested ")
-
         if len(self.buffer_manager.active_channels) > 1:
             self.dev_conf.capture_run.caps_max /= len(self.buffer_manager.active_channels)
-
-        logging.debug(f"active chans: len{len(self.buffer_manager.active_channels)} chans:{self.buffer_manager.active_channels}")
-
-        logging.debug(f"after div: {self.dev_conf.capture_run.caps_max} caps for {self.util.max_samples(self.dev_conf.mode.resolution)}:max {capture_samples}:requested ")
 
         self.dev_conf.capture_run.caps_remaining = self.dev_conf.capture.n_captures
 
@@ -695,8 +706,6 @@ class PicoController:
                     for capture_run in range(cap_loop):
                         ##why are pha_counts being appended twice? why here and not in buffer_manager?
                         self.buffer_manager.pha_counts = [[]] * 4
-
-                        self.buffer_manager.pha_counts = [[]] * 4
                         self.current_capture = capture_run
 
                         # Complete a capture run, based on capture number
@@ -706,13 +715,15 @@ class PicoController:
                                     "Collecting Requested Captures, Capture: " + str(
                                         capture_run + 1)
                                 )
-                                self.user_capture(True)
+                                # TEC-sweep
+                                if (self.dev_conf.temp_sweep.active and
+                                    self.gpib_control and
+                                    self.gpib_avail):
+                                    self.run_temperature_sweep()
+                                else:
+                                    self.user_capture(True)
                         else:
-                            # Complete a capture test, to determine capture frequency
-                            if capture_run == 0:
-                                self.pico_status.flags.system_state = ("Testing Capture Rate")
-                                # self.caps_per_cycle()
-                                self.buffer_manager.pha_counts = [[]] * 4
+                            self.buffer_manager.pha_counts = [[]] * 4
 
                             # Complete a capture run, for a pre-determined amount of time
                             if not self.pico_status.flags.abort_cap:
@@ -720,7 +731,13 @@ class PicoController:
                                     "Completing Time-Based Capture Collection, Capture: "
                                     + str(capture_run + 1)
                                 )
-                                self.tb_capture()
+                                # TEC-sweep
+                                if (self.dev_conf.temp_sweep.active and
+                                    self.gpib_control and
+                                    self.gpib_avail):
+                                    self.run_temperature_sweep()
+                                else:
+                                    self.tb_capture()
                         
                         # Delay between capture runs, if requested by user
                         if capture_run != (cap_loop - 1):
@@ -824,6 +841,128 @@ class PicoController:
             )
         self.file_writer.write_hdf5(write_accumulated=True)
         self.buffer_manager.clear_arrays()
+
+    def wait_for_tec(self, target: float, tol: float):
+        """Wait for tec for reach target temp within a set tolerance"""
+        while not self.pico_status.flags.abort_cap:
+            meas = self.util.iac_get(
+                self.gpib,
+                f"devices/{self.selected_tec}/info/tec_temp_meas")
+            if meas is None:
+                break
+            if abs(meas - target) <= tol:
+                return
+            time.sleep(self.dev_conf.temp_sweep.poll_s)
+
+    def _temp_range(self, start, end, step):
+        """
+        Return a list of temperatures in equal increments, direction is 
+        inferred from start → end
+        """
+        if step == 0 or start == end:
+            return [start]
+
+        step      = abs(step) # ignore sign the user gave
+        direction = 1 if end >= start else -1
+        temps     = [start]
+        current   = start
+
+        while True:
+            next_val = current + direction * step
+            # Would the next step cross the end value?
+            if (direction == 1 and next_val >= end) or \
+            (direction == -1 and next_val <= end):
+                break
+            temps.append(next_val)
+            current = next_val
+
+        if temps[-1] != end:
+            temps.append(end)
+
+        logging.debug(f"returning temps: {temps}")
+        return temps
+    
+    def _temp_suffix(self, T: float) -> str:
+        """
+        Return a filename-safe suffix like '_25-0c' or '_-5-0c'
+        (1 decimal place, '.' → '-').
+        """
+        s = f"{T:.1f}".replace(".", "-")
+        return f"_{s}c"
+    
+    def run_temperature_sweep(self):
+        """
+        Iterate over every temperature in the listeven in SIM mode
+        and acquire data.  A guard flag prevents any single capture from
+        setting `abort_cap` and killing the rest of the sweep.
+        """
+        sweep = self.dev_conf.temp_sweep
+        if not sweep.active:
+            return
+
+        temps    = self._temp_range(sweep.t_start, sweep.t_end, sweep.t_step)
+        logging.info(f"[TEC-sweep] Set-points: {temps}")
+
+        base_fname = self.dev_conf.file.file_name.rstrip(".hdf5")
+
+        # local flag so abort in one capture doesn’t cancel the sweep
+        sweep_abort = False
+
+        for idx, T in enumerate(temps):
+            if sweep_abort:
+                break
+
+            # Set temperature on Tec
+            if self.simulate:
+                logging.info(f"[SIM] TEC set-point → {T:.2f} °C")
+            else:
+                self.util.iac_set(
+                    self.gpib,
+                    f"devices/{self.selected_tec}/set/temp_set",
+                    float(T)
+                )
+            self.buffer_manager.temp_set_last = T
+
+            # ── 2) wait / mock wait until stable ────────────────────────────
+            self.pico_status.flags.system_state = (
+                f"{'Simulating' if self.simulate else 'Waiting for'} TEC {T:.2f} °C")
+
+            if self.simulate:
+                time.sleep(sweep.poll_s)
+                self.buffer_manager.temp_meas_last = T
+            else:
+                self.wait_for_tec(T, sweep.tol)
+                self.buffer_manager.temp_meas_last = self.util.iac_get(
+                    self.gpib,
+                    f"devices/{self.selected_tec}/info/tec_temp_meas")
+
+            # ── 3) make a unique file name for this temperature ─────────────
+            self.dev_conf.file.file_name = \
+                base_fname + self._temp_suffix(T)      # no “.hdf5” here
+            self.file_writer.capture_number = 1        # reset suffix counter
+
+            # ── 4) run the acquisition in current mode ──────────────────────
+            self.pico_status.flags.system_state = \
+                f"Capturing @ {T:.2f} °C  ({idx+1}/{len(temps)})"
+
+            # reset abort flag before each capture; if *this* capture sets it,
+            # finish the file and then abandon the remaining temps
+            self.pico_status.flags.abort_cap = False
+
+            try:
+                if self.dev_conf.capture.capture_type:     # time-based
+                    self.tb_capture()
+                else:                                      # fixed-count
+                    self.user_capture(True)
+            except Exception as e:
+                logging.error(f"Capture failed at {T}°C: {e}")
+                sweep_abort = True
+
+        # restore original file name for future manual runs
+        self.dev_conf.file.file_name = base_fname + ".hdf5"
+        self.pico_status.flags.system_state = (
+            "TEC Sweep Aborted" if sweep_abort else "TEC Sweep Complete")
+
         
     ##### Adapter specific functions below #####
 

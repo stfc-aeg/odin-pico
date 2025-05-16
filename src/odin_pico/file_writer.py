@@ -5,8 +5,6 @@ time-based acquisitions.
 import logging
 import math
 import os
-import time
-from typing import List
 
 import h5py
 import numpy as np
@@ -116,6 +114,11 @@ class FileWriter:
                 for k, v in metadata.items():
                     meta.attrs[k] = v
 
+                if hasattr(self.buffer_manager, "temp_set_last"):
+                    meta.attrs["tec_set_C"] = self.buffer_manager.temp_set_last
+                if hasattr(self.buffer_manager, "temp_meas_last"):
+                    meta.attrs["tec_meas_C"] = self.buffer_manager.temp_meas_last
+
                 if write_accumulated and self.buffer_manager.capture_blocks:
 
                     capture_blocks  = self.buffer_manager.capture_blocks
@@ -158,16 +161,8 @@ class FileWriter:
                         logging.debug(
                             f"Writing HDF5 File: Writing Captures {row_slice.start+1}–{row_slice.stop} out of {total_captures}")
                         next_row += seg_caps
-
-                    # final confirmation
-                    for ch_id in self.buffer_manager.active_channels:
-                        logging.debug(
-                            f"[HDF5] adc_counts_{ch_id} : {total_captures} total captures"
-                        )
-
-                # =====================================================
-                # 3B.   CLASSIC (normal) PATH
-                # =====================================================
+                        
+                ## File writing for N captures
                 else:
                     source = self.buffer_manager.np_channel_arrays
                     trigger_times = self.buffer_manager.trigger_times
@@ -178,7 +173,7 @@ class FileWriter:
 
                     f.create_dataset("trigger_timings", data=trigger_times)
 
-                # --- PHA datasets (valid for both paths)
+                # PHA datasets 
                 edges = self.buffer_manager.bin_edges
                 for ch_id in self.buffer_manager.active_channels:
                     counts = self.buffer_manager.pha_counts[ch_id]

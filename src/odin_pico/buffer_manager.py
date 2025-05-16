@@ -153,7 +153,8 @@ class BufferManager:
         self.capture_blocks.append(block)
         self.trigger_blocks.append(np.empty(caps_in_run, dtype=np.float64))
 
-        # reference to the newly created block to use in assign_memory in pico_device
+        # reference to the newly created block to use in funcitons that expect data to be 
+        # accessible in self.np_channel_arrays
         self.np_channel_arrays = block
 
         self.overflow = (ctypes.c_int16 * caps_in_run)()

@@ -2,6 +2,7 @@
 
 import ctypes
 import logging
+import math
 import sys
 import time
 
@@ -65,6 +66,9 @@ class PicoDevice:
                 self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_adc)
             )
 
+        if self.dev_conf.pha.upper_range == 0:
+            self.dev_conf.pha.upper_range = self.dev_conf.meta_data.max_adc.value
+
     def assign_pico_memory(self):
         """Give PicoScope memory locations for data to be extracted.
 
@@ -89,14 +93,12 @@ class PicoDevice:
         )
 
         # Assign data buffers for the PicoScope to write to
-        buffer_counter = 0
         for c, b in zip(
             self.buffer_manager.active_channels,
             self.buffer_manager.np_channel_arrays,
         ):
             for i in range(self.dev_conf.capture_run.caps_comp, 
                            (self.dev_conf.capture_run.caps_comp + self.dev_conf.capture_run.caps_in_run)):
-                buffer_counter+=1
                 buff = b[i]
                 ps.ps5000aSetDataBuffer(
                     self.dev_conf.mode.handle,
@@ -106,7 +108,6 @@ class PicoDevice:
                     i - self.dev_conf.capture_run.caps_comp,
                     0,
                 )
-        logging.debug(f"mapped {buffer_counter} buffers")
 
     def set_trigger(self):
         """Responsible for setting the trigger information on the picoscope."""
@@ -218,7 +219,7 @@ class PicoDevice:
             # Allocate buffers for this run
             self._tb_current_block = self.buffer_manager.create_tb_block(caps_in_run)
 
-            # Map those buffers
+            # Map the buffers
             self.assign_pico_memory()
             return True
 
@@ -335,6 +336,8 @@ class PicoDevice:
 
         while True:
             self.elapsed_time = time.time() - start_time
+            self.pico_status.flags.system_state = (
+                f"Time based collection running")
             # User Aborted OR time limit reached
             if self.pico_status.flags.abort_cap or \
             (time.time() - start_time) >= total_time:
