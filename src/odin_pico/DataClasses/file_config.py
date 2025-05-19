@@ -10,3 +10,5 @@ class FileConfig:
     file_path: str = ""
     curr_file_name: str = ""
     last_write_success: bool = False
+    temp_suffix: str = None   # e.g. "_25-0c"
+    repeat_suffix: str = None   # e.g. "_3"

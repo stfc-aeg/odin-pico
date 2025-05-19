@@ -28,7 +28,6 @@ class FileWriter:
         self.buffer_manager = buffer_manager
         self.pico_status = pico_status
         self.util = PicoUtil()
-        self.capture_number = 1
         self.file_error = False
 
     def check_file_name(self) -> bool:
@@ -42,14 +41,14 @@ class FileWriter:
             self.dev_conf.file.file_name += ".hdf5"
 
         # ensure folder ends with "/"
-        if self.dev_conf.file.folder_name and \
-           not self.dev_conf.file.folder_name.endswith("/"):
+        if (self.dev_conf.file.folder_name
+                and not self.dev_conf.file.folder_name.endswith("/")):
             self.dev_conf.file.folder_name += "/"
 
         full_path = (
             self.dev_conf.file.file_path +
             self.dev_conf.file.folder_name +
-            self.dev_conf.file.file_name
+            self._build_filename()
         )
 
         root, ext = os.path.splitext(full_path)
@@ -62,6 +61,20 @@ class FileWriter:
             exist_ok=True,
         )
         return True
+    
+    def _build_filename(self):
+        """
+        create <base><temp><repeat>.hdf5
+        """
+        base = self.dev_conf.file.file_name
+        if base.endswith(".hdf5"):
+            base = base[:-5]
+
+        if self.dev_conf.file.temp_suffix:
+            base += self.dev_conf.file.temp_suffix
+        if self.dev_conf.file.repeat_suffix:
+            base += self.dev_conf.file.repeat_suffix
+        return base + ".hdf5"
 
     def write_hdf5(self, write_accumulated: bool = False):
         """
@@ -88,21 +101,27 @@ class FileWriter:
         # Update system state, and keep track of previous system state
         self.pico_status.flags.system_state = "Captures Collected, Creating HDF5 File"
 
-        # Change file name depending on how many times capture has been run
-        if self.dev_conf.capture.capture_repeat:
-            if self.capture_number == 1:
-                name = self.dev_conf.file.file_name[:-5] # strip .hdf5
-            else:
-                name = self.dev_conf.file.file_name[:-7] # strip _n.hdf5
-            self.dev_conf.file.file_name = f"{name}_{self.capture_number}.hdf5"
+        # # Change file name depending on how many times capture has been run
+        # if self.dev_conf.capture.capture_repeat:
+        #     if self.capture_number == 1:
+        #         name = self.dev_conf.file.file_name[:-5] # strip .hdf5
+        #     else:
+        #         name = self.dev_conf.file.file_name[:-7] # strip _n.hdf5
+        #     self.dev_conf.file.file_name = f"{name}_{self.capture_number}.hdf5"
 
-        # Take note of file path so it can be written to
-        self.dev_conf.file.curr_file_name = (
-            self.dev_conf.file.file_path +
-            self.dev_conf.file.folder_name +
-            self.dev_conf.file.file_name
-        )
-        fname = self.dev_conf.file.curr_file_name
+        # # Take note of file path so it can be written to
+        # self.dev_conf.file.curr_file_name = (
+        #     self.dev_conf.file.file_path +
+        #     self.dev_conf.file.folder_name +
+        #     self.dev_conf.file.file_name
+        # )
+        # fname = self.dev_conf.file.curr_file_name
+        fname = (
+                self.dev_conf.file.file_path
+                + self.dev_conf.file.folder_name
+                + self._build_filename()
+                )
+        self.dev_conf.file.curr_file_name = fname
         logging.debug(f"writing to {fname}")
 
 
@@ -187,10 +206,10 @@ class FileWriter:
             self.dev_conf.file.last_write_success = False
             return
 
-        # 4)  ------ reset capture-repeat suffix if finished ---------
-        if self.dev_conf.capture.capture_repeat and \
-           self.capture_number == self.dev_conf.capture.repeat_amount:
-            self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
+        # # 4)  ------ reset capture-repeat suffix if finished ---------
+        # if self.dev_conf.capture.capture_repeat and \
+        #    self.capture_number == self.dev_conf.capture.repeat_amount:
+        #     self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
 
-        self.capture_number += 1
+        # self.capture_number += 1
         self.dev_conf.file.last_write_success = True

@@ -2,6 +2,7 @@
 
 import logging
 import math
+import re
 import time
 from concurrent import futures
 from functools import partial
@@ -560,9 +561,9 @@ class PicoController:
     def set_dc_chan_value(self, obj, chan_name, attr_name, value):
         """Change values for the individual channel settings."""
         # Ensure the user does not input a negative offset
-        if attr_name == "offset":
-            if value < 0:
-                value = value * (-1)
+        # if attr_name == "offset":
+        #     if value < 0:
+        #         value = value * (-1)
 
         # Check setting validity
         # Check if channel selected for LV is actually active
@@ -704,6 +705,7 @@ class PicoController:
                         delay = 0
 
                     for capture_run in range(cap_loop):
+                        self.dev_conf.file.repeat_suffix = "_" + str((capture_run+1))
                         # reset abort flag if its been set by TB capture
                         self.pico_status.flags.abort_cap = False
                         ##why are pha_counts being appended twice? why here and not in buffer_manager?
@@ -757,6 +759,7 @@ class PicoController:
                     self.file_writer.capture_number = 1
                     self.pico_status.flags.user_capture = False
                     self.pico_status.flags.abort_cap = False
+                    self.dev_conf.file.repeat_suffix = None
 
                 else:
                     self.file_writer.file_error = True
@@ -891,6 +894,22 @@ class PicoController:
         """
         s = f"{T:.1f}".replace(".", "-")
         return f"_{s}c"
+
+    def _clean_base_fname(self) -> str:
+        """
+        Return the users current file name without .hdf5 and other suffix's    
+        """
+        name = self.dev_conf.file.file_name
+        if name.endswith(".hdf5"):
+            name = name[:-5]
+
+        # strip “…_<digits>”  (repeat suffix)
+        name = re.sub(r"_\d+$", "", name)
+
+        # strip “…_<±number>[ - number]c”  (temperature suffix)
+        name = re.sub(r"_-?\d+(?:-\d+)?c$", "", name)
+
+        return name.rstrip("_") 
     
     def run_temperature_sweep(self):
         """
@@ -905,7 +924,7 @@ class PicoController:
         temps    = self._temp_range(sweep.t_start, sweep.t_end, sweep.t_step)
         logging.info(f"[TEC-sweep] Set-points: {temps}")
 
-        base_fname = self.dev_conf.file.file_name.rstrip(".hdf5")
+        base_fname = self._clean_base_fname()
 
         # local flag so abort in one capture doesn’t cancel the sweep
         sweep_abort = False
@@ -937,13 +956,12 @@ class PicoController:
                 self.buffer_manager.temp_meas_last = self.util.iac_get(
                     self.gpib,
                     f"devices/{self.selected_tec}/info/tec_temp_meas")
+                
+            # self.dev_conf.file.file_name = (
+            #     base_fname + self._temp_suffix(T)
+            # )
+            self.dev_conf.file.temp_suffix = str(self._temp_suffix(T))
 
-            # ── 3) make a unique file name for this temperature ─────────────
-            self.dev_conf.file.file_name = \
-                base_fname + self._temp_suffix(T)      # no “.hdf5” here
-            self.file_writer.capture_number = 1        # reset suffix counter
-
-            # ── 4) run the acquisition in current mode ──────────────────────
             self.pico_status.flags.system_state = \
                 f"Capturing @ {T:.2f} °C  ({idx+1}/{len(temps)})"
 
@@ -960,10 +978,13 @@ class PicoController:
                 logging.error(f"Capture failed at {T}°C: {e}")
                 sweep_abort = True
 
-        # restore original file name for future manual runs
+        # restore original file_name
         self.dev_conf.file.file_name = base_fname + ".hdf5"
         self.pico_status.flags.system_state = (
             "TEC Sweep Aborted" if sweep_abort else "TEC Sweep Complete")
+    
+        # clear temperature suffix
+        self.dev_conf.file.temp_suffix = None
 
         
     ##### Adapter specific functions below #####

@@ -145,7 +145,7 @@ class PicoUtil:
 
     def verify_channel_settings(self, offset):
         """Check if chosen channel settings are logically correct."""
-        if (offset >= 0) and (offset <= 100):
+        if (offset >= -100) and (offset <= 100):
             return True
         else:
             return False
