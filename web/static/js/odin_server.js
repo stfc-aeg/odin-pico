@@ -497,60 +497,214 @@ function sync_with_adapter(){
         }
 
         // If user capture is in progress, update the progress bar accordingly
-        if (response.device.commands.run_user_capture == true){
+        // Create or get a progress tracker to store the highest progress value and last repeat/sweep values
+        let progressTracker = document.getElementById('progress-tracker');
+        if (!progressTracker) {
+            progressTracker = document.createElement('input');
+            progressTracker.id = 'progress-tracker';
+            progressTracker.type = 'hidden';
+            progressTracker.value = JSON.stringify({
+                highestProgress: 0,  // Store the highest progress value seen
+                lastRepeat: -1,      // Last repeat index seen
+                lastSweepIndex: -1,  // Last sweep index seen
+                lastKey: "",         // Last combination key
+                completedOps: 0      // Count of completed operations
+            });
+            document.body.appendChild(progressTracker);
+        }
 
-            lock_boxes(true)
+        if (response.device.commands.run_user_capture == true) {
+            lock_boxes(true);
 
-            if (response.device.settings.capture.capture_mode == true) {
-                var cap_percent = ((response.device.live_view.current_tbdc_time / response.device.settings.capture.capture_time) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
-                console.log("percent: ", cap_percent)
+            // Get all relevant parameters
+            const isRepeatingEnabled = response.device.settings.capture.capture_repeat === true;
+            const repeatAmount = isRepeatingEnabled ? (response.device.settings.capture.repeat_amount || 1) : 1;
+            const currentRepeat = isRepeatingEnabled ? (response.device.live_view.current_capture || 0) : 0;
+            
+            // Check for both GPIB control AND temperature sweep being active
+            const isGpibControlEnabled = response.gpib?.gpib_control === true;
+            const isTempSweepActive = response.gpib?.temp_sweep?.active === true;
+            const isTempSweepEffective = isGpibControlEnabled && isTempSweepActive;
+            
+            // Use temperature sweep values only if both conditions are met
+            const sweepTotal = isTempSweepEffective ? (response.device.live_view.sweep_total || 1) : 1;
+            const sweepIndex = isTempSweepEffective ? (response.device.live_view.sweep_index || 0) : 0;
+            
+            const isCaptureTimeBased = response.device.settings.capture.capture_mode === true;
+            const captureTime = response.device.settings.capture.capture_time || 1;
+            const currentTbdcTime = response.device.live_view.current_tbdc_time || 0;
+            const captureCount = response.device.live_view.capture_count || 0;
+            const capturesRequested = response.device.live_view.captures_requested || 1;
+
+            // Calculate total number of operations (repeat × sweep combinations)
+            // IMPORTANT: Only consider active features in total calculation
+            const totalOperations = repeatAmount * sweepTotal;
+            
+            // Get current state from progress tracker
+            let state;
+            try {
+                state = JSON.parse(progressTracker.value);
+                if (!state.lastKey) {
+                    state.lastKey = "";
+                }
+                if (state.completedOps === undefined) {
+                    state.completedOps = 0;
+                }
+            } catch (e) {
+                state = { 
+                    highestProgress: 0, 
+                    lastRepeat: -1, 
+                    lastSweepIndex: -1,
+                    lastKey: "",
+                    completedOps: 0
+                };
+            }
+            
+            // Create a unique key for the current repeat-sweep combination
+            const currentKey = `${currentRepeat}-${sweepIndex}`;
+            
+            // Check if we've moved to a new combination
+            // This handles both advancing to next sweep index and going to next repeat
+            if (state.lastKey !== "" && currentKey !== state.lastKey) {
+                console.log(`Detected new combination: ${state.lastKey} -> ${currentKey}`);
+                // moved to a new combination
+                state.completedOps++;
+                console.log(`Completed operations: ${state.completedOps}/${totalOperations}`);
+            }
+            
+            // Calculate current position (1-based)
+            const currentOperation = state.completedOps + 1;
+            
+            // Update the last key seen for next comparison
+            state.lastKey = currentKey;
+            state.lastRepeat = currentRepeat;
+            state.lastSweepIndex = sweepIndex;
+            
+            // Calculate progress for current combination
+            let currentCombinationProgress;
+            if (isCaptureTimeBased) {
+                // Time-based capture
+                currentCombinationProgress = currentTbdcTime / captureTime;
             } else {
-                var cap_percent = ((response.device.live_view.capture_count / response.device.live_view.captures_requested) * (100 / response.device.settings.capture.repeat_amount)).toFixed(2)
+                // Count-based capture
+                currentCombinationProgress = captureCount / capturesRequested;
+            }
+            currentCombinationProgress = Math.min(1, Math.max(0, currentCombinationProgress));
+            
+            // Calculate overall progress
+            // Each combination is equally weighted
+            const combinationWeight = 100 / totalOperations;
+            
+            // Progress is: (completed operations) + (progress of current operation)
+            const completedProgress = state.completedOps * combinationWeight;
+            const currentProgress = currentCombinationProgress * combinationWeight;
+            
+            // Calculate the new total progress
+            let totalProgress = Math.min(100, completedProgress + currentProgress);
+            
+            // Only allow progress to increase, never decrease during capture, visual issue can be created when system finishes capture, moves
+            // to file writing, hasn't updated the current capture, UI interprets this as the current capture restarting, resulting in the UI
+            // progress rubberbanding. This Max check solves that by ensuring the progress never visually decreases.
+            totalProgress = Math.max(totalProgress, state.highestProgress);
+            
+            // Store the new highest progress value
+            state.highestProgress = totalProgress;
+            progressTracker.value = JSON.stringify(state);
+            
+            // Format the progress bar text to include all captures including repeats*temperature sweeps
+            let progressBarText = `${totalProgress.toFixed(1)}% (${currentOperation}/${totalOperations})`;
+            
+            // Create status text for the label
+            let statusText = "";
+            
+            if (isRepeatingEnabled) {
+                statusText += `Repeat ${currentRepeat + 1}/${repeatAmount}`;
+            }
+            
+            // Only show temperature sweep info if both GPIB control & temp sweep are active
+            if (isTempSweepEffective) {
+                if (statusText) statusText += ", ";
+                statusText += `Temp ${sweepIndex + 1}/${sweepTotal}`;
+            }
+            
+            // Update the progress bar
+            let progressBar = document.getElementById('capture-progress-bar');
+            progressBar.style.width = totalProgress + '%';
+            progressBar.innerHTML = progressBarText;
+            
+            // Find and update the Capture Progress label
+            let captureProgressLabel = document.getElementById('capture-progress-label');
+            if (!captureProgressLabel) {
+                // Try to find and add id to the label if missing
+                const capProgressRow = document.getElementById('cap-progress');
+                if (capProgressRow) {
+                    const labelElement = capProgressRow.querySelector('label');
+                    if (labelElement) {
+                        labelElement.id = 'capture-progress-label';
+                        captureProgressLabel = labelElement;
+                    }
+                }
             }
 
-            var current_cap = response.device.live_view.current_capture
+            // Update the label text with info about total capture progress and current step
+            if (captureProgressLabel) {
+                if (statusText) {
+                    captureProgressLabel.textContent = `Capture Progress: ${statusText}`;
+                } else {
+                    captureProgressLabel.textContent = 'Capture Progress';
+                }
+            }
 
-            var percent_done = ((current_cap / response.device.settings.capture.repeat_amount) * 100).toFixed(2)
-            percent_done = parseFloat(percent_done)
-            cap_percent = parseFloat(cap_percent)
-
-            cap_percent = (cap_percent + percent_done)
-
-            let progressBar = document.getElementById('capture-progress-bar');
-            progressBar.style.width = cap_percent + '%';
-            progressBar.innerHTML = cap_percent + '%';
         } else {
-            lock_boxes(false)
+            lock_boxes(false);
+
+            // Reset all tracking values when user_capture becomes false
+            let state = { 
+                highestProgress: 0, 
+                lastRepeat: -1, 
+                lastSweepIndex: -1,
+                lastKey: "",
+                completedOps: 0
+            };
+            progressTracker.value = JSON.stringify(state);
 
             let progressBar = document.getElementById('capture-progress-bar');
-            progressBar.style.width = 0 + '%';
-            progressBar.innerHTML = 0 + '%';
+            progressBar.style.width = '0%';
+            progressBar.innerHTML = '0%';
+            
+            // Reset the Capture Progress label back to default
+            const capProgressRow = document.getElementById('cap-progress');
+            if (capProgressRow) {
+                const labelElement = capProgressRow.querySelector('label');
+                if (labelElement) {
+                    labelElement.textContent = 'Capture Progress';
+                }
+            }
 
-            // Only allow the user to enter repetition settings if the repetition setting is on
+            // Only allow the user to enter repeat settings if the repeat setting is on
             if (response.device.settings.capture.capture_repeat == true) {
-                document.getElementById("repeat-amount").disabled = false
-                document.getElementById("delay-time").disabled = false
+                document.getElementById("repeat-amount").disabled = false;
+                document.getElementById("delay-time").disabled = false;
             } else {
-                document.getElementById("repeat-amount").disabled = true
-                document.getElementById("delay-time").disabled = true
+                document.getElementById("repeat-amount").disabled = true;
+                document.getElementById("delay-time").disabled = true;
             }
 
             // Only allow the relevant boxes to be open, depending on capture mode chosen
             if (response.device.settings.capture.capture_mode == true) {
-                document.getElementById("capture-count").disabled = true
-                document.getElementById("capture-time").disabled = false
+                document.getElementById("capture-count").disabled = true;
+                document.getElementById("capture-time").disabled = false;
             } else {
-                document.getElementById("capture-count").disabled = false
-                document.getElementById("capture-time").disabled = true
+                document.getElementById("capture-count").disabled = false;
+                document.getElementById("capture-time").disabled = true;
             }
         }
-
         document.getElementById("samp-int").textContent = toSiUnit(response.device.settings.mode.samp_time)
         folder_name = response.device.settings.file.folder_name  //document.getElementById("capture-folder-name").textContent
         if ((folder_name[folder_name.length - 1] == '/') || (folder_name.length == 0)) {
-            document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + response.device.settings.file.file_name)
+            document.getElementById("file-name-span").textContent = (response.device.settings.file.curr_file_name)
         } else {
-            document.getElementById("file-name-span").textContent = ('data/' + response.device.settings.file.folder_name + '/' + response.device.settings.file.file_name)
+            document.getElementById("file-name-span").textContent = (response.device.settings.file.folder_name + '/' + response.device.settings.file.file_name)
         }
 
         // Update the recommended capture amount and time length

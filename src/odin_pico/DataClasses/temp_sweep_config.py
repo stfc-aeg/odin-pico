@@ -8,3 +8,5 @@ class TempSweepConfig:
     t_step:  float =  0.0
     tol:     float = 0.1
     poll_s:  float = 0.25
+    sweep_points: int = 0   # total points in this sweep
+    sweep_index:  int = 0   # 0-based index of the current point

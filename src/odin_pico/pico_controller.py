@@ -349,10 +349,8 @@ class PicoController:
                 "captures_requested": (lambda: self.dev_conf.capture.n_captures, None),
                 "lv_data": (lambda: self.buffer_manager.lv_channel_arrays, None),
                 "pha_bin_edges": (lambda: self.buffer_manager.bin_edges, None),
-                # "lv_range": (
-                #     lambda: self.buffer_manager.lv_range,
-                #     partial(self.set_dc_value, self.buffer_manager, "lv_range"),
-                # ),
+                "sweep_total" : (lambda: self.dev_conf.temp_sweep.sweep_points, None),
+                "sweep_index" : (lambda: self.dev_conf.temp_sweep.sweep_index , None),
                 "pha_active_channels": (
                     lambda: self.buffer_manager.pha_active_channels,
                     None,
@@ -705,12 +703,16 @@ class PicoController:
                         delay = 0
 
                     for capture_run in range(cap_loop):
-                        self.dev_conf.file.repeat_suffix = "_" + str((capture_run+1))
+
+                        if cap_loop > 1:
+                            self.dev_conf.file.repeat_suffix = "_" + str((capture_run+1))
                         # reset abort flag if its been set by TB capture
                         self.pico_status.flags.abort_cap = False
                         ##why are pha_counts being appended twice? why here and not in buffer_manager?
                         self.buffer_manager.pha_counts = [[]] * 4
                         self.current_capture = capture_run
+
+                        logging.debug(f"current capture repeat: {self.current_capture}")
 
                         # Complete a capture run, based on capture number
                         if not self.dev_conf.capture.capture_type:
@@ -922,6 +924,7 @@ class PicoController:
             return
 
         temps    = self._temp_range(sweep.t_start, sweep.t_end, sweep.t_step)
+        self.dev_conf.temp_sweep.sweep_points = len(temps)
         logging.info(f"[TEC-sweep] Set-points: {temps}")
 
         base_fname = self._clean_base_fname()
@@ -930,6 +933,8 @@ class PicoController:
         sweep_abort = False
 
         for idx, T in enumerate(temps):
+            self.dev_conf.temp_sweep.sweep_index  = idx
+            logging.debug(f"Current temp sweep: {self.dev_conf.temp_sweep.sweep_index}")
             if sweep_abort:
                 break
 
@@ -983,8 +988,10 @@ class PicoController:
         self.pico_status.flags.system_state = (
             "TEC Sweep Aborted" if sweep_abort else "TEC Sweep Complete")
     
-        # clear temperature suffix
+        # clear temperature suffix and reset sweep index to 0
         self.dev_conf.file.temp_suffix = None
+        self.dev_conf.temp_sweep.sweep_points = 0
+        self.dev_conf.temp_sweep.sweep_index  = 0         
 
         
     ##### Adapter specific functions below #####
