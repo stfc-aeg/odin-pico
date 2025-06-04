@@ -537,7 +537,7 @@ function sync_with_adapter(){
             const capturesRequested = response.device.live_view.captures_requested || 1;
 
             // Calculate total number of operations (repeat × sweep combinations)
-            // IMPORTANT: Only consider active features in total calculation
+            // Only consider active features in total calculation
             const totalOperations = repeatAmount * sweepTotal;
             
             // Get current state from progress tracker

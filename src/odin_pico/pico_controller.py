@@ -749,9 +749,12 @@ class PicoController:
                         if capture_run != (cap_loop - 1):
                             self.pico_status.flags.system_state = ("Delay Between Captures")
                             start_time = time.time()
+                            logging.debug("Entered delay")
                             while (time.time() - start_time) < delay:
                                 if self.pico_status.flags.abort_cap:
                                     delay = 0
+                                logging.debug("Delaying")
+                                time.sleep(0.1)
 
                         # Change system state, depends on if capture was repeated
                         if (capture_run + 1) == cap_loop:
@@ -848,23 +851,60 @@ class PicoController:
             )
         self.file_writer.write_hdf5(write_accumulated=True)
         self.buffer_manager.clear_arrays()
+        self.pico_status.flags.abort_cap = False
 
     def wait_for_tec(self, target: float, tol: float):
-        """Wait for tec for reach target temp within a set tolerance"""
-        while not self.pico_status.flags.abort_cap:
-            meas = self.util.iac_get(
-                self.gpib,
-                f"devices/{self.selected_tec}/info/tec_temp_meas")
-            if meas is None:
-                break
-            if abs(meas - target) <= tol:
-                return
-            time.sleep(self.dev_conf.temp_sweep.poll_s)
+        """
+        Simple temperature stability check with basic logging.
+        Waits for temperature to remain stable within tolerance for specified time.
+        """
+        from collections import deque
+        
+        sweep_config = self.dev_conf.temp_sweep
 
+        # Simple time-based calculation
+        stability_readings = int(sweep_config.stability_time / sweep_config.poll_s)
+        errors = deque(maxlen=stability_readings)
+        
+        start_time = time.time()
+        logging.info(f"[TEC] Waiting for {target:.2f}°C ± {tol:.2f}°C")  
+        reading_count = 0
+        
+        while not self.pico_status.flags.abort_cap:
+            # Get current temperature
+            meas = self.util.iac_get(self.gpib, f"devices/{self.selected_tec}/info/tec_temp_meas")
+            if meas is None:
+                logging.error("[TEC] Failed to read temperature")
+                break
+                
+            # Calculate error and add to rolling window
+            error = meas - target
+            errors.append(error)
+            reading_count += 1
+            
+            if reading_count % 10 == 0:
+                elapsed = time.time() - start_time
+                mean_error = sum(abs(e) for e in errors) / len(errors)
+                logging.debug(f"[TEC] Current: {meas:.2f}°C, Avg error: ±{mean_error:.3f}°C "
+                            f"(readings: {len(errors)}/{stability_readings}, elapsed: {elapsed:.1f}s)")
+            
+            # Check for stability once we have enough readings
+            if len(errors) >= stability_readings:
+                mean_error = sum(abs(e) for e in errors) / len(errors)
+                
+                if mean_error <= tol:
+                    elapsed_time = time.time() - start_time
+                    actual_stability_time = len(errors) * sweep_config.poll_s
+                    logging.info(f"[TEC] Temperature stable at {meas:.2f}°C "
+                                f"(±{mean_error:.3f}°C over {actual_stability_time:.1f}s, "
+                                f"total time: {elapsed_time:.1f}s)")
+                    return
+            time.sleep(sweep_config.poll_s)
+        
     def _temp_range(self, start, end, step):
         """
         Return a list of temperatures in equal increments, direction is 
-        inferred from start → end
+        inferred from start   end
         """
         if step == 0 or start == end:
             return [start]
@@ -892,7 +932,6 @@ class PicoController:
     def _temp_suffix(self, T: float) -> str:
         """
         Return a filename-safe suffix like '_25-0c' or '_-5-0c'
-        (1 decimal place, '.' → '-').
         """
         s = f"{T:.1f}".replace(".", "-")
         return f"_{s}c"
@@ -940,7 +979,7 @@ class PicoController:
 
             # Set temperature on Tec
             if self.simulate:
-                logging.info(f"[SIM] TEC set-point → {T:.2f} °C")
+                logging.info(f"[SIM] TEC set-point {T:.2f} °C")
             else:
                 self.util.iac_set(
                     self.gpib,

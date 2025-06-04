@@ -11,4 +11,6 @@ class DeviceFlags:
     user_capture: bool = False
     pico_mem_exceeded: bool = False
     abort_cap: bool = False
+    temp_set: bool = False
+    temp_reached: bool = False
     system_state: str = "Waiting for connection"
