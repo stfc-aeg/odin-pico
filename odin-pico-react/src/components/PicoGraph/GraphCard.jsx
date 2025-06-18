@@ -1,4 +1,4 @@
-import UICard from './UICard';
+import UICard from '../utils/UICard';
 
 const GraphCard = () => {
     return (

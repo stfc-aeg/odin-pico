@@ -1,7 +1,7 @@
 import './App.css'
 import Component from './components/Component';
-import NavigationBar from './components/NavigationBar';
-import PicoDashboard from './components/PicoDashboard';
+import NavigationBar from './components/PicoDashboard/NavigationBar';
+import PicoDashboard from './components/PicoDashboard/PicoDashboard';
 
 function App() {
 

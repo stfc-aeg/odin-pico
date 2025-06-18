@@ -1,7 +1,9 @@
+import ChannelSetup from './ChannelSetup';
+
 const OptionsCard = () => {
     return (
         <>
-            <p>OptionsCard!!!</p>
+            <ChannelSetup />
         </>
     )
 }
