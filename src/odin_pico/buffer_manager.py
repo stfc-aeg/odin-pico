@@ -22,7 +22,7 @@ class BufferManager:
 
         self.overflow = None
         self.np_channel_arrays = []
-        self.pha_arrays = []
+        # self.pha_arrays = []
         self.trigger_times = []
         self.capture_blocks: List[List[np.ndarray]] = []
         self.trigger_blocks:  List[np.ndarray]   = []
@@ -35,17 +35,18 @@ class BufferManager:
 
         self.pha_channels_active = [False] * 4
         self.pha_active_channels = []
-        self.current_pha_channels = []
+        # self.current_pha_channels = []
         self.bin_edges = []
-        self.pha_counts = [[]] * 4
+        self.pha_counts = np.zeros((len(self.dev_conf.channel_names), 
+                                    self.dev_conf.pha.num_bins), dtype=np.int64)
+        self.bin_edges = np.empty(self.dev_conf.pha.num_bins, dtype=np.float64)
 
     def estimate_max_time(self):
         """
         Return estimated seconds of acquisition that can still fit into RAM,
         or 0 if avg trigger times unavailable.
         """
-        avg_dt = self.avg_trigger_dt()
-        if avg_dt is None:
+        if self.avg_trigger_dt() is None:
             return 0
 
         n_chan = len(self.active_channels) or 1
@@ -62,7 +63,7 @@ class BufferManager:
             return 0
 
         max_caps = allowed // bytes_per_cap
-        return math.trunc(max_caps * (capture_dur + avg_dt))
+        return math.trunc(max_caps * (capture_dur + self.avg_trigger_dt()))
 
     def add_trigger_intervals(self, deltas):
         """Append trigger timing values to the deque."""
@@ -93,20 +94,40 @@ class BufferManager:
         for i in range(len(self.active_channels)):
             self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
 
-    def accumulate_pha(self, chan, pha_data):
-        """Add the new PHA data to the previous data, if there is any data."""
-        current_pha_data = (self.pha_arrays[pha_data]).tolist()
-        self.bin_edges = current_pha_data[0]
-        pha_counts = (current_pha_data)[1]
+        # if self.pha_counts[chan] is None:   # first histogram for this channel
+        #     # Make our own copy so later reuse of self.pha_arrays won’t overwrite it
+        #     self.pha_counts[chan] = new_counts.copy()
+        # else:
+        #     # Fast, in-place update; counts are already int so += is safe
+        #     self.pha_counts[chan] += new_counts
 
-        # Adds PHA to previous data, unless there is no previous data
-        if len(self.pha_counts[chan]) != 0:
-            self.pha_counts[chan] = np.array(pha_counts) + np.array(
-                self.pha_counts[chan]
-            )
-            self.pha_counts[chan] = self.pha_counts[chan].tolist()
-        else:
-            self.pha_counts[chan] = pha_counts
+    def accumulate_pha(self, chan, counts):
+        """Add the new PHA data to the previous data, if there is any data."""
+        # create references to bin_edges and counts for this channels pha
+
+        self.pha_counts[chan] += counts
+
+        # logging.debug(f"pha arrays shape: {self.pha_arrays}")
+        # bin_edges, counts = self.pha_arrays[pha_idx]
+        # # store bin_edges
+        # self.bin_edges = bin_edges
+
+        # self.pha
+            
+        #     #self.
+
+        # current_pha_data = (self.pha_arrays[pha_idx]).tolist()
+        # self.bin_edges = current_pha_data[0]
+        # pha_counts = (current_pha_data)[1]
+
+        # # Adds PHA to previous data, unless there is no previous data
+        # if len(self.pha_counts[chan]) != 0:
+        #     self.pha_counts[chan] = np.array(pha_counts) + np.array(
+        #         self.pha_counts[chan]
+        #     )
+        #     self.pha_counts[chan] = self.pha_counts[chan].tolist()
+        # else:
+        #     self.pha_counts[chan] = pha_counts
 
     def check_channels(self):
         """Check which channels are active, LV active and PHA active."""
@@ -191,3 +212,11 @@ class BufferManager:
         self.capture_blocks: List[List[np.ndarray]] = []
         self.trigger_blocks:  List[np.ndarray]   = []
         self.pha_channels_active = [False] * 4
+
+    def reset_pha(self):
+        """Reset PHA counts array based on current channel count and bin settings."""
+        self.pha_counts = np.zeros(
+            (len(self.dev_conf.channel_names), self.dev_conf.pha.num_bins), 
+            dtype=np.int64
+        )
+        self.bin_edges = np.empty(self.dev_conf.pha.num_bins, dtype=np.float64)

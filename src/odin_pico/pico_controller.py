@@ -341,14 +341,14 @@ class PicoController:
                     lambda: self.buffer_manager.lv_channels_active,
                     None,
                 ),
-                "pha_counts": (lambda: self.buffer_manager.pha_counts, None),
+                "pha_counts": (lambda: (self.buffer_manager.pha_counts.tolist()), None),
                 "capture_count": (
                     lambda: self.dev_conf.capture_run.live_cap_comp,
                     None,
                 ),
                 "captures_requested": (lambda: self.dev_conf.capture.n_captures, None),
                 "lv_data": (lambda: self.buffer_manager.lv_channel_arrays, None),
-                "pha_bin_edges": (lambda: self.buffer_manager.bin_edges, None),
+                "pha_bin_edges": (lambda: (self.buffer_manager.bin_edges.tolist()), None),
                 "sweep_total" : (lambda: self.dev_conf.temp_sweep.sweep_points, None),
                 "sweep_index" : (lambda: self.dev_conf.temp_sweep.sweep_index , None),
                 "pha_active_channels": (
@@ -540,8 +540,9 @@ class PicoController:
                 value = self.dev_conf.pha.lower_range + 1
 
         if attr_name == "lower_range":
-            if value < 0:
-                value = value * (-1)
+        #     if value < 0:
+        #         value = value * (-1)
+
 
             if value > self.dev_conf.pha.upper_range:
                 value = self.dev_conf.pha.upper_range - 1
@@ -588,6 +589,15 @@ class PicoController:
                 setattr(channel_dc, attr_name, value)
             except AttributeError:
                 pass
+        # reset pha if pha params change
+        if (
+            (attr_name == "num_bins")
+            or (attr_name == "lower_range")
+            or (attr_name == "upper_range")
+        ):
+            self.analysis.clear_pha = True
+            if attr_name == "num_bins":
+                self.buffer_manager.reset_pha()
 
     def verify_settings(self):
         """Verify all picoscope settings, sets status of individual groups of settings."""
@@ -708,8 +718,7 @@ class PicoController:
                             self.dev_conf.file.repeat_suffix = "_" + str((capture_run+1))
                         # reset abort flag if its been set by TB capture
                         self.pico_status.flags.abort_cap = False
-                        ##why are pha_counts being appended twice? why here and not in buffer_manager?
-                        self.buffer_manager.pha_counts = [[]] * 4
+                        self.buffer_manager.reset_pha()
                         self.current_capture = capture_run
 
                         logging.debug(f"current capture repeat: {self.current_capture}")
@@ -729,7 +738,7 @@ class PicoController:
                                 else:
                                     self.user_capture(True)
                         else:
-                            self.buffer_manager.pha_counts = [[]] * 4
+                            self.buffer_manager.reset_pha()
 
                             # Complete a capture run, for a pre-determined amount of time
                             if not self.pico_status.flags.abort_cap:

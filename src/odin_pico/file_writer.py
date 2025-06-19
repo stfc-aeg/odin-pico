@@ -178,7 +178,7 @@ class FileWriter:
                         self.pico_status.flags.system_state = (
                             f"Writing HDF5 File: Writing Captures: {math.trunc((row_slice.stop/total_captures)*100)}% completed")
                         logging.debug(
-                            f"Writing HDF5 File: Writing Captures {row_slice.start+1}–{row_slice.stop} out of {total_captures}")
+                            f"Writing HDF5 File: Writing Captures {row_slice.start+1}-{row_slice.stop} out of {total_captures}")
                         next_row += seg_caps
                         
                 ## File writing for N captures
@@ -196,9 +196,9 @@ class FileWriter:
                 edges = self.buffer_manager.bin_edges
                 for ch_id in self.buffer_manager.active_channels:
                     counts = self.buffer_manager.pha_counts[ch_id]
-                    if edges and counts and len(edges) == len(counts):
+                    if len(edges) > 0 and len(edges) == len(counts):
                         f.create_dataset(f"pha_{ch_id}", data=[edges, counts])
-
+                        
             self.dev_conf.file.last_write_success = True
 
         except Exception as e:
