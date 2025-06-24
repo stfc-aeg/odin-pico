@@ -1,14 +1,14 @@
 import OptionsCard from '../PicoOptions/OptionsCard';
 import GraphCard from '../PicoGraph/GraphCard';
 
-const PicoDashboard = () => {
+const PicoDashboard = ({ pico_endpoint }) => {
     return (
         <>
             <div className="d-flex flex-wrap border rounded-1 pt-2 mt-2 ms-3 me-4">
-                <div className="pe-3 ps-4" style={{ flexGrow: 1, width: '40%', minWidth: '480px' }}>
-                    <OptionsCard />
+                <div className="pe-3 ps-4" style={{ flexGrow: 1, width: '45%', minWidth: '620px' }}>
+                    <OptionsCard pico_endpoint={pico_endpoint} />
                 </div>
-                <div className="ps-4 pe-3" style={{ flexGrow: 1, width: '60%' }}>
+                <div className="ps-4 pe-3" style={{ flexGrow: 1, width: '55%', minWidth: '600px' }}>
                     <GraphCard />
                 </div>
             </div>
@@ -16,8 +16,5 @@ const PicoDashboard = () => {
 
     )
 }
-
-// needs to be a flax box thing like the other code I made (wraps underneath)
-// needs a line box thing around it
 
 export default PicoDashboard

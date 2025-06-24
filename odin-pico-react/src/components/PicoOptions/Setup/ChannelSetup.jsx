@@ -1,13 +1,6 @@
 import React from 'react';
-import UICard from '../utils/UICard';
-import { getChannelRowClass } from '../utils/utils';
-
-const defaultChannels = [
-  { id: 'a', label: 'A', active: false, coupling: '1', range: '0', offset: '0' },
-  { id: 'b', label: 'B', active: false, coupling: '1', range: '0', offset: '0' },
-  { id: 'c', label: 'C', active: false, coupling: '1', range: '0', offset: '0', danger: true },
-  { id: 'd', label: 'D', active: false, coupling: '1', range: '0', offset: '0', danger: true },
-];
+import UICard from '../../utils/UICard';
+import { getChannelRowClass } from '../../utils/utils';
 
 const couplingOptions = [
   { value: '1', label: 'DC' },
@@ -28,54 +21,84 @@ const rangeOptions = [
   { value: '10', label: '20 V' },
 ];
 
-const ChannelSetup = () => {
-  const [channelStates, setChannelStates] = React.useState(defaultChannels);
+const ChannelSetup = ({ channelStates, setChannelStates, anyActive, pico_endpoint }) => {
+  const [loading, setLoading] = React.useState(true);
 
-  const anyActive = channelStates.some(ch => ch.active);
+  // Initial GET fetch
+  React.useEffect(() => {
+    pico_endpoint.get('device/settings/channels')
+      .then((response) => {
+        const channelObj = response.channels;
+        const formatted = Object.entries(channelObj).map(([id, data]) => ({
+          id,
+          label: id.toUpperCase(),
+          active: data.active,
+          coupling: String(data.coupling),
+          range: String(data.range),
+          offset: String(data.offset),
+        }));
+        setChannelStates(formatted);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching channel data:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  // Update helper
+  const updateChannel = (id, key, value) => {
+    pico_endpoint.put({ [key]: value }, `device/settings/channels/${id}/`)
+      .catch((err) => console.error(`Failed to update ${id}:${key}`, err));
+  };
 
   const handleCheckboxChange = (index) => (e) => {
     const newChannels = [...channelStates];
     newChannels[index].active = e.target.checked;
     setChannelStates(newChannels);
-    // Call new commit_checked_adapter here
+    updateChannel(newChannels[index].id, 'active', e.target.checked);
   };
 
   const handleSelectChange = (index, field) => (e) => {
     const newChannels = [...channelStates];
     newChannels[index][field] = e.target.value;
     setChannelStates(newChannels);
-    // Call new commit_int_adapter here
+    updateChannel(newChannels[index].id, field, parseInt(e.target.value));
   };
 
   const handleInputChange = (index) => (e) => {
+    const value = e.target.value;
     const newChannels = [...channelStates];
-    newChannels[index].offset = e.target.value;
+    newChannels[index].offset = value;
     setChannelStates(newChannels);
-    // Call new commit_float_adapter here
+    const floatVal = parseFloat(value);
+    if (!isNaN(floatVal)) updateChannel(newChannels[index].id, 'offset', floatVal);
   };
+
+  if (loading) return <p>Loading channel setup...</p>;
 
   return (
     <div className="col-sm-12" id="chan-6-div">
       <UICard title="Channel Setup">
-        <table className="table" style={{ marginBottom: '0px'}}>
-        <thead>
-          <tr className={anyActive ? "table-success" : "table-danger"} id="chan-row">
-            <th>Channel:</th>
-            <th>Channel Coupling</th>
-            <th>Channel Range</th>
-            <th>Offset (%)</th>
-          </tr>
-        </thead>
+        <table className="table" style={{ marginBottom: '0px' }}>
+          <thead>
+            <tr className={getChannelRowClass(true, anyActive)} id="chan-row">
+              <th>Channel:</th>
+              <th>Channel Coupling</th>
+              <th>Channel Range</th>
+              <th>Offset (%)</th>
+            </tr>
+          </thead>
           <tbody>
-            {channelStates.map(({ id, label, active, coupling, range, offset, danger }, i) => (
+            {channelStates.map(({ id, label, active, coupling, range, offset }, i) => (
               <tr
                 key={id}
                 className={getChannelRowClass(active, anyActive)}
                 id={`channel-${id}-set`}
               >
                 <th>
-                  <div className={`custom-div-${id}`}>
-                    <label htmlFor={`channel-${id}-active`} className="custom-label">
+                  <div>
+                    <label htmlFor={`channel-${id}-active`}>
                       {label}&nbsp;&nbsp;&nbsp;&nbsp;
                     </label>
                     <input
@@ -83,8 +106,6 @@ const ChannelSetup = () => {
                       id={`channel-${id}-active`}
                       checked={active}
                       onChange={handleCheckboxChange(i)}
-                      className="custom-checkbox"
-                      value={i}
                     />
                   </div>
                 </th>

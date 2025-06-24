@@ -1,0 +1,14 @@
+.bg-green {
+  background-color: #dff0d8 !important;
+  --bs-table-bg: transparent;
+}
+
+.bg-red {
+  background-color: #f2dede !important;
+  --bs-table-bg: transparent;
+}
+
+select.form-control {
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+}

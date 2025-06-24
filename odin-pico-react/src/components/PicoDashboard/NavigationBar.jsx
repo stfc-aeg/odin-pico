@@ -1,23 +1,79 @@
+import React, { useEffect, useState } from 'react';
 import { Navbar, Container } from 'react-bootstrap';
 import odinIcon from '../../assets/odin.png';
 import logo from '../../assets/logo.png';
-//import './NavigationBar.css';
 
-const NavigationBar = () => {
+const NavigationBar = ({ pico_endpoint }) => {
+  const [deviceStatus, setDeviceStatus] = useState(null);
+  const [statusError, setStatusError] = useState(false);
+
+  useEffect(() => {
+    const fetchDeviceStatus = async () => {
+      try {
+        const treeResponse = await pico_endpoint.get('device');
+
+        const deviceResponse = treeResponse?.device;
+
+        const runUserCapture = deviceResponse?.commands?.run_user_capture;
+        const captureMode = deviceResponse?.settings?.capture?.capture_mode?.value;
+
+        let captureType;
+        if (runUserCapture === true && captureMode === false) {
+          captureType = 'N Based Captures';
+        } else if (runUserCapture === true && captureMode === true) {
+          captureType = 'Time Based Captures';
+        } else if (runUserCapture === false) {
+          captureType = 'Live View';
+        } else {
+          captureType = '-';
+        }
+
+        setDeviceStatus({
+          open_unit: deviceResponse?.status?.open_unit,
+          settings_verified: deviceResponse?.status?.settings_verified,
+          system_state: deviceResponse?.flags?.system_state,
+          capture_type: captureType,
+        });
+
+        setStatusError(false); // Clear previous error if fetch succeeds
+      } catch (error) {
+        console.error('Error fetching device status:', error);
+        setStatusError(true);
+        setDeviceStatus(null);
+      }
+    };
+
+    fetchDeviceStatus();
+    const intervalId = setInterval(fetchDeviceStatus, 10000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Helper function to display status fields
+  const renderField = (label, value) => (
+    <span>
+      {label}:{' '}
+      <span>
+        {statusError
+          ? 'Error'
+          : value !== undefined && value !== null
+          ? value
+          : '-'}
+      </span>
+    </span>
+  );
+
   return (
     <Navbar
-      id="custom-navbar"
       bg="dark"
       variant="dark"
       sticky="top"
       className="navbar-inverse"
       style={{ paddingTop: 0, paddingBottom: 0 }}
     >
-      <Container fluid id="custom-container-fluid">
+      <Container fluid>
         <div
-          id="custom-navbar-header"
           className="navbar-header d-flex align-items-center gap-3"
-          style={{ height: '50px', fontSize: '0.7rem', color: '#DADADA' }}
+          style={{ height: '50px', color: 'white' }}
         >
           <div>
             <img
@@ -34,22 +90,21 @@ const NavigationBar = () => {
             />
           </div>
 
-          {/* Status Labels (TODO: make dynamic) */}
-          <span id="custom-item-label">
-            Status:
-          </span>
-          <span id="custom-item1">
-            Connection: <span id="connection_status">True</span>
-          </span>
-          <span id="custom-item2">
-            Capture Type: <span id="cap_type_status">True</span>
-          </span>
-          <span id="custom-item3">
-            Settings valid: <span id="settings_status">True</span>
-          </span>
-          <span id="custom-item4">
-            System State: <span id="system-state">Collecting LV Data</span>
-          </span>
+          <span>Status:</span>
+          {renderField(
+            'Connection',
+            deviceStatus?.open_unit === 0 ? 'True' : deviceStatus?.open_unit === 1 ? 'False' : null
+          )}
+          {renderField('Capture Type', deviceStatus?.capture_type)}
+          {renderField(
+            'Settings valid',
+            deviceStatus?.settings_verified === true
+              ? 'True'
+              : deviceStatus?.settings_verified === false
+              ? 'False'
+              : null
+          )}
+          {renderField('System State', deviceStatus?.system_state)}
         </div>
       </Container>
     </Navbar>
