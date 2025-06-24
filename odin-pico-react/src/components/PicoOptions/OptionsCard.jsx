@@ -1,6 +1,7 @@
 import React from 'react';
 import ChannelSetup from './Setup/ChannelSetup';
 import GeneralSetup from './Setup/GeneralSetup';
+import TriggerSetup from './Setup/TriggerSetup';
 
 import CaptureSettings from './Capture/CaptureSettings';
 import GpibSettings from './GPIB/GpibSettings';
@@ -71,6 +72,13 @@ const OptionsCard = ({ pico_endpoint }) => {
               setChannelStates={setChannelStates}
               anyActive={anyChannelActive}
               pico_endpoint={pico_endpoint}
+            />
+            <TriggerSetup
+              pico_endpoint={pico_endpoint}
+              activeChannels={channelStates
+                .map((ch, i) => (ch.active ? i : null))
+                .filter(i => i !== null)
+              }
             />
           </>
         )}

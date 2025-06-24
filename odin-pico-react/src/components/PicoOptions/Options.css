@@ -8,7 +8,12 @@
   --bs-table-bg: transparent;
 }
 
+.form {
+  display: block;
+}
+
 select.form-control {
-  appearance: auto !important;
-  -webkit-appearance: auto !important;
+  appearance: auto;
+  -webkit-appearance: auto;
+  display: block;
 }

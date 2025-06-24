@@ -1,14 +1,12 @@
 import React from 'react';
 import UICard from '../../utils/UICard';
-import { Form } from 'react-bootstrap';
 import { getChannelRowClass, toSiUnit } from '../../utils/utils';
-import '../Options.css'
+import '../Options.css';
 
 const GeneralSetup = ({ pico_endpoint, anyActive }) => {
   const [settings, setSettings] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [invalidInputs, setInvalidInputs] = React.useState({});
-
 
   // Initial GET fetch
   React.useEffect(() => {
@@ -21,7 +19,7 @@ const GeneralSetup = ({ pico_endpoint, anyActive }) => {
         console.error('Error fetching device settings:', err);
         setLoading(false);
       });
-  }, [pico_endpoint]);
+  }, []);
 
   const commitIntAdapter = (id, path, key) => {
     const inputElem = document.getElementById(id);
@@ -43,7 +41,7 @@ const GeneralSetup = ({ pico_endpoint, anyActive }) => {
     });
   };
 
-  if (loading || !settings) return null;
+  if (loading || !settings) return <p>Loading channel setup...</p>;
 
   const baseRowClass = getChannelRowClass(true, anyActive);
   const hasInvalid = Object.values(invalidInputs).some(v => v);
@@ -54,56 +52,55 @@ const GeneralSetup = ({ pico_endpoint, anyActive }) => {
       <table className="table mb-0">
         <tbody>
           <tr className={rowClass} id="general-setup-row">
-          <th>
-              <Form.Group controlId="bit-mode-dropdown">
-                <Form.Label>Resolution</Form.Label>
-                <Form.Control
-                  as="select"
-                  onChange={() => commitIntAdapter('bit-mode-dropdown', 'mode/', 'resolution')}
-                  defaultValue={settings.mode.resolution}
-                >
-                  <option value="0">8 Bit Mode</option>
-                  <option value="1">12 Bit Mode</option>
-                </Form.Control>
-              </Form.Group>
-            </th>
             <th>
-              <Form.Group controlId="time-base-input">
-                <Form.Label>Timebase</Form.Label>
-                <Form.Control
-                  type="text"
-                  className={`small-text`}
-                  defaultValue={settings.mode.timebase}
-                  onChange={() => commitIntAdapter('time-base-input', 'mode/', 'timebase')}
-                />
-                <div>
-                  <span>Sample Interval: </span>
-                  <span>{toSiUnit(settings.mode.samp_time)}</span>
-                  <span>s</span>
-                </div>
-              </Form.Group>
+              <label htmlFor="bit-mode-dropdown">Resolution</label>
+              <select
+                id="bit-mode-dropdown"
+                className="form"
+                onChange={() => commitIntAdapter('bit-mode-dropdown', 'mode/', 'resolution')}
+                defaultValue={settings.mode.resolution}
+              >
+                <option value="0">8 Bit Mode</option>
+                <option value="1">12 Bit Mode</option>
+              </select>
             </th>
+
             <th>
-              <Form.Group controlId="capture-pretrig-samples">
-                <Form.Label>Pre-Trigger Samples</Form.Label>
-                <Form.Control
-                  type="text"
-                  className={`small-text`}
-                  defaultValue={settings.capture.pre_trig_samples}
-                  onChange={() => commitIntAdapter('capture-pretrig-samples', 'capture/', 'pre_trig_samples')}
-                />
-              </Form.Group>
+              <label htmlFor="time-base-input">Timebase</label>
+              <input
+                id="time-base-input"
+                type="text"
+                className="form small-text"
+                defaultValue={settings.mode.timebase}
+                onChange={() => commitIntAdapter('time-base-input', 'mode/', 'timebase')}
+              />
+              <div>
+                <span>Sample Interval: </span>
+                <span>{toSiUnit(settings.mode.samp_time)}</span>
+                <span>s</span>
+              </div>
             </th>
+
             <th>
-              <Form.Group controlId="capture-posttrig-samples">
-                <Form.Label>Post-Trigger Samples</Form.Label>
-                <Form.Control
-                  type="text"
-                  className={`small-text`}
-                  defaultValue={settings.capture.post_trig_samples}
-                  onChange={() => commitIntAdapter('capture-posttrig-samples', 'capture/', 'post_trig_samples')}
-                />
-              </Form.Group>
+              <label htmlFor="capture-pretrig-samples">Pre-Trigger Samples</label>
+              <input
+                id="capture-pretrig-samples"
+                type="text"
+                className="form small-text"
+                defaultValue={settings.capture.pre_trig_samples}
+                onChange={() => commitIntAdapter('capture-pretrig-samples', 'capture/', 'pre_trig_samples')}
+              />
+            </th>
+
+            <th>
+              <label htmlFor="capture-posttrig-samples">Post-Trigger Samples</label>
+              <input
+                id="capture-posttrig-samples"
+                type="text"
+                className="form small-text"
+                defaultValue={settings.capture.post_trig_samples}
+                onChange={() => commitIntAdapter('capture-posttrig-samples', 'capture/', 'post_trig_samples')}
+              />
             </th>
           </tr>
         </tbody>
