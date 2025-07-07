@@ -21,61 +21,16 @@ const rangeOptions = [
   { value: '10', label: '20 V' },
 ];
 
-const ChannelSetup = ({ channelStates, setChannelStates, anyActive, pico_endpoint }) => {
-  const [loading, setLoading] = React.useState(true);
-
-  // Initial GET fetch
-  React.useEffect(() => {
-    pico_endpoint.get('device/settings/channels')
-      .then((response) => {
-        const channelObj = response.channels;
-        const formatted = Object.entries(channelObj).map(([id, data]) => ({
-          id,
-          label: id.toUpperCase(),
-          active: data.active,
-          coupling: String(data.coupling),
-          range: String(data.range),
-          offset: String(data.offset),
-        }));
-        setChannelStates(formatted);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error fetching channel data:', err);
-        setLoading(false);
-      });
-  }, []);
-
-  // Update helper
-  const updateChannel = (id, key, value) => {
-    pico_endpoint.put({ [key]: value }, `device/settings/channels/${id}/`)
-      .catch((err) => console.error(`Failed to update ${id}:${key}`, err));
-  };
-
-  const handleCheckboxChange = (index) => (e) => {
-    const newChannels = [...channelStates];
-    newChannels[index].active = e.target.checked;
-    setChannelStates(newChannels);
-    updateChannel(newChannels[index].id, 'active', e.target.checked);
-  };
-
-  const handleSelectChange = (index, field) => (e) => {
-    const newChannels = [...channelStates];
-    newChannels[index][field] = e.target.value;
-    setChannelStates(newChannels);
-    updateChannel(newChannels[index].id, field, parseInt(e.target.value));
-  };
-
-  const handleInputChange = (index) => (e) => {
-    const value = e.target.value;
-    const newChannels = [...channelStates];
-    newChannels[index].offset = value;
-    setChannelStates(newChannels);
-    const floatVal = parseFloat(value);
-    if (!isNaN(floatVal)) updateChannel(newChannels[index].id, 'offset', floatVal);
-  };
-
-  if (loading) return <p>Loading channel setup...</p>;
+const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect, EndpointCheckbox }) => {
+  const channelObj = pico_endpoint?.data?.device?.settings?.channels ?? {};
+  const channelStates = Object.entries(channelObj).map(([id, data]) => ({
+    id,
+    label: id.toUpperCase(),
+    active: data.active,
+    coupling: String(data.coupling),
+    range: String(data.range),
+    offset: String(data.offset),
+  }));
 
   return (
     <div className="col-sm-12" id="chan-6-div">
@@ -101,46 +56,45 @@ const ChannelSetup = ({ channelStates, setChannelStates, anyActive, pico_endpoin
                     <label htmlFor={`channel-${id}-active`}>
                       {label}&nbsp;&nbsp;&nbsp;&nbsp;
                     </label>
-                    <input
-                      type="checkbox"
+                    <EndpointCheckbox
                       id={`channel-${id}-active`}
-                      checked={active}
-                      onChange={handleCheckboxChange(i)}
+                      endpoint={pico_endpoint}
+                      fullpath={`device/settings/channels/${id}/active`}
                     />
                   </div>
                 </th>
                 <th>
-                  <select
+                  <EndpointSelect
                     id={`channel-${id}-coupl`}
-                    value={coupling}
-                    onChange={handleSelectChange(i, 'coupling')}
+                    endpoint={pico_endpoint}
+                    fullpath={`device/settings/channels/${id}/coupling`}
                   >
                     {couplingOptions.map(({ value, label }) => (
                       <option key={value} value={value}>
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </EndpointSelect>
                 </th>
                 <th>
-                  <select
+                  <EndpointSelect
                     id={`channel-${id}-range`}
-                    value={range}
-                    onChange={handleSelectChange(i, 'range')}
+                    endpoint={pico_endpoint}
+                    fullpath={`device/settings/channels/${id}/range`}
                   >
                     {rangeOptions.map(({ value, label }) => (
                       <option key={value} value={value}>
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </EndpointSelect>
                 </th>
                 <th>
-                  <input
+                  <EndpointInput
                     id={`channel-${id}-offset`}
-                    type="text"
-                    value={offset}
-                    onChange={handleInputChange(i)}
+                    endpoint={pico_endpoint}
+                    fullpath={`device/settings/channels/${id}/offset`}
+                    type="number"
                   />
                 </th>
               </tr>

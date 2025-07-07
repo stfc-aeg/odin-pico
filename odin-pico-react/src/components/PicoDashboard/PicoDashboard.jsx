@@ -1,5 +1,6 @@
 import OptionsCard from '../PicoOptions/OptionsCard';
 import GraphCard from '../PicoGraph/GraphCard';
+import React from 'react';
 
 const PicoDashboard = ({ pico_endpoint }) => {
     return (
@@ -9,7 +10,7 @@ const PicoDashboard = ({ pico_endpoint }) => {
                     <OptionsCard pico_endpoint={pico_endpoint} />
                 </div>
                 <div className="ps-4 pe-3" style={{ flexGrow: 1, width: '55%', minWidth: '600px' }}>
-                    <GraphCard />
+                    <GraphCard pico_endpoint={pico_endpoint} />
                 </div>
             </div>
         </>

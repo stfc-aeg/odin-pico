@@ -1,4 +1,3 @@
-import React from 'react';
 import UICard from '../../utils/UICard';
 
 const sourceOptions = [
@@ -16,38 +15,43 @@ const directionOptions = [
   { value: 4, label: 'Rising or Falling Edge' },
 ];
 
-const TriggerSetup = ({ pico_endpoint, activeChannels }) => {
-  const [trigger, setTrigger] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
+const rangeCodeToMillivolts = {
+  0: 10,
+  1: 20,
+  2: 50,
+  3: 100,
+  4: 200,
+  5: 500,
+  6: 1000,
+  7: 2000,
+  8: 5000,
+  9: 10000,
+  10: 20000,
+};
 
-  React.useEffect(() => {
-    pico_endpoint.get('device/settings/trigger')
-      .then(data => {
-        setTrigger({ ...data.trigger });
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to load trigger config', err);
-        setLoading(false);
-      });
-  }, []);
-
-  const handleUpdate = (key, value) => {
-    const parsed = key === 'active' ? value === 'true' : parseInt(value, 10);
-    setTrigger(prev => ({ ...prev, [key]: parsed }));
-
-    pico_endpoint.put({ [key]: parsed }, 'device/settings/trigger')
-      .catch(err => console.error(`Failed to update ${key}:`, err));
-  };
+const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
 
   const getTriggerClass = () => {
-    if (activeChannels.includes(trigger.source)) {
+    const verificationPath = pico_endpoint?.data?.device?.status?.channel_trigger_verify;
+    const isValid = verificationPath === undefined? false : verificationPath === 0 ? true : false;
+
+    const currentChannelIndex = pico_endpoint?.data?.device?.settings?.trigger?.source;
+    const channelLetter = ['a', 'b', 'c', 'd'][currentChannelIndex];
+
+    const channelData = pico_endpoint?.data?.device?.settings?.channels?.[channelLetter];
+    const triggerThreshold = pico_endpoint?.data?.device?.settings?.trigger?.threshold;
+
+    if (!channelData?.active) return 'bg-red';
+
+    const channelRangeCode = channelData?.range;
+    const channelRange = rangeCodeToMillivolts[channelRangeCode];
+
+    if (isValid && triggerThreshold <= channelRange) {
       return 'bg-green';
     }
-    return 'bg-red';
-  };
 
-  if (loading || !trigger) return <p>Loading trigger setup...</p>;
+    return 'bg-red';
+  }
 
   return (
     <div className="col-sm-12" id="trigger-setup-div">
@@ -57,79 +61,72 @@ const TriggerSetup = ({ pico_endpoint, activeChannels }) => {
             <tr className={getTriggerClass()}>
               <th>
                 <label htmlFor="trigger-enable">Enable:</label>
-                <select
+                <EndpointSelect
                   id="trigger-enable"
+                  endpoint={pico_endpoint}
+                  fullpath="device/settings/trigger/active"
                   className="form"
-                  value={String(trigger.active)}
-                  onChange={(e) => handleUpdate('active', e.target.value)}
                 >
-                  <option value="true">True</option>
-                  <option value="false">False</option>
-                </select>
+                  <option value={true}>True</option>
+                  <option value={false}>False</option>
+                </EndpointSelect>
               </th>
 
               <th>
                 <label htmlFor="trigger-source">Source:</label>
-                <select
+                <EndpointSelect
                   id="trigger-source"
-                  className="form"
-                  value={trigger.source}
-                  onChange={(e) => handleUpdate('source', e.target.value)}
+                  endpoint={pico_endpoint}
+                  fullpath="device/settings/trigger/source"
                 >
                   {sourceOptions.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
-                </select>
+                </EndpointSelect>
               </th>
 
               <th>
                 <label htmlFor="trigger-direction">Signal Direction:</label>
-                <select
+                <EndpointSelect
                   id="trigger-direction"
-                  className="form"
-                  value={trigger.direction}
-                  onChange={(e) => handleUpdate('direction', e.target.value)}
+                  endpoint={pico_endpoint}
+                  fullpath="device/settings/trigger/direction"
                 >
                   {directionOptions.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
-                </select>
+                </EndpointSelect>
               </th>
             </tr>
 
             <tr className={getTriggerClass()}>
               <th>
                 <label htmlFor="trigger-threshold">Threshold (mV):</label>
-                <input
+                <EndpointInput
                   id="trigger-threshold"
+                  endpoint={pico_endpoint}
+                  fullpath="device/settings/trigger/threshold"
                   type="number"
-                  className="form"
-                  value={trigger.threshold}
-                  onChange={(e) => handleUpdate('threshold', e.target.value)}
                 />
               </th>
 
               <th>
                 <label htmlFor="trigger-delay">Delay (ms):</label>
-                <input
+                <EndpointInput
                   id="trigger-delay"
+                  endpoint={pico_endpoint}
+                  fullpath="device/settings/trigger/delay"
                   type="number"
-                  min="0"
-                  className="form"
-                  value={trigger.delay}
-                  onChange={(e) => handleUpdate('delay', e.target.value)}
                 />
               </th>
 
               <th>
                 <label htmlFor="trigger-auto">Trigger After (ms):</label>
-                <input
+                <EndpointInput
                   id="trigger-auto"
+                  endpoint={pico_endpoint}
+                  fullpath="device/settings/trigger/auto_trigger"
                   type="number"
-                  min="0"
-                  className="form"
-                  value={trigger.auto_trigger}
-                  onChange={(e) => handleUpdate('auto_trigger', e.target.value)}
                 />
               </th>
             </tr>

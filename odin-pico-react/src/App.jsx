@@ -6,7 +6,11 @@ import PicoDashboard from './components/PicoDashboard/PicoDashboard';
 import { useAdapterEndpoint } from 'odin-react';
 
 function App() {
-  const pico_endpoint = useAdapterEndpoint("pico", "http://192.168.0.28:8888");
+  const pico_endpoint = useAdapterEndpoint("pico", "http://192.168.0.28:8888", 150);
+
+  React.useEffect(() => {
+      pico_endpoint.refreshData();
+  }, []);
 
   return (
     <>

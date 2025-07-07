@@ -2,14 +2,40 @@ import React from 'react';
 import ChannelSetup from './Setup/ChannelSetup';
 import GeneralSetup from './Setup/GeneralSetup';
 import TriggerSetup from './Setup/TriggerSetup';
+import PHASettings from './Setup/PHASettings';
 
 import CaptureSettings from './Capture/CaptureSettings';
 import GpibSettings from './GPIB/GpibSettings';
 
+import { WithEndpoint } from 'odin-react';
+
+const EndpointInput = WithEndpoint((props) => (
+  <input {...props} className={`form small-text ${props.className || ''}`} />
+));
+
+const EndpointSelect = WithEndpoint((props) => (
+  <select {...props} className={`form ${props.className || ''}`}>
+    {props.children}
+  </select>
+));
+
+const EndpointCheckbox = WithEndpoint((props) => (
+  <input type="checkbox" {...props} />
+));
+
 const OptionsCard = ({ pico_endpoint }) => {
-  const [channelStates, setChannelStates] = React.useState([]);
-  const anyChannelActive = channelStates.some(ch => ch.active);
+
   const [gpibEnabled, setGpibEnabled] = React.useState(false);
+  const channels = pico_endpoint?.data?.device?.settings?.channels;
+
+  let anyChannelActive;
+
+  if (channels !== undefined) {
+      anyChannelActive = Object.values(channels).some(channel => channel.active);
+  } else {
+      anyChannelActive = false;
+  }
+
 
   React.useEffect(() => {
     pico_endpoint.get('gpib')
@@ -66,19 +92,24 @@ const OptionsCard = ({ pico_endpoint }) => {
             <GeneralSetup
               anyActive={anyChannelActive}
               pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
+              EndpointSelect={EndpointSelect}
             />
             <ChannelSetup
-              channelStates={channelStates}
-              setChannelStates={setChannelStates}
               anyActive={anyChannelActive}
               pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
+              EndpointSelect={EndpointSelect}
+              EndpointCheckbox={EndpointCheckbox}
             />
             <TriggerSetup
               pico_endpoint={pico_endpoint}
-              activeChannels={channelStates
-                .map((ch, i) => (ch.active ? i : null))
-                .filter(i => i !== null)
-              }
+              EndpointInput={EndpointInput}
+              EndpointSelect={EndpointSelect}
+            />
+            <PHASettings
+              pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
             />
           </>
         )}

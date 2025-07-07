@@ -1,52 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navbar, Container } from 'react-bootstrap';
 import odinIcon from '../../assets/odin.png';
 import logo from '../../assets/logo.png';
 
 const NavigationBar = ({ pico_endpoint }) => {
-  const [deviceStatus, setDeviceStatus] = useState(null);
-  const [statusError, setStatusError] = useState(false);
+  let deviceStatus = null;
+  let statusError = false;
+  const deviceResponse = pico_endpoint?.data?.device;
 
-  useEffect(() => {
-    const fetchDeviceStatus = async () => {
-      try {
-        const treeResponse = await pico_endpoint.get('device');
+  if (deviceResponse === undefined) {
+    statusError = true;
+  } else {
+    const runUserCapture = deviceResponse?.commands?.run_user_capture;
+    const captureMode = deviceResponse?.settings?.capture?.capture_mode?.value;
 
-        const deviceResponse = treeResponse?.device;
+    let captureType;
+    if (runUserCapture === true && captureMode === false) {
+      captureType = 'N Based Captures';
+    } else if (runUserCapture === true && captureMode === true) {
+      captureType = 'Time Based Captures';
+    } else if (runUserCapture === false) {
+      captureType = 'Live View';
+    } else {
+      captureType = '-';
+    }
 
-        const runUserCapture = deviceResponse?.commands?.run_user_capture;
-        const captureMode = deviceResponse?.settings?.capture?.capture_mode?.value;
-
-        let captureType;
-        if (runUserCapture === true && captureMode === false) {
-          captureType = 'N Based Captures';
-        } else if (runUserCapture === true && captureMode === true) {
-          captureType = 'Time Based Captures';
-        } else if (runUserCapture === false) {
-          captureType = 'Live View';
-        } else {
-          captureType = '-';
-        }
-
-        setDeviceStatus({
-          open_unit: deviceResponse?.status?.open_unit,
-          settings_verified: deviceResponse?.status?.settings_verified,
-          system_state: deviceResponse?.flags?.system_state,
-          capture_type: captureType,
-        });
-
-        setStatusError(false); // Clear previous error if fetch succeeds
-      } catch (error) {
-        console.error('Error fetching device status:', error);
-        setStatusError(true);
-        setDeviceStatus(null);
-      }
+    deviceStatus ={
+      open_unit: deviceResponse?.status?.open_unit,
+      settings_verified: deviceResponse?.status?.settings_verified,
+      system_state: deviceResponse?.flags?.system_state,
+      capture_type: captureType,
     };
-
-    fetchDeviceStatus();
-    const intervalId = setInterval(fetchDeviceStatus, 10000);
-    return () => clearInterval(intervalId);
-  }, []);
+  }
 
   // Helper function to display status fields
   const renderField = (label, value) => (
