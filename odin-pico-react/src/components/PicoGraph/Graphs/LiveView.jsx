@@ -55,7 +55,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             const settings = pico_endpoint?.data?.device?.settings;
             const activeChannels = pico_endpoint?.data?.device?.live_view?.lv_active_channels;
             const pre = -Math.abs(settings?.capture?.pre_trig_samples ?? 0);
-            const post = -Math.abs(settings?.capture?.post_trig_samples ?? 0);
+            const post = Math.abs(settings?.capture?.post_trig_samples ?? 0);
 
             setLvData(data);
             setDeviceSettings(settings);
@@ -63,7 +63,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             setPreTrigSamples(pre);
             setPostTrigSamples(post);
         }
-    }, [isPlaying, pico_endpoint]);
+    }, [isPlaying, pico_endpoint.updateFlag]);
 
     if (lvData === undefined) {
         return <div>Loading live data...</div>;
@@ -74,7 +74,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
         return found ? found.label : `Channel ${ch}`;
     });
 
-    const prepared_data = lvData.slice(0, 2).map((y_array, idx) => {
+    const prepared_data = lvData.slice(0, lvActiveChannels.length).map((y_array, idx) => {
         const x_array = generateXValues(preTrigSamples, y_array);
         const channel_name = series_names[idx] || `Channel ${idx}`;
         const trace = {
@@ -84,8 +84,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             line: { color: channelColours[channel_name] },
         };
 
-        // If it is the second channel (index 1), attach to y2 axis
-        if (idx === 1) {
+        if (lvActiveChannels.length === 2 && idx === 1) {
             trace.yaxis = 'y2';
         }
 
@@ -103,14 +102,28 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
         return [-yrange, yrange];
     };
 
+    let maxRange = 0;
+    if (lvActiveChannels.length >= 3) {
+        maxRange = Math.max(...lvActiveChannels.map((ch_id) => {
+            const ch_key = channelIdToKey[ch_id];
+            const ch_range = deviceSettings.channels?.[ch_key]?.range;
+            return rangeValueToMilliVolts[ch_range] ?? 1000;
+        }));
+    }
+
     const layout = {
+        uirevision: 'true',
         xaxis: {
             title: { text: 'Sample Interval' },
-            range: [{preTrigSamples}, {postTrigSamples}]
+            range: [preTrigSamples, postTrigSamples]
         },
         yaxis: {
-            title: { text: (prepared_data[0]?.name+" Voltage (mV)")},
-            range: getChannelRange(deviceSettings, lvActiveChannels, 0)
+            title: lvActiveChannels.length >= 3
+                ? { text: "Channel Voltage (mV)" }
+                : { text: (prepared_data[0]?.name+" Voltage (mV)")},
+            range: lvActiveChannels.length >= 3
+                ? [-maxRange, maxRange]
+                : getChannelRange(deviceSettings, lvActiveChannels, 0)
         },
         yaxis2: {
             title: { text: (prepared_data[1]?.name+" Voltage (mV)")},
@@ -178,8 +191,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             </div>
 
             <OdinGraph
-                style={{ width: '100%', height: '100%' }}
-                useResizeHandler={true}
                 data={prepared_data}
                 layout={layout}
             />
