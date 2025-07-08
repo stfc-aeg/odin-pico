@@ -31,13 +31,17 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
     range: String(data.range),
     offset: String(data.offset),
   }));
+  const activeChannels = channelStates.filter(ch => ch.active);
+  const allOffsetsInvalid = activeChannels.length > 0 && activeChannels.every(
+    ch => Number(ch.offset) > 100 || Number(ch.offset) < -100
+  );
 
   return (
     <div className="col-sm-12" id="chan-6-div">
       <UICard title="Channel Setup">
         <table className="table" style={{ marginBottom: '0px' }}>
           <thead>
-            <tr className={getChannelRowClass(true, anyActive)} id="chan-row">
+            <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive)} id="chan-row">
               <th>Channel:</th>
               <th>Channel Coupling</th>
               <th>Channel Range</th>
@@ -48,7 +52,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
             {channelStates.map(({ id, label, active, coupling, range, offset }, i) => (
               <tr
                 key={id}
-                className={getChannelRowClass(active, anyActive)}
+                className={(Number(offset) > 100 || Number(offset) < -100) ? 'bg-red' : getChannelRowClass(active, anyActive)}
                 id={`channel-${id}-set`}
               >
                 <th>
