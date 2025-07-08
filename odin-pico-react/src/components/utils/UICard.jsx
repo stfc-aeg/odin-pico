@@ -4,7 +4,7 @@ const UICard = ({ title, children }) => {
       <div className="px-3 py-2 border-bottom" style={{ fontSize: '0.95rem', backgroundColor: '#f5f5f5' }}>
         {title}
       </div>
-      <div style={{ fontSize: '0.8rem' }}>
+      <div>
         {children}
       </div>
     </div>

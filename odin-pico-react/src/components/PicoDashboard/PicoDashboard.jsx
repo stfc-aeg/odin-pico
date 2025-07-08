@@ -1,6 +1,5 @@
 import OptionsCard from '../PicoOptions/OptionsCard';
 import GraphCard from '../PicoGraph/GraphCard';
-import React from 'react';
 
 const PicoDashboard = ({ pico_endpoint }) => {
     return (
