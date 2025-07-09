@@ -25,11 +25,11 @@ const GraphCard = ({ pico_endpoint }) => {
                     EndpointCheckbox={EndpointCheckbox}
                     canRun={canRun}
                 />
-                {/* <CurrentPHA
+                <CurrentPHA
                     pico_endpoint={pico_endpoint}
                     EndpointCheckbox={EndpointCheckbox}
                     canRun={canRun}
-                /> */}
+                />
             </UICard>
         </>
     )

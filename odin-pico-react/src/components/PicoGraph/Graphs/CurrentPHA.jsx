@@ -1,5 +1,5 @@
 import { OdinGraph } from 'odin-react';
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 
 const sourceOptions = [
   { value: 0, label: 'Channel A' },
@@ -8,97 +8,74 @@ const sourceOptions = [
   { value: 3, label: 'Channel D' },
 ];
 
-const channelIdToKey = {
-  0: 'a',
-  1: 'b',
-  2: 'c',
-  3: 'd',
+const channelColours = {
+    'Channel A': 'rgb(0, 110, 255)',
+    'Channel B': 'rgb(255, 17, 0)',
+    'Channel C': 'rgb(83, 181, 13)',
+    'Channel D': 'rgb(255, 230, 0)',
 };
-
-const rangeValueToMilliVolts = {
-  '0': 10,
-  '1': 20,
-  '2': 50,
-  '3': 100,
-  '4': 200,
-  '5': 500,
-  '6': 1000,
-  '7': 2000,
-  '8': 5000,
-  '9': 10000,
-  '10': 20000,
-};
-
-const generateXValues = (start_x, y_array, step = 1) =>
-    Array.from({ length: y_array.length }, (_, i) => start_x + i * step);
 
 const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
-    let lv_data = pico_endpoint?.data?.device?.live_view?.lv_data;
-    if (lv_data == undefined) {
-        return (
-            <div>Loading live data...</div>
-        );
+    const [isPlaying, setIsPlaying] = useState(true);
+    const [phaCounts, setPhaCounts] = useState(undefined);
+    const [deviceSettings, setDeviceSettings] = useState(undefined);
+    const [phaActiveChannels, setPhaActiveChannels] = useState(undefined);
+    const [lowerRange, setLowerRange] = useState(0);
+    const [upperRange, setUpperRange] = useState(0);
+    const [binEdges, setBinEdges] = useState([]);
+
+    const toggle_play = () => setIsPlaying(prev => !prev);
+
+    useEffect(() => {
+        if (isPlaying) {
+            const data = pico_endpoint?.data?.device?.live_view?.pha_counts;
+            const settings = pico_endpoint?.data?.device?.settings;
+            const activeChannels = pico_endpoint?.data?.device?.live_view?.pha_active_channels;
+            const low = pico_endpoint?.data?.device?.settings?.pha?.lower_range;
+            const up = pico_endpoint?.data?.device?.settings?.pha?.upper_range;
+            const edges = pico_endpoint?.data?.device?.live_view?.pha_bin_edges;
+
+            setPhaCounts(data);
+            setDeviceSettings(settings);
+            setPhaActiveChannels(activeChannels);
+            setLowerRange(low);
+            setUpperRange(up);
+            setBinEdges(edges);
+        }
+    }, [isPlaying, pico_endpoint.updateFlag]);
+
+    if (phaCounts === undefined) {
+        return <div>Loading live data...</div>;
     }
 
-    let pre_trig_samples = -Math.abs(pico_endpoint?.data?.device?.settings?.capture?.pre_trig_samples);
-    let post_trig_samples = -Math.abs(pico_endpoint?.data?.device?.settings?.capture?.post_trig_samples);
-    const lv_active_channels = pico_endpoint?.data?.device?.live_view?.lv_active_channels;
-    const device_settings = pico_endpoint?.data?.device?.settings;
+    const prepared_data = phaActiveChannels.map((channel_idx) => {
+        const y_array = phaCounts[channel_idx];
+        const x_array = binEdges;
+        const found = sourceOptions.find(opt => opt.value === channel_idx);
+        const channel_name = found ? found.label : `Channel ${channel_idx}`;
 
-    let series_names = ["Loading..."]
-
-    series_names = lv_active_channels.map(ch => {
-        const found = sourceOptions.find(opt => opt.value === ch);
-        return found ? found.label : String(ch);
-    });
-
-    const prepared_data = lv_data.slice(0, 2).map((y_array, idx) => {
-        const x_array = generateXValues(pre_trig_samples, y_array);
-        const channel_name = series_names[idx] || `Channel ${idx}`;
         const trace = {
             x: x_array,
             y: y_array,
             name: channel_name,
+            line: { color: channelColours[channel_name] },
         };
-
-        // If it is the second channel (index 1), attach to y2 axis
-        if (idx === 1) {
-            trace.yaxis = 'y2';
-        }
 
         return trace;
     });
 
-    const getChannelRange = (device_settings, lv_active_channels, index) => {
-        if (!device_settings || !lv_active_channels || lv_active_channels.length <= index) {
-            return 0;
-        }
-        const ch_id = lv_active_channels[index];
-        const ch_key = channelIdToKey[ch_id];
-        const ch_range = device_settings.channels?.[ch_key].range;
-        const yrange = rangeValueToMilliVolts[ch_range];
-
-        return [-yrange, yrange];
-    };
-
     const layout = {
+        uirevision: 'true',
+        showlegend: phaActiveChannels.length === 0 ? false : true,
         xaxis: {
-            title: { text: 'Sample Interval' },
-            range: [{pre_trig_samples}, {post_trig_samples}]
+            title: { text: 'Energy Level' },
+            range: [lowerRange, upperRange]
         },
         yaxis: {
-            title: { text: (prepared_data[0]?.name+" Voltage (mV)")},
-            range: getChannelRange(device_settings, lv_active_channels, 0)
-        },
-        yaxis2: {
-            title: { text: (prepared_data[1]?.name+" Voltage (mV)")},
-            overlaying: 'y',
-            side: 'right',
-            visible: lv_data.length === 2,
-            range: getChannelRange(device_settings, lv_active_channels, 1)
+            title: { text: "Counts" },
         },
         title: {
-            text: 'Live View of PicoScope Traces'
+            text: 'Current PHA Data'
         },
         margin: {
             t: 40,
@@ -106,45 +83,76 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             l: 50,
             r: 50
         },
-        legend: {
-            orientation: 'h',
-            y: -0.2,
-            x: 0,
-            xanchor: 'left',
-        },
     };
 
     if (prepared_data.length === 0) {
         prepared_data.push(0);
     }
 
+    const handleClearPHA = () => {
+        pico_endpoint.put(true, 'device/commands/clear_pha');
+    };
+
     const channels = ['a', 'b', 'c', 'd'];
 
     return (
         <>
-            <span>&nbsp;&nbsp;Select Live View Channels: &nbsp;</span>
+            <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></link>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <div>
+                    <span style={{ marginRight: '8px' }}>Select Channels to preview PHA:</span>
+                    {channels.map((ch) => (
+                        <React.Fragment key={ch}>
+                            <EndpointCheckbox
+                                id={`channel-${ch}-pha`}
+                                endpoint={pico_endpoint}
+                                fullpath={`device/settings/channels/${ch}/pha_active`}
+                                disabled={!canRun[ch]}
+                            />
+                            <span style={{ margin: '0 8px' }}>{ch.toUpperCase()}</span>
+                        </React.Fragment>
+                    ))}
+                </div>
 
-            {channels.map((ch) => (
-                <React.Fragment key={ch}>
-                    <EndpointCheckbox
-                        id={`channel-${ch}-liveview`}
-                        endpoint={pico_endpoint}
-                        fullpath={`device/settings/channels/${ch}/live_view`}
-                        disabled={!canRun[ch]}
-                    />
-                    &nbsp;{ch.toUpperCase()}&nbsp;&nbsp;
-                </React.Fragment>
-            ))}
+                <div style={{ marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
+                    <span>Clear PHA Data</span>
+                    <button
+                        type="button"
+                        id="clear_pha_btn"
+                        onClick={handleClearPHA}
+                        style={{
+                            marginLeft: '8px',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Clear
+                    </button>
+                </div>
+
+                <button
+                    id="p_p_button_pha"
+                    className="icon-button"
+                    onClick={toggle_play}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        marginLeft: 'auto',
+                        paddingRight: '150px',
+                    }}
+                >
+                    <span className="material-icons">{isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}</span>
+                </button>
+            </div>
 
             <OdinGraph
-                style={{ width: '100%', height: '100%' }}
-                useResizeHandler={true}
                 data={prepared_data}
                 layout={layout}
+                style={{ height: '300px' }}
             />
         </>
     )
 }
-
-
 export default CurrentPHA

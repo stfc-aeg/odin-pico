@@ -47,7 +47,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     const [preTrigSamples, setPreTrigSamples] = useState(0);
     const [postTrigSamples, setPostTrigSamples] = useState(0);
 
-    const toggle_play_lv = () => setIsPlaying(prev => !prev);
+    const toggle_play = () => setIsPlaying(prev => !prev);
 
     useEffect(() => {
         if (isPlaying) {
@@ -113,11 +113,14 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
 
     const layout = {
         uirevision: 'true',
+        showlegend: lvActiveChannels.length === 0 ? false : true,
         xaxis: {
             title: { text: 'Sample Interval' },
             range: [preTrigSamples, postTrigSamples]
         },
         yaxis: {
+            nticks: 15,
+            //tickformat: '.1f',
             title: lvActiveChannels.length >= 3
                 ? { text: "Channel Voltage (mV)" }
                 : { text: (prepared_data[0]?.name+" Voltage (mV)")},
@@ -130,7 +133,9 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             overlaying: 'y',
             side: 'right',
             visible: lvData.length === 2,
-            range: getChannelRange(deviceSettings, lvActiveChannels, 1)
+            range: getChannelRange(deviceSettings, lvActiveChannels, 1),
+            nticks: 15,
+            //tickformat: '.1f',
         },
         title: {
             text: 'Live View of PicoScope Traces'
@@ -177,7 +182,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
                 <button
                     id="p_p_button_lv"
                     className="icon-button"
-                    onClick={toggle_play_lv}
+                    onClick={toggle_play}
                     style={{
                         background: 'none',
                         border: 'none',
@@ -193,6 +198,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             <OdinGraph
                 data={prepared_data}
                 layout={layout}
+                style={{ height: '300px' }}
             />
         </>
     )
