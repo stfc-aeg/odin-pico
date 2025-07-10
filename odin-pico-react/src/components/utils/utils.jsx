@@ -1,8 +1,16 @@
 import '../PicoOptions/Options.css'
 
-export function getChannelRowClass(active, anyActive) {
-  if (!anyActive) return 'bg-red';
-  return active ? 'bg-green' : 'bg-red';
+export function getChannelRowClass(active, anyActive, channelSetup = false) {
+  let background = '';
+  if (!anyActive && channelSetup) {
+    background = 'bg-red';
+  } else {
+    background = active ? 'bg-green' : 'bg-red';
+  }
+  if (channelSetup && background === 'bg-red') {
+    return 'bg-grey';
+  }
+  return background;
 }
 
 export function toSiUnit(num) {

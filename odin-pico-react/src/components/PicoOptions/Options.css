@@ -8,6 +8,11 @@
   --bs-table-bg: transparent;
 }
 
+.bg-grey {
+  background-color: #DFDFDF !important;
+  --bs-table-bg: transparent;
+}
+
 .form {
   display: block;
 }
