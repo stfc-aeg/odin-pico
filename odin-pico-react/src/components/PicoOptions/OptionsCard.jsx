@@ -113,7 +113,14 @@ const OptionsCard = ({ pico_endpoint }) => {
             />
           </>
         )}
-        {activeTab === 'capture' && <CaptureSettings />}
+        {activeTab === 'capture' && (
+          <>
+            <CaptureSettings
+              pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
+            />
+          </>
+        )}
         {activeTab === 'gpib' && gpibEnabled && <GpibSettings />}
       </div>
     </div>
