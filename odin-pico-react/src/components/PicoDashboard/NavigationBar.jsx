@@ -12,7 +12,7 @@ const NavigationBar = ({ pico_endpoint }) => {
     statusError = true;
   } else {
     const runUserCapture = deviceResponse?.commands?.run_user_capture;
-    const captureMode = deviceResponse?.settings?.capture?.capture_mode?.value;
+    const captureMode = deviceResponse?.settings?.capture?.capture_mode;
 
     let captureType;
     if (runUserCapture === true && captureMode === false) {
@@ -58,7 +58,7 @@ const NavigationBar = ({ pico_endpoint }) => {
       <Container fluid>
         <div
           className="navbar-header d-flex align-items-center gap-3"
-          style={{ height: '50px', color: 'white' }}
+          style={{ height: '80px', color: 'white' }}
         >
           <div>
             <img

@@ -5,6 +5,8 @@ import TriggerSetup from './Setup/TriggerSetup';
 import PHASettings from './Setup/PHASettings';
 
 import CaptureSettings from './Capture/CaptureSettings';
+import CaptureControl from './Capture/CaptureControl';
+
 import GpibSettings from './GPIB/GpibSettings';
 
 import { WithEndpoint } from 'odin-react';
@@ -115,6 +117,10 @@ const OptionsCard = ({ pico_endpoint }) => {
         )}
         {activeTab === 'capture' && (
           <>
+            <CaptureControl
+              pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
+            />
             <CaptureSettings
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
