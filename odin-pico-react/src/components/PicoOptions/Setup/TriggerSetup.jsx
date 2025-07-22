@@ -29,7 +29,7 @@ const rangeCodeToMillivolts = {
   10: 20000,
 };
 
-const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
+const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, captureRunning }) => {
 
   const getTriggerClass = () => {
     const verificationPath = pico_endpoint?.data?.device?.status?.channel_trigger_verify;
@@ -66,6 +66,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
                   endpoint={pico_endpoint}
                   fullpath="device/settings/trigger/active"
                   className="form"
+                  disabled={captureRunning}
                 >
                   <option value={true}>True</option>
                   <option value={false}>False</option>
@@ -78,6 +79,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
                   id="trigger-source"
                   endpoint={pico_endpoint}
                   fullpath="device/settings/trigger/source"
+                  disabled={captureRunning}
                 >
                   {sourceOptions.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
@@ -91,6 +93,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
                   id="trigger-direction"
                   endpoint={pico_endpoint}
                   fullpath="device/settings/trigger/direction"
+                  disabled={captureRunning}
                 >
                   {directionOptions.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
@@ -107,6 +110,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
                   endpoint={pico_endpoint}
                   fullpath="device/settings/trigger/threshold"
                   type="number"
+                  disabled={captureRunning}
                 />
               </th>
 
@@ -117,6 +121,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
                   endpoint={pico_endpoint}
                   fullpath="device/settings/trigger/delay"
                   type="number"
+                  disabled={captureRunning}
                 />
               </th>
 
@@ -127,6 +132,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect }) => {
                   endpoint={pico_endpoint}
                   fullpath="device/settings/trigger/auto_trigger"
                   type="number"
+                  disabled={captureRunning}
                 />
               </th>
             </tr>

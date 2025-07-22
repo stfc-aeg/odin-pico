@@ -21,7 +21,7 @@ const rangeOptions = [
   { value: '10', label: '20 V' },
 ];
 
-const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect, EndpointCheckbox }) => {
+const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect, EndpointCheckbox, captureRunning }) => {
   const channelObj = pico_endpoint?.data?.device?.settings?.channels ?? {};
   const channelStates = Object.entries(channelObj).map(([id, data]) => ({
     id,
@@ -64,6 +64,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                       id={`channel-${id}-active`}
                       endpoint={pico_endpoint}
                       fullpath={`device/settings/channels/${id}/active`}
+                      disabled={captureRunning}
                     />
                   </div>
                 </th>
@@ -72,6 +73,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     id={`channel-${id}-coupl`}
                     endpoint={pico_endpoint}
                     fullpath={`device/settings/channels/${id}/coupling`}
+                    disabled={captureRunning}
                   >
                     {couplingOptions.map(({ value, label }) => (
                       <option key={value} value={value}>
@@ -85,6 +87,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     id={`channel-${id}-range`}
                     endpoint={pico_endpoint}
                     fullpath={`device/settings/channels/${id}/range`}
+                    disabled={captureRunning}
                   >
                     {rangeOptions.map(({ value, label }) => (
                       <option key={value} value={value}>
@@ -99,6 +102,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     endpoint={pico_endpoint}
                     fullpath={`device/settings/channels/${id}/offset`}
                     type="number"
+                    disabled={captureRunning}
                   />
                 </th>
               </tr>

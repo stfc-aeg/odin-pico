@@ -2,7 +2,7 @@ import UICard from '../../utils/UICard';
 import { getChannelRowClass, toSiUnit } from '../../utils/utils';
 import '../Options.css';
 
-const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect }) => {
+const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect, captureRunning }) => {
   const verificationPath = pico_endpoint?.data?.device?.status;
   const hasInvalid = verificationPath === undefined? false : verificationPath.pico_setup_verify === 0 ? true : false;
 
@@ -24,6 +24,7 @@ const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect 
                 endpoint={pico_endpoint}
                 fullpath="device/settings/mode/resolution"
                 type="number"
+                disabled={captureRunning}
               >
                 <option value="0">8 Bit Mode</option>
                 <option value="1">12 Bit Mode</option>
@@ -37,6 +38,7 @@ const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect 
                 endpoint={pico_endpoint}
                 fullpath="device/settings/mode/timebase"
                 type="number"
+                disabled={captureRunning}
               />
               <div>
                 <span>Sample Interval: </span>
@@ -52,6 +54,7 @@ const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect 
                 endpoint={pico_endpoint}
                 fullpath="device/settings/capture/pre_trig_samples"
                 type="number"
+                disabled={captureRunning}
               />
             </th>
 
@@ -62,6 +65,7 @@ const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect 
                 endpoint={pico_endpoint}
                 fullpath="device/settings/capture/post_trig_samples"
                 type="number"
+                disabled={captureRunning}
               />
             </th>
           </tr>

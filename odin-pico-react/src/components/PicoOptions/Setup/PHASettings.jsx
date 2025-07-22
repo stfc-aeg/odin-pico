@@ -1,6 +1,6 @@
 import UICard from '../../utils/UICard';
 
-const PHASettings = ({ pico_endpoint, EndpointInput }) => {
+const PHASettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
   
   const is_pha_verified = pico_endpoint?.data?.device?.status?.capture_settings_verify;
 
@@ -16,6 +16,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput }) => {
                 endpoint={pico_endpoint}
                 fullpath="device/settings/pha/num_bins"
                 type="number"
+                disabled={captureRunning}
               />
             </th>
             <th>
@@ -25,6 +26,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput }) => {
                 endpoint={pico_endpoint}
                 fullpath="device/settings/pha/lower_range"
                 type="number"
+                disabled={captureRunning}
               />
             </th>
             <th>
@@ -34,6 +36,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput }) => {
                 endpoint={pico_endpoint}
                 fullpath="device/settings/pha/upper_range"
                 type="number"
+                disabled={captureRunning}
               />
             </th>
           </tr>

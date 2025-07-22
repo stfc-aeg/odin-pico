@@ -29,6 +29,7 @@ const OptionsCard = ({ pico_endpoint }) => {
 
   const [gpibEnabled, setGpibEnabled] = React.useState(false);
   const channels = pico_endpoint?.data?.device?.settings?.channels;
+  const captureRunning = pico_endpoint?.data?.device?.commands?.run_user_capture;
 
   let anyChannelActive;
 
@@ -96,6 +97,7 @@ const OptionsCard = ({ pico_endpoint }) => {
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               EndpointSelect={EndpointSelect}
+              captureRunning={captureRunning}
             />
             <ChannelSetup
               anyActive={anyChannelActive}
@@ -103,15 +105,18 @@ const OptionsCard = ({ pico_endpoint }) => {
               EndpointInput={EndpointInput}
               EndpointSelect={EndpointSelect}
               EndpointCheckbox={EndpointCheckbox}
+              captureRunning={captureRunning}
             />
             <TriggerSetup
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               EndpointSelect={EndpointSelect}
+              captureRunning={captureRunning}
             />
             <PHASettings
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
+              captureRunning={captureRunning}
             />
           </>
         )}
@@ -119,11 +124,12 @@ const OptionsCard = ({ pico_endpoint }) => {
           <>
             <CaptureControl
               pico_endpoint={pico_endpoint}
-              EndpointInput={EndpointInput}
+              captureRunning={captureRunning}
             />
             <CaptureSettings
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
+              captureRunning={captureRunning}
             />
           </>
         )}

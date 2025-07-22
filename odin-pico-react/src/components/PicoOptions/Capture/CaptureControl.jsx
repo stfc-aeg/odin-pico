@@ -1,8 +1,9 @@
 import UICard from '../../utils/UICard';
 import ProgressBar from './ProgressBar';
 
-const CaptureControl = ({ pico_endpoint, EndpointInput }) => {
+const CaptureControl = ({ pico_endpoint, captureRunning }) => {
     const rowClass = 'bg-empty';
+    const progressClass = captureRunning ? 'bg-green' : 'bg-empty';
     const fileSettingsPath = pico_endpoint?.data?.device?.settings?.file ?? {};
 
     const file = fileSettingsPath?.curr_file_name;
@@ -23,6 +24,7 @@ const CaptureControl = ({ pico_endpoint, EndpointInput }) => {
                                 <button
                                     className="btn btn-success"
                                     onClick={() => handleButtonClick("device/commands/run_user_capture")}
+                                    disabled={captureRunning}
                                 >
                                     Capture
                                 </button>
@@ -47,7 +49,7 @@ const CaptureControl = ({ pico_endpoint, EndpointInput }) => {
                                 {recorded}
                             </th>
                         </tr>
-                        <tr className={rowClass}>
+                        <tr className={progressClass}>
                             <th colspan="2" className="align-middle">
                                 <ProgressBar
                                     response={pico_endpoint?.data}

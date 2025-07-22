@@ -12,8 +12,9 @@ const EndpointSwitch = WithEndpoint(({ ...props }) => (
     />
 ));
 
-const CaptureSettings = ({ pico_endpoint, EndpointInput }) => {
+const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
     const rowClass = 'bg-empty';
+    const fileClass = pico_endpoint?.data?.device?.status?.file_name_verify ? 'bg-green' : 'bg-red';
 
     const capturePath = pico_endpoint?.data?.device?.settings?.capture ?? {};
     const captureMode = capturePath?.capture_mode;
@@ -58,7 +59,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput }) => {
                                         name="captureModeSettingsRadio"
                                         value={radio.value}
                                         checked={settingsValue === radio.value}
-                                        onClick={() => handleRadioValueChange(radio.value, 'Number of Captures', 'device/settings/capture/capture_mode')}>
+                                        onClick={() => handleRadioValueChange(radio.value, 'Number of Captures', 'device/settings/capture/capture_mode')}
+                                        disabled={captureRunning}>
                                             {radio.name}
                                         </ToggleButton>
                                     ))}
@@ -70,6 +72,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput }) => {
                                     endpoint={pico_endpoint}
                                     fullpath={`device/settings/capture/${settingsPath}`}
                                     type="number"
+                                    disabled={captureRunning}
                                 />
                                 <div>
                                     <span>Recommended Max : </span>
@@ -88,19 +91,12 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput }) => {
                                         name="acquisitionNumberRadio"
                                         value={radio.value}
                                         checked={acquisitionNumber === radio.value}
-                                        onClick={() => handleRadioValueChange(radio.value, 'Single Acquisition', 'device/settings/capture/capture_repeat')}>
+                                        onClick={() => handleRadioValueChange(radio.value, 'Single Acquisition', 'device/settings/capture/capture_repeat')}
+                                        disabled={captureRunning}>
                                             {radio.name}
                                         </ToggleButton>
                                     ))}
                                 </ButtonGroup>
-                                {/* <label>Enable Repeat Acquisition</label>
-                                <div style={{ transform: 'scale(1.5)', transformOrigin: 'left center', maxWidth: '70px' }}>
-                                    <EndpointSwitch
-                                        endpoint={pico_endpoint}
-                                        fullpath='device/settings/capture/capture_repeat'
-                                        id="capture_repeat_switch"
-                                    />
-                                </div> */}
                             </th>
                             <th className="align-middle">
                                 <label>Number of Acquisitions:</label>
@@ -108,7 +104,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput }) => {
                                     endpoint={pico_endpoint}
                                     fullpath='device/settings/capture/repeat_amount'
                                     type="number"
-                                    disabled={!acquisitionEnabled}
+                                    disabled={!acquisitionEnabled || captureRunning}
                                 />
                             </th>
                             <th className="align-middle">
@@ -117,16 +113,17 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput }) => {
                                     endpoint={pico_endpoint}
                                     fullpath='device/settings/capture/capture_delay'
                                     type="number"
-                                    disabled={!acquisitionEnabled}
+                                    disabled={!acquisitionEnabled || captureRunning}
                                 />
                             </th>
                         </tr>
-                        <tr className={rowClass}>
+                        <tr className={fileClass}>
                             <th className="align-middle">
                                 <label>Folder Name:</label>
                                 <EndpointInput
                                     endpoint={pico_endpoint}
                                     fullpath='device/settings/file/folder_name'
+                                    disabled={captureRunning}
                                 />
                             </th>
                             <th className="align-middle">
@@ -134,6 +131,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput }) => {
                                 <EndpointInput
                                     endpoint={pico_endpoint}
                                     fullpath='device/settings/file/file_name'
+                                    disabled={captureRunning}
                                 />
                             </th>
                             <th className="align-middle" style={{ fontSize: '12px' }}>
