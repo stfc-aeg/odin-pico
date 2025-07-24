@@ -7,7 +7,10 @@ import PHASettings from './Setup/PHASettings';
 import CaptureSettings from './Capture/CaptureSettings';
 import CaptureControl from './Capture/CaptureControl';
 
-import GpibSettings from './GPIB/GpibSettings';
+import GpibControl from './GPIB/GpibControl';
+import GpibTecSet from './GPIB/GpibTecSet';
+import GpibTecStatus from './GPIB/GpibTecStatus';
+import GpibTempSweep from './GPIB/GpibTempSweep';
 
 import { WithEndpoint } from 'odin-react';
 
@@ -30,6 +33,7 @@ const OptionsCard = ({ pico_endpoint }) => {
   const [gpibEnabled, setGpibEnabled] = React.useState(false);
   const channels = pico_endpoint?.data?.device?.settings?.channels;
   const captureRunning = pico_endpoint?.data?.device?.commands?.run_user_capture;
+  const temperatureSweepActive = pico_endpoint?.data?.gpib?.temp_sweep?.active;
 
   let anyChannelActive;
 
@@ -133,7 +137,31 @@ const OptionsCard = ({ pico_endpoint }) => {
             />
           </>
         )}
-        {activeTab === 'gpib' && gpibEnabled && <GpibSettings />}
+        {activeTab === 'gpib' && gpibEnabled && (
+          <>
+            <GpibControl
+              pico_endpoint={pico_endpoint}
+              EndpointSelect={EndpointSelect}
+              captureRunning={captureRunning}
+            />
+            {temperatureSweepActive ? (
+              <GpibTempSweep
+                pico_endpoint={pico_endpoint}
+                EndpointInput={EndpointInput}
+                captureRunning={captureRunning}
+              />
+            ) : (
+              <GpibTecSet
+                pico_endpoint={pico_endpoint}
+                EndpointInput={EndpointInput}
+                captureRunning={captureRunning}
+              />
+            )}
+            <GpibTecStatus
+              pico_endpoint={pico_endpoint}
+            />
+          </> 
+          )}
       </div>
     </div>
   )
