@@ -54,7 +54,8 @@ var focusFlags = {
   "sweep-end": false,
   "sweep-step": false,
   "sweep-tol": false,
-  "gpib-device-select": false
+  "gpib-device-select": false,
+  "single-temp-target": false,
 };
 
 // Initialize a timers object to keep track of the timers for each field
@@ -375,15 +376,18 @@ function sync_with_adapter(){
                 document.getElementById("sweep-active").checked =
                     Boolean(response.gpib.temp_sweep.active);
             }
+            toggleTempPanels();
 
             // sweep parameters
             const sweep_params = response.gpib.temp_sweep;
+            const single_temp = response.gpib.set.temp_target;
             const map = {
                 "sweep-active": String(sweep_params.active),
                 "sweep-start":  sweep_params.t_start,
                 "sweep-end":    sweep_params.t_end,
                 "sweep-step":   sweep_params.t_step,
-                "sweep-tol":    sweep_params.tol
+                "sweep-tol":    sweep_params.tol,
+                "single-temp-target": single_temp
             };
             for (const id in map) {
                 if (!focusFlags[id]) $("#" + id).val(map[id]);
@@ -993,4 +997,10 @@ function openTab(tabID) {
         two.style.display   = "none";
         if (three) three.style.display = "block";
     }
+}
+
+function toggleTempPanels() {
+  const sweepOn = document.getElementById('sweep-active').checked;
+  document.getElementById('sweep-panel').style.display  = sweepOn ? 'block' : 'none';
+  document.getElementById('single-panel').style.display = sweepOn ? 'none'  : 'block';
 }

@@ -140,6 +140,8 @@ class PicoDevice:
             self.dev_conf.trigger.delay,
             self.dev_conf.trigger.auto_trigger_ms,
         )
+        if self.pico_status.flags.user_capture:
+            logging.debug(f"Trigger: {self.dev_conf.trigger.active}")
 
     def set_channels(self):
         """Set the channel information for each channel on the picoscope."""
@@ -243,7 +245,10 @@ class PicoDevice:
         self.dev_conf.meta_data.max_samples = ctypes.c_int32(
             self.dev_conf.meta_data.total_cap_samples
         )
-
+        if not self.file_writer.file_error and not self.pico_status.flags.user_capture:
+            self.pico_status.flags.system_state = "Collecting LV Data"
+        else:
+            self.pico_status.flags.system_state = "N capture collection"
         ps.ps5000aRunBlock(
             self.dev_conf.mode.handle,
             self.dev_conf.capture.pre_trig_samples,
@@ -269,12 +274,11 @@ class PicoDevice:
             )
 
             if time.time() - t >= 2.5:
-                self.pico_status.flags.system_state = "Waiting for Trigger"
-                t = time.time()
-                self.get_cap_count()
-
+                if self.seg_caps == 0:
+                    self.pico_status.flags.system_state = "Waiting for Trigger"
+                    t = time.time()
+                
             if (time.time() - start_time) > 10:
-                self.get_cap_count()
                 if self.seg_caps == 0:
                     logging.debug("Aborting due to waiting for over 10s for trigger")
                     self.pico_status.flags.abort_cap = True
@@ -286,12 +290,11 @@ class PicoDevice:
                 collect = False
 
             time.sleep(0.05)
+            self.get_cap_count()
             self.prev_seg_caps = self.seg_caps
 
         self.pico_status.flags.system_state = current_system_state
         self.get_cap_count()
-        if not self.file_writer.file_error and not self.pico_status.flags.user_capture:
-            self.pico_status.flags.system_state = "Collecting LV Data"
 
         if self.pico_status.flags.abort_cap:
             seg_to_indx = self.seg_caps
@@ -337,7 +340,7 @@ class PicoDevice:
         while True:
             self.elapsed_time = time.time() - start_time
             self.pico_status.flags.system_state = (
-                f"Time based collection running")
+                f"Time based collection")
             # User Aborted OR time limit reached
             if self.pico_status.flags.abort_cap or \
             (time.time() - start_time) >= total_time:
@@ -514,6 +517,7 @@ class PicoDevice:
         """Query PicoScope to check how many traces have been captured."""
         caps = ctypes.c_uint32(0)
         ps.ps5000aGetNoOfCaptures(self.dev_conf.mode.handle, ctypes.byref(caps))
+        #logging.debug(f"Got {caps}: captures")
         self.seg_caps = caps.value
         self.dev_conf.capture_run.live_cap_comp = (
             self.dev_conf.capture_run.caps_comp + caps.value

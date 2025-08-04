@@ -417,12 +417,15 @@
                                   <table class="table table-striped">
                                     <tr id="command-row">
                                       <th>
+                                        <th>
+                                          
+                                        </th>
                                         <label for="save_cap_butt">Record PicoScope Traces and PHA to File: &nbsp;</label>
-                                        <button class="btn btn-default" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Capture</button>
+                                        <button class="btn btn-success" type="button" id="save_cap_butt" value = "true" onclick="commit_true_adapter('commands/','run_user_capture')" >Capture</button>
                                       </th>
                                       <th>
                                         <label for="abort_cap_butt">Abort Current Capture: &nbsp;</label>
-                                        <button class="btn btn-default" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
+                                        <button class="btn btn-danger" type="button" id="abort_cap_butt" value = "true" onclick="commit_true_adapter('flags/','abort_cap')" >Abort</button>
                                       </th>
                                     </tr>
                                   </table>
@@ -492,6 +495,15 @@
                                           <span class="slider round"></span>
                                         </label>
                                       </th>
+                                        <th>
+                                          <label>Temperature Sweep&nbsp;</label>
+                                          <label class="switch">
+                                            <input type="checkbox" id="sweep-active"
+                                                  onclick="commit_checked_adapter(
+                                                    'sweep-active','gpib/temp_sweep/','active')">
+                                            <span class="slider round"></span>
+                                          </label>
+                                        </th>
                                       <th>
                                         <!-- device selector -->
                                         <span style="margin-left: 20px;"></span>
@@ -507,20 +519,12 @@
                               </div>
                           
                               <!-- temperature-sweep controls -->
-                              <div class="panel panel-default">
+                              <div id="sweep-panel" class="panel panel-default">
                                 <div class="panel-heading">Temperature Sweep</div>
                                 <div class="panel-body">
                                   <table id="sweep-table" class="table table-striped">
                                     <tr>
-                                      <th>
-                                        <label>Active:&nbsp;</label>
-                                        <label class="switch">
-                                          <input type="checkbox" id="sweep-active"
-                                                 onclick="commit_checked_adapter(
-                                                   'sweep-active','gpib/temp_sweep/','active')">
-                                          <span class="slider round"></span>
-                                        </label>
-                                      </th>
+
                                       <th><label for="sweep-start">Start&nbsp;°C:</label>
                                           <input id="sweep-start" type="text" class="small-text"
                                                  oninput="commit_float_adapter(
@@ -537,6 +541,28 @@
                                           <input id="sweep-tol" type="text" class="small-text"
                                                  oninput="commit_float_adapter(
                                                    'sweep-tol','gpib/temp_sweep/','tol')"/></th>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </div>
+                              <div id="single-panel" class="panel panel-default" style="display:none;">
+                                <div class="panel-heading">Single-Shot TEC Set</div>
+                                <div class="panel-body">
+                                  <table class="table table-striped">
+                                    <tr>
+                                      <th>
+                                        <label for="single-temp-target">Target&nbsp;°C:</label>
+                                        <input id="single-temp-target" type="text" class="small-text"
+                                              oninput="commit_float_adapter(
+                                                'single-temp-target','gpib/set/','temp_target')" />
+                                      </th>
+                                      <th>
+                                        <button id="single-temp-set" class="btn btn-success"
+                                                onclick="commit_true_adapter(
+                                                  'set_temp','gpib/set/','set_temp')">
+                                          Set
+                                        </button>
+                                      </th>
                                     </tr>
                                   </table>
                                 </div>

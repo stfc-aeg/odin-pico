@@ -98,9 +98,6 @@ class FileWriter:
             }
         )
 
-        # Update system state, and keep track of previous system state
-        self.pico_status.flags.system_state = "Captures Collected, Creating HDF5 File"
-
         # # Change file name depending on how many times capture has been run
         # if self.dev_conf.capture.capture_repeat:
         #     if self.capture_number == 1:

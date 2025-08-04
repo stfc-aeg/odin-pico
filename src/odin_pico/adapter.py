@@ -48,6 +48,8 @@ class PicoAdapter(ApiAdapter):
 
         content_type = "application/json"
 
+        if content_type != "application/json":
+            logging.debug(f"Type: {content_type}, Status: {status_code}")
         return ApiAdapterResponse(
             response, content_type=content_type, status_code=status_code
         )

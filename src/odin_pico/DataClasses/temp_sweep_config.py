@@ -14,3 +14,6 @@ class TempSweepConfig:
     max_wait_time: float = 300.0          # Maximum wait time in seconds
     min_stability_readings: int = 5       # Minimum readings regardless of time
     max_stability_readings: int = 100     # Lenght of reading lsit
+
+    # single shot temp target
+    temp_target: float = 0.0

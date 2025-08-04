@@ -92,14 +92,8 @@ class BufferManager:
             + self.dev_conf.capture.post_trig_samples)
 
         for i in range(len(self.active_channels)):
+            #logging.debug(f"Creating array for channel for {i}")
             self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
-
-        # if self.pha_counts[chan] is None:   # first histogram for this channel
-        #     # Make our own copy so later reuse of self.pha_arrays won’t overwrite it
-        #     self.pha_counts[chan] = new_counts.copy()
-        # else:
-        #     # Fast, in-place update; counts are already int so += is safe
-        #     self.pha_counts[chan] += new_counts
 
     def accumulate_pha(self, chan, counts):
         """Add the new PHA data to the previous data, if there is any data."""
