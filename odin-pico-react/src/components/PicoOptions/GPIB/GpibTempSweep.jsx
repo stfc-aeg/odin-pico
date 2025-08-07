@@ -1,7 +1,6 @@
 import UICard from '../../utils/UICard';
 
 const GpibTempSweep = ({ pico_endpoint, EndpointInput, captureRunning }) => {
-    const tempSweep = pico_endpoint?.data?.gpib?.temp_sweep;
     return (
         <UICard title="Temperature Sweep">
             <table className="table mb-0">
@@ -39,7 +38,7 @@ const GpibTempSweep = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                         </th>
 
                         <th>
-                            Tol °C:
+                            Tolerance °C:
                             <EndpointInput
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/temp_sweep/tol"

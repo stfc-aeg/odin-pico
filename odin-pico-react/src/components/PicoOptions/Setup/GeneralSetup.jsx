@@ -1,8 +1,10 @@
 import UICard from '../../utils/UICard';
 import { getChannelRowClass, toSiUnit } from '../../utils/utils';
 import '../Options.css';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import ToggleButton from 'react-bootstrap/ToggleButton';
 
-const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointRadioGroup, captureRunning }) => {
+const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, captureRunning }) => {
   const verificationPath = pico_endpoint?.data?.device?.status;
   const hasInvalid = verificationPath === undefined? false : verificationPath.pico_setup_verify === 0 ? true : false;
 
@@ -19,16 +21,25 @@ const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointRadioGr
           <tr className={rowClass} id="general-setup-row">
             <th>
               <label htmlFor="bit-mode-dropdown">Resolution</label>
-              <EndpointRadioGroup
-                endpoint={pico_endpoint}
-                fullpath="device/settings/mode/resolution"
-                disabled={captureRunning}
-                name="bit-mode"
-                options={[
-                  { value: 0, label: '8 Bit Mode' },
-                  { value: 1, label: '12 Bit Mode' },
-                ]}
-              />
+              <ButtonGroup size="sm" className="mb-2">
+                {[
+                  { name: '8 Bit', value: 0 },
+                  { name: '12 Bit', value: 1 }
+                ].map((radio, idx) => (
+                  <ToggleButton
+                    key={idx}
+                    type="radio"
+                    variant="outline-primary"
+                    name="bit-mode"
+                    value={radio.value.toString()}
+                    checked={pico_endpoint?.data?.device?.settings?.mode?.resolution === radio.value}
+                    onClick={() => pico_endpoint.put(radio.value, 'device/settings/mode/resolution')}
+                    disabled={captureRunning}
+                  >
+                    {radio.name}
+                  </ToggleButton>
+                ))}
+              </ButtonGroup>
             </th>
 
             <th>

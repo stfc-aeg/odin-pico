@@ -20,7 +20,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
               />
             </th>
             <th>
-              <label htmlFor="lower_range">Lower range of ADC_Counts:</label>
+              <label htmlFor="lower_range">Lower range:</label>
               <EndpointInput
                 id="lower_range"
                 endpoint={pico_endpoint}
@@ -30,7 +30,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
               />
             </th>
             <th>
-              <label htmlFor="upper_range">Upper range of ADC_Counts:</label>
+              <label htmlFor="upper_range">Upper range:</label>
               <EndpointInput
                 id="upper_range"
                 endpoint={pico_endpoint}

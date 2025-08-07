@@ -1,6 +1,8 @@
 import UICard from '../../utils/UICard';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import ToggleButton from 'react-bootstrap/ToggleButton';
 
-const CaptureSettings = ({ pico_endpoint, EndpointInput, EndpointRadioGroup, captureRunning }) => {
+const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
     const fileClass = pico_endpoint?.data?.device?.status?.file_name_verify ? 'bg-green' : 'bg-red';
 
     const capturePath = pico_endpoint?.data?.device?.settings?.capture ?? {};
@@ -21,16 +23,25 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, EndpointRadioGroup, cap
                     <tbody>
                         <tr>
                             <th className="align-middle">
-                                <EndpointRadioGroup
-                                    endpoint={pico_endpoint}
-                                    fullpath="device/settings/capture/capture_mode"
-                                    name="captureModeSettingsRadio"
-                                    options={[
-                                        { label: 'Number of Captures', value: false },
-                                        { label: 'Capture Time', value: true },
-                                    ]}
-                                    disabled={captureRunning}
-                                />
+                                <ButtonGroup size="sm" className="mb-2">
+                                    {[
+                                        { name: 'Number of Captures', value: false },
+                                        { name: 'Capture Time', value: true }
+                                    ].map((radio, idx) => (
+                                        <ToggleButton
+                                            key={idx}
+                                            type="radio"
+                                            variant="outline-primary"
+                                            name="captureModeSettingsRadio"
+                                            value={radio.value.toString()}
+                                            checked={pico_endpoint?.data?.device?.settings?.capture?.capture_mode === radio.value}
+                                            onClick={() => pico_endpoint.put(radio.value, 'device/settings/capture/capture_mode')}
+                                            disabled={captureRunning}
+                                        >
+                                            {radio.name}
+                                        </ToggleButton>
+                                    ))}
+                                </ButtonGroup>
                             </th>
                             <th colSpan="2" className="align-middle">
                                 <label>{settingsTitle}</label>
@@ -48,16 +59,25 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, EndpointRadioGroup, cap
                         </tr>
                         <tr>
                             <th className="align-middle">
-                                <EndpointRadioGroup
-                                    endpoint={pico_endpoint}
-                                    fullpath="device/settings/capture/capture_repeat"
-                                    name="acquisitionNumberRadio"
-                                    options={[
-                                        { label: 'Single Acquisition', value: false },
-                                        { label: 'Repeated Acquisition', value: true },
-                                    ]}
-                                    disabled={captureRunning}
-                                />
+                                <ButtonGroup size="sm" className="mb-2">
+                                    {[
+                                        { name: 'Single Acquisition', value: false },
+                                        { name: 'Repeated Acquisition', value: true }
+                                    ].map((radio, idx) => (
+                                        <ToggleButton
+                                            key={idx}
+                                            type="radio"
+                                            variant="outline-primary"
+                                            name="acquisitionNumberRadio"
+                                            value={radio.value.toString()}
+                                            checked={pico_endpoint?.data?.device?.settings?.capture?.capture_repeat === radio.value}
+                                            onClick={() => pico_endpoint.put(radio.value, 'device/settings/capture/capture_repeat')}
+                                            disabled={captureRunning}
+                                        >
+                                            {radio.name}
+                                        </ToggleButton>
+                                    ))}
+                                </ButtonGroup>
                             </th>
                             <th className="align-middle">
                                 {acquisitionEnabled ? (
