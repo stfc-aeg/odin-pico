@@ -62,7 +62,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointTo
           <tbody>
             <tr className={getTriggerClass()}>
               <th className="align-middle">
-                <div>Enable:</div>
+                <div>Enable</div>
                 <label htmlFor="trigger-enable">
                   <EndpointToggleSwitch
                     endpoint={pico_endpoint}
@@ -73,7 +73,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointTo
               </th>
 
               <th>
-                <label htmlFor="trigger-source">Source:</label>
+                <label htmlFor="trigger-source">Source</label>
                 <EndpointSelect
                   id="trigger-source"
                   endpoint={pico_endpoint}
@@ -87,7 +87,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointTo
               </th>
 
               <th>
-                <label htmlFor="trigger-direction">Signal Direction:</label>
+                <label htmlFor="trigger-direction">Signal Direction</label>
                 <EndpointSelect
                   id="trigger-direction"
                   endpoint={pico_endpoint}
@@ -103,7 +103,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointTo
 
             <tr className={getTriggerClass()}>
               <th>
-                <label htmlFor="trigger-threshold">Threshold (mV):</label>
+                <label htmlFor="trigger-threshold">Threshold (mV)</label>
                 <EndpointInput
                   id="trigger-threshold"
                   endpoint={pico_endpoint}
@@ -114,7 +114,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointTo
               </th>
 
               <th>
-                <label htmlFor="trigger-delay">Delay (ms):</label>
+                <label htmlFor="trigger-delay">Delay (ms)</label>
                 <EndpointInput
                   id="trigger-delay"
                   endpoint={pico_endpoint}
@@ -125,7 +125,7 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointTo
               </th>
 
               <th>
-                <label htmlFor="trigger-auto">Trigger After (ms):</label>
+                <label htmlFor="trigger-auto">Trigger After (ms)</label>
                 <EndpointInput
                   id="trigger-auto"
                   endpoint={pico_endpoint}

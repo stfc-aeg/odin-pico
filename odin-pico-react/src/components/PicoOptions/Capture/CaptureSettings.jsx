@@ -12,7 +12,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
     const fileSettingsPath = pico_endpoint?.data?.device?.settings?.file ?? {};
     const filename = fileSettingsPath?.file_path + fileSettingsPath?.folder_name + fileSettingsPath?.file_name;
 
-    const settingsTitle = captureMode ? "Capture Time (Seconds):" : "Number of Captures:";
+    const settingsTitle = captureMode ? "Capture Time (Seconds)" : "Number of Captures";
     const settingsPath = captureMode ? "capture_time" : "n_captures";
     const recMax = captureMode ? "max_time" : "max_captures";
 
@@ -51,7 +51,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                     type="number"
                                     disabled={captureRunning}
                                 />
-                                <div>
+                                <div style={{ fontWeight: 'normal' }}>
                                     <span>Recommended Max : </span>
                                     <span>{capturePath?.[recMax]}</span>
                                 </div>
@@ -82,7 +82,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                             <th className="align-middle">
                                 {acquisitionEnabled ? (
                                     <>
-                                        <label>Number of Acquisitions:</label>
+                                        <label>Number of Acquisitions</label>
                                         <EndpointInput
                                             endpoint={pico_endpoint}
                                             fullpath='device/settings/capture/repeat_amount'
@@ -95,7 +95,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                             <th className="align-middle">
                                 {acquisitionEnabled ? (
                                     <>
-                                        <label>Delay Time (Seconds):</label>
+                                        <label>Delay Time (Seconds)</label>
                                         <EndpointInput
                                             endpoint={pico_endpoint}
                                             fullpath='device/settings/capture/capture_delay'
@@ -108,7 +108,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                         </tr>
                         <tr className={fileClass}>
                             <th className="align-middle">
-                                <label>Folder Name:</label>
+                                <label>Folder Name</label>
                                 <EndpointInput
                                     endpoint={pico_endpoint}
                                     fullpath='device/settings/file/folder_name'
@@ -116,7 +116,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                 />
                             </th>
                             <th className="align-middle">
-                                <label>File Name:</label>
+                                <label>File Name</label>
                                 <EndpointInput
                                     endpoint={pico_endpoint}
                                     fullpath='device/settings/file/file_name'

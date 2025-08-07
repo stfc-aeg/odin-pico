@@ -23,7 +23,7 @@ const GpibControl = ({ pico_endpoint, EndpointSelect, EndpointToggleSwitch, capt
                 <tbody>
                     <tr>
                         <th className="align-middle">
-                            <div>Enable: </div>
+                            <div>Enable </div>
                             <EndpointToggleSwitch
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/gpib_control"
@@ -32,7 +32,7 @@ const GpibControl = ({ pico_endpoint, EndpointSelect, EndpointToggleSwitch, capt
                         </th>
 
                         <th className="align-middle">
-                            <div>Output: </div>
+                            <div>Output </div>
                             <EndpointToggleSwitch
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/output_state"
@@ -59,7 +59,7 @@ const GpibControl = ({ pico_endpoint, EndpointSelect, EndpointToggleSwitch, capt
                         </th>
 
                         <th>
-                            Device:
+                            Device
                             <EndpointSelect
                                 id="bit-mode-dropdown"
                                 endpoint={pico_endpoint}

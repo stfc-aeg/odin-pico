@@ -41,7 +41,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
         <table className="table" style={{ marginBottom: '0px' }}>
           <thead>
             <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
-              <th>Channel:</th>
+              <th>Enable</th>
               <th>Channel Coupling</th>
               <th>Channel Range</th>
               <th>Offset (%)</th>
