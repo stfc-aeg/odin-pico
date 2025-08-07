@@ -29,9 +29,11 @@ const rangeCodeToMillivolts = {
   10: 20000,
 };
 
-const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, captureRunning }) => {
+const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointToggleSwitch, captureRunning }) => {
 
   const getTriggerClass = () => {
+    const triggerActive = pico_endpoint?.data?.device?.settings?.trigger?.active;
+    if (!triggerActive) return 'bg-grey';
     const verificationPath = pico_endpoint?.data?.device?.status?.channel_trigger_verify;
     const isValid = verificationPath === undefined? false : verificationPath === 0 ? true : false;
 
@@ -59,18 +61,15 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, captureRun
         <table className="table" style={{ marginBottom: 0 }}>
           <tbody>
             <tr className={getTriggerClass()}>
-              <th>
-                <label htmlFor="trigger-enable">Enable:</label>
-                <EndpointSelect
-                  id="trigger-enable"
-                  endpoint={pico_endpoint}
-                  fullpath="device/settings/trigger/active"
-                  className="form"
-                  disabled={captureRunning}
-                >
-                  <option value={true}>True</option>
-                  <option value={false}>False</option>
-                </EndpointSelect>
+              <th className="align-middle">
+                <div>Enable:</div>
+                <label htmlFor="trigger-enable">
+                  <EndpointToggleSwitch
+                    endpoint={pico_endpoint}
+                    fullpath="device/settings/trigger/active"
+                    disabled={captureRunning}
+                  />
+                </label>
               </th>
 
               <th>

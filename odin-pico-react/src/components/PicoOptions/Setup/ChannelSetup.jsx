@@ -1,4 +1,3 @@
-import React from 'react';
 import UICard from '../../utils/UICard';
 import { getChannelRowClass } from '../../utils/utils';
 
@@ -21,7 +20,7 @@ const rangeOptions = [
   { value: '10', label: '20 V' },
 ];
 
-const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect, EndpointCheckbox, captureRunning }) => {
+const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect, EndpointToggleSwitch, captureRunning }) => {
   const channelObj = pico_endpoint?.data?.device?.settings?.channels ?? {};
   const channelStates = Object.entries(channelObj).map(([id, data]) => ({
     id,
@@ -55,12 +54,12 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                 className={(Number(offset) > 100 || Number(offset) < -100) ? 'bg-red' : getChannelRowClass(active, anyActive, true)}
                 id={`channel-${id}-set`}
               >
-                <th>
-                  <div>
+                <th className="align-middle">
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
                     <label htmlFor={`channel-${id}-active`}>
                       {label}&nbsp;&nbsp;&nbsp;&nbsp;
                     </label>
-                    <EndpointCheckbox
+                    <EndpointToggleSwitch
                       id={`channel-${id}-active`}
                       endpoint={pico_endpoint}
                       fullpath={`device/settings/channels/${id}/active`}

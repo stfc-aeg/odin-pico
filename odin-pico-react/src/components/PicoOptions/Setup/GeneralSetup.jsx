@@ -2,7 +2,7 @@ import UICard from '../../utils/UICard';
 import { getChannelRowClass, toSiUnit } from '../../utils/utils';
 import '../Options.css';
 
-const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect, captureRunning }) => {
+const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointRadioGroup, captureRunning }) => {
   const verificationPath = pico_endpoint?.data?.device?.status;
   const hasInvalid = verificationPath === undefined? false : verificationPath.pico_setup_verify === 0 ? true : false;
 
@@ -19,16 +19,16 @@ const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, EndpointSelect,
           <tr className={rowClass} id="general-setup-row">
             <th>
               <label htmlFor="bit-mode-dropdown">Resolution</label>
-              <EndpointSelect
-                id="bit-mode-dropdown"
+              <EndpointRadioGroup
                 endpoint={pico_endpoint}
                 fullpath="device/settings/mode/resolution"
-                type="number"
                 disabled={captureRunning}
-              >
-                <option value="0">8 Bit Mode</option>
-                <option value="1">12 Bit Mode</option>
-              </EndpointSelect>
+                name="bit-mode"
+                options={[
+                  { value: 0, label: '8 Bit Mode' },
+                  { value: 1, label: '12 Bit Mode' },
+                ]}
+              />
             </th>
 
             <th>

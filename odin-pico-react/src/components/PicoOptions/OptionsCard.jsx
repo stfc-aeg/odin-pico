@@ -4,8 +4,9 @@ import GeneralSetup from './Setup/GeneralSetup';
 import TriggerSetup from './Setup/TriggerSetup';
 import PHASettings from './Setup/PHASettings';
 
+import CaptureButtons from './Capture/CaptureButtons';
 import CaptureSettings from './Capture/CaptureSettings';
-import CaptureControl from './Capture/CaptureControl';
+import CaptureStatus from './Capture/CaptureStatus';
 
 import GpibControl from './GPIB/GpibControl';
 import GpibTecSet from './GPIB/GpibTecSet';
@@ -24,9 +25,47 @@ const EndpointSelect = WithEndpoint((props) => (
   </select>
 ));
 
-const EndpointCheckbox = WithEndpoint((props) => (
-  <input type="checkbox" {...props} />
-));
+const RadioGroup = ({ value, onChange, options = [], name, disabled, className = '', ...props }) => (
+  <div className={`radio-group ${className}`} {...props}>
+    {options.map(({ label, value: optionValue }) => (
+      <label key={optionValue} style={{ marginRight: '1rem' }}>
+        <input
+          type="radio"
+          name={name}
+          value={optionValue}
+          checked={String(value) === String(optionValue)}
+          onChange={(e) => {
+            const raw = e.target.value;
+            let parsed;
+
+            if (raw === 'true') {
+              parsed = true;
+            } else if (raw === 'false') {
+              parsed = false;
+            } else if (!isNaN(raw)) {
+              parsed = Number(raw);
+            } else {
+              parsed = raw;
+            }
+
+            onChange({ target: { value: parsed } });
+          }}
+          disabled={disabled}
+        />
+        {' '}{label}
+      </label>
+    ))}
+  </div>
+);
+const EndpointRadioGroup = WithEndpoint(RadioGroup);
+
+const ToggleSwitch = ({ className = '', ...props }) => (
+  <label className={`switch ${className}`}>
+    <input type="checkbox" {...props} />
+    <span className="slider round"></span>
+  </label>
+);
+const EndpointToggleSwitch = WithEndpoint(ToggleSwitch);
 
 const OptionsCard = ({ pico_endpoint }) => {
 
@@ -100,7 +139,7 @@ const OptionsCard = ({ pico_endpoint }) => {
               anyActive={anyChannelActive}
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
-              EndpointSelect={EndpointSelect}
+              EndpointRadioGroup={EndpointRadioGroup}
               captureRunning={captureRunning}
             />
             <ChannelSetup
@@ -108,13 +147,14 @@ const OptionsCard = ({ pico_endpoint }) => {
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               EndpointSelect={EndpointSelect}
-              EndpointCheckbox={EndpointCheckbox}
+              EndpointToggleSwitch={EndpointToggleSwitch}
               captureRunning={captureRunning}
             />
             <TriggerSetup
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               EndpointSelect={EndpointSelect}
+              EndpointToggleSwitch={EndpointToggleSwitch}
               captureRunning={captureRunning}
             />
             <PHASettings
@@ -126,13 +166,18 @@ const OptionsCard = ({ pico_endpoint }) => {
         )}
         {activeTab === 'capture' && (
           <>
-            <CaptureControl
+            <CaptureButtons
+              pico_endpoint={pico_endpoint}
+              captureRunning={captureRunning}
+            />
+            <CaptureStatus
               pico_endpoint={pico_endpoint}
               captureRunning={captureRunning}
             />
             <CaptureSettings
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
+              EndpointRadioGroup={EndpointRadioGroup}
               captureRunning={captureRunning}
             />
           </>
@@ -142,6 +187,8 @@ const OptionsCard = ({ pico_endpoint }) => {
             <GpibControl
               pico_endpoint={pico_endpoint}
               EndpointSelect={EndpointSelect}
+              EndpointToggleSwitch={EndpointToggleSwitch}
+              EndpointRadioGroup={EndpointRadioGroup}
               captureRunning={captureRunning}
             />
             {temperatureSweepActive ? (
