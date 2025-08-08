@@ -5,29 +5,29 @@ import logging
 from collections import deque
 from typing import List
 import numpy as np
-from odin_pico.DataClasses.device_config import DeviceConfig
-from odin_pico.pico_util import PicoUtil
+from odin_pico.DataClasses.pico_config import DeviceConfig
+from odin_pico.Utilities.pico_util import PicoUtil
 import psutil
 import math
 
 class BufferManager:
     """Class which manages the buffers that are filled with data by the PicoScope."""
 
-    def __init__(self, channels=[], dev_conf=DeviceConfig()):
+    def __init__(self, dev_conf=DeviceConfig()):
         """Initialise the BufferManager Class."""
         self.dev_conf = dev_conf
-        self.channels = channels
-        self.active_channels = []
         self.util = PicoUtil()
+        self.channels = [
+            getattr(self.dev_conf, f"channel_{name}")
+            for name in self.dev_conf.channel_names
+        ]
 
+        self.active_channels = []
         self.overflow = None
         self.np_channel_arrays = []
-        # self.pha_arrays = []
         self.trigger_times = []
         self.capture_blocks: List[List[np.ndarray]] = []
         self.trigger_blocks:  List[np.ndarray]   = []
-
-        ### Add to self.options
         self.trigger_intervals = deque(maxlen=500)
 
         self.lv_channel_arrays = []
@@ -35,7 +35,6 @@ class BufferManager:
 
         self.pha_channels_active = [False] * 4
         self.pha_active_channels = []
-        # self.current_pha_channels = []
         self.bin_edges = []
         self.pha_counts = np.zeros((len(self.dev_conf.channel_names), 
                                     self.dev_conf.pha.num_bins), dtype=np.int64)
@@ -141,7 +140,7 @@ class BufferManager:
 
         for c, b in zip(self.active_channels, self.np_channel_arrays):
             # Find current data, along with channel range and offset
-            values = PicoUtil.adc2mV(
+            values = self.util.adc2mV(
                 b[(self.dev_conf.capture_run.caps_in_run - 1)],
                 self.channels[c].range,
                 self.dev_conf.meta_data.max_adc,

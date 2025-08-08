@@ -1,10 +1,19 @@
-"""Store settings for PicoScope setting verification."""
+"""Store settings to represent various status parameters """
 
 import ctypes
 from dataclasses import dataclass, field
 
-from odin_pico.DataClasses.device_flags import DeviceFlags
-
+@dataclass
+class DeviceFlags:
+    verify_all: bool = False
+    res_changed: bool = False
+    range_changed: bool = False
+    user_capture: bool = False
+    pico_mem_exceeded: bool = False
+    abort_cap: bool = False
+    temp_set: bool = False
+    temp_reached: bool = False
+    system_state: str = "Waiting for connection"
 
 @dataclass
 class DeviceStatus:
@@ -21,5 +30,4 @@ class DeviceStatus:
     channel_trigger_complete: int = -1
     capture_settings_verify: int = -1
     capture_settings_complete: int = -1
-
     flags: DeviceFlags = field(default_factory=DeviceFlags)

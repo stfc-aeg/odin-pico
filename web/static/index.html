@@ -559,7 +559,9 @@
                                       <th>
                                         <button id="single-temp-set" class="btn btn-success"
                                                 onclick="commit_true_adapter(
-                                                  'set_temp','gpib/set/','set_temp')">
+                                                  'gpib/set/set_temp',  // full tree-path
+                                                  'set_temp'            // the parameter name
+                                                )">
                                           Set
                                         </button>
                                       </th>

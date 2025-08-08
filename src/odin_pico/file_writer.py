@@ -10,9 +10,9 @@ import h5py
 import numpy as np
 
 from odin_pico.buffer_manager import BufferManager
-from odin_pico.DataClasses.device_config import DeviceConfig
-from odin_pico.DataClasses.device_status import DeviceStatus
-from odin_pico.pico_util import PicoUtil
+from odin_pico.DataClasses.pico_config import DeviceConfig
+from odin_pico.DataClasses.pico_status import DeviceStatus
+from odin_pico.Utilities.pico_util import PicoUtil
 
 
 class FileWriter:
@@ -97,22 +97,7 @@ class FileWriter:
                 "timebase": self.dev_conf.mode.timebase,
             }
         )
-
-        # # Change file name depending on how many times capture has been run
-        # if self.dev_conf.capture.capture_repeat:
-        #     if self.capture_number == 1:
-        #         name = self.dev_conf.file.file_name[:-5] # strip .hdf5
-        #     else:
-        #         name = self.dev_conf.file.file_name[:-7] # strip _n.hdf5
-        #     self.dev_conf.file.file_name = f"{name}_{self.capture_number}.hdf5"
-
-        # # Take note of file path so it can be written to
-        # self.dev_conf.file.curr_file_name = (
-        #     self.dev_conf.file.file_path +
-        #     self.dev_conf.file.folder_name +
-        #     self.dev_conf.file.file_name
-        # )
-        # fname = self.dev_conf.file.curr_file_name
+        
         fname = (
                 self.dev_conf.file.file_path
                 + self.dev_conf.file.folder_name
@@ -203,10 +188,4 @@ class FileWriter:
             self.dev_conf.file.last_write_success = False
             return
 
-        # # 4)  ------ reset capture-repeat suffix if finished ---------
-        # if self.dev_conf.capture.capture_repeat and \
-        #    self.capture_number == self.dev_conf.capture.repeat_amount:
-        #     self.dev_conf.file.file_name = self.dev_conf.file.file_name[:-7]
-
-        # self.capture_number += 1
         self.dev_conf.file.last_write_success = True

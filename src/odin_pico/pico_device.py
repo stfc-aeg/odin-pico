@@ -10,9 +10,9 @@ from picosdk.functions import mV2adc
 from picosdk.ps5000a import ps5000a as ps
 
 from odin_pico.buffer_manager import BufferManager
-from odin_pico.DataClasses.device_config import DeviceConfig
-from odin_pico.DataClasses.device_status import DeviceStatus
-from odin_pico.pico_util import PicoUtil
+from odin_pico.DataClasses.pico_config import DeviceConfig
+from odin_pico.DataClasses.pico_status import DeviceStatus
+from odin_pico.Utilities.pico_util import PicoUtil
 from odin_pico.PS5000A_Trigger_Info import Trigger_Info
 from odin_pico.file_writer import FileWriter
 from odin_pico.analysis import PicoAnalysis
@@ -23,12 +23,8 @@ class PicoDevice:
     """Class that communicates with the scope to collect data."""
 
     def __init__(
-        self,
-        max_samples,
-        dev_conf=DeviceConfig(),
-        pico_status=DeviceStatus(),
-        buffer_manager=BufferManager(),
-        analysis=PicoAnalysis(),
+        self, max_samples, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
+        buffer_manager=BufferManager(), analysis=PicoAnalysis(),
         file_writer=FileWriter()
     ):
         """Initialise the PicoDevice class."""
@@ -38,20 +34,19 @@ class PicoDevice:
         self.buffer_manager = buffer_manager
         self.file_writer = file_writer
         self.analysis = analysis
-        self.cap_time = 30
+        self.max_samples = max_samples
+        
+        self.channels = [
+            getattr(self.dev_conf, f"channel_{name}")
+            for name in self.dev_conf.channel_names
+        ]
+
+        self._tb_current_block = None
         self.seg_caps = 0
         self.prev_seg_caps = 0
         self.elapsed_time = 0.0
-        self.channels = [
-            self.dev_conf.channel_a,
-            self.dev_conf.channel_b,
-            self.dev_conf.channel_c,
-            self.dev_conf.channel_d,
-        ]
-        self.max_samples = max_samples
         self.rec_caps = 0
         self.rec_time = 0
-        self._tb_current_block = None
 
     def open_unit(self):
         """Initalise connection with the picoscope, and settings the status values."""

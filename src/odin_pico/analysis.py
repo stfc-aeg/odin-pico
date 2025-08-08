@@ -4,8 +4,8 @@ import logging
 import numpy as np
 
 from odin_pico.buffer_manager import BufferManager
-from odin_pico.DataClasses.device_config import DeviceConfig
-from odin_pico.DataClasses.device_status import DeviceStatus
+from odin_pico.DataClasses.pico_config import DeviceConfig
+from odin_pico.DataClasses.pico_status import DeviceStatus
 
 
 class PicoAnalysis:
@@ -25,16 +25,14 @@ class PicoAnalysis:
         self.dev_conf = dev_conf
         self.buffer_manager = buffer_manager
         self.pico_status = pico_status
-        self.bin_width = 250
-        self.clear_pha = False
 
     def pha_one_peak(self):
         """Analysis function - generates peak height distributions."""
 
         # Check if user has requested PHA counts to be cleared
-        if self.clear_pha:
+        if self.dev_conf.pha.clear_pha:
             self.buffer_manager.reset_pha()
-            self.clear_pha = False
+            self.dev_conf.pha.clear_pha = False
 
         # Select channels based on capture mode
         channels = (self.buffer_manager.active_channels
