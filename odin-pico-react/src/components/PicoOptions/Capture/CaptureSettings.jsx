@@ -23,10 +23,11 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                     <tbody>
                         <tr>
                             <th className="align-middle">
+                                Capture mode: &nbsp;
                                 <ButtonGroup size="sm" className="mb-2">
                                     {[
-                                        { name: 'Number of Captures', value: false },
-                                        { name: 'Capture Time', value: true }
+                                        { name: 'Number', value: false },
+                                        { name: 'Time', value: true }
                                     ].map((radio, idx) => (
                                         <ToggleButton
                                             key={idx}
@@ -37,6 +38,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                             checked={pico_endpoint?.data?.device?.settings?.capture?.capture_mode === radio.value}
                                             onClick={() => pico_endpoint.put(radio.value, 'device/settings/capture/capture_mode')}
                                             disabled={captureRunning}
+                                            className={pico_endpoint?.data?.device?.settings?.capture?.capture_mode !== radio.value ? 'bg-white' : ''}
                                         >
                                             {radio.name}
                                         </ToggleButton>
@@ -59,10 +61,11 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                         </tr>
                         <tr>
                             <th className="align-middle">
+                                Acquisition: &nbsp;&nbsp;
                                 <ButtonGroup size="sm" className="mb-2">
                                     {[
-                                        { name: 'Single Acquisition', value: false },
-                                        { name: 'Repeated Acquisition', value: true }
+                                        { name: 'Single', value: false },
+                                        { name: 'Repeated', value: true }
                                     ].map((radio, idx) => (
                                         <ToggleButton
                                             key={idx}
@@ -73,6 +76,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                             checked={pico_endpoint?.data?.device?.settings?.capture?.capture_repeat === radio.value}
                                             onClick={() => pico_endpoint.put(radio.value, 'device/settings/capture/capture_repeat')}
                                             disabled={captureRunning}
+                                            className={pico_endpoint?.data?.device?.settings?.capture?.capture_repeat !== radio.value ? 'bg-white' : ''}
                                         >
                                             {radio.name}
                                         </ToggleButton>
@@ -80,30 +84,22 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                 </ButtonGroup>
                             </th>
                             <th className="align-middle">
-                                {acquisitionEnabled ? (
-                                    <>
-                                        <label>Number of Acquisitions</label>
-                                        <EndpointInput
-                                            endpoint={pico_endpoint}
-                                            fullpath='device/settings/capture/repeat_amount'
-                                            type="number"
-                                            disabled={!acquisitionEnabled || captureRunning}
-                                        />
-                                    </>
-                                ) : null}
+                                <label>Number of Acquisitions</label>
+                                <EndpointInput
+                                    endpoint={pico_endpoint}
+                                    fullpath='device/settings/capture/repeat_amount'
+                                    type="number"
+                                    disabled={!acquisitionEnabled || captureRunning}
+                                />
                             </th>
                             <th className="align-middle">
-                                {acquisitionEnabled ? (
-                                    <>
-                                        <label>Delay Time (Seconds)</label>
-                                        <EndpointInput
-                                            endpoint={pico_endpoint}
-                                            fullpath='device/settings/capture/capture_delay'
-                                            type="number"
-                                            disabled={!acquisitionEnabled || captureRunning}
-                                        />
-                                    </>
-                                ) : null}
+                                <label>Delay Time (Seconds)</label>
+                                <EndpointInput
+                                    endpoint={pico_endpoint}
+                                    fullpath='device/settings/capture/capture_delay'
+                                    type="number"
+                                    disabled={!acquisitionEnabled || captureRunning}
+                                />
                             </th>
                         </tr>
                         <tr className={fileClass}>

@@ -16,7 +16,7 @@ const CaptureStatus = ({ pico_endpoint, captureRunning }) => {
                     <tbody>
                         <tr>
                             <th className="align-middle">
-                                File:<br/>
+                                Filename:<br/>
                                 {file}
                             </th>
                             <th className="align-middle">
@@ -25,10 +25,10 @@ const CaptureStatus = ({ pico_endpoint, captureRunning }) => {
                             </th>
                         </tr>
                         <tr>
-                            <label>
+                            <th>
                                 System State:<br/>
                                 {systemState}
-                            </label>
+                            </th>
                         </tr>
                         <tr className={progressClass}>
                             <th colSpan="2" className="align-middle">

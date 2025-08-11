@@ -35,6 +35,7 @@ const GeneralSetup = ({ pico_endpoint, anyActive, EndpointInput, captureRunning 
                     checked={pico_endpoint?.data?.device?.settings?.mode?.resolution === radio.value}
                     onClick={() => pico_endpoint.put(radio.value, 'device/settings/mode/resolution')}
                     disabled={captureRunning}
+                    className={pico_endpoint?.data?.device?.settings?.mode?.resolution !== radio.value ? 'bg-white' : ''}
                   >
                     {radio.name}
                   </ToggleButton>

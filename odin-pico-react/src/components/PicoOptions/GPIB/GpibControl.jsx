@@ -44,14 +44,16 @@ const GpibControl = ({ pico_endpoint, EndpointSelect, EndpointToggleSwitch, capt
                             <ButtonGroup size="sm" className="mb-2">
                                 {cardToggleRadios.map((radio, idx) => (
                                     <ToggleButton
-                                    key={idx}
-                                    type="radio"
-                                    variant="outline-primary"
-                                    name="cardToggleRadio"
-                                    value={radio.value}
-                                    checked={cardActive === radio.value}
-                                    onClick={() => handleRadioValueChange(radio.value, 'Single Shot', 'gpib/temp_sweep/active')}
-                                    disabled={captureRunning}>
+                                        key={idx}
+                                        type="radio"
+                                        variant="outline-primary"
+                                        name="cardToggleRadio"
+                                        value={radio.value}
+                                        checked={cardActive === radio.value}
+                                        onClick={() => handleRadioValueChange(radio.value, 'Single Shot', 'gpib/temp_sweep/active')}
+                                        disabled={captureRunning}
+                                        className={cardActive !== radio.value ? 'bg-white' : ''}
+                                    >
                                         {radio.name}
                                     </ToggleButton>
                                 ))}

@@ -13,6 +13,11 @@
   --bs-table-bg: transparent;
 }
 
+.bg-white {
+  background-color: #fff !important;
+  --bs-table-bg: transparent;
+}
+
 .form {
   display: block;
 }

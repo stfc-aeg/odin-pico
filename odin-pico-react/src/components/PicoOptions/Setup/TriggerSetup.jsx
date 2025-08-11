@@ -63,11 +63,13 @@ const TriggerSetup = ({ pico_endpoint, EndpointInput, EndpointSelect, EndpointTo
             <tr className={getTriggerClass()}>
               <th className="align-middle">
                 <div>Enable</div>
+                &nbsp;
                 <label htmlFor="trigger-enable">
                   <EndpointToggleSwitch
                     endpoint={pico_endpoint}
                     fullpath="device/settings/trigger/active"
                     disabled={captureRunning}
+                    className="ms-4"
                   />
                 </label>
               </th>
