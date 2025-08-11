@@ -1,36 +1,11 @@
 import UICard from '../../utils/UICard';
+import CaptureButton from './CaptureButton';
 
 const CaptureControl = ({ pico_endpoint, captureRunning }) => {
-    const handleButtonClick = (path) => {
-        pico_endpoint.put(true, path);
-    };
-
     return (
         <>
             <UICard title="Capture Control">
-                <table className="table mb-0" style={{ fontSize: '14px' }}>
-                    <tbody>
-                        <tr>
-                            <th className="align-middle">
-                                <button
-                                    className="btn btn-success"
-                                    onClick={() => handleButtonClick("device/commands/run_user_capture")}
-                                    disabled={captureRunning}
-                                >
-                                    Start Capture
-                                </button>
-                            </th>
-                            <th className="align-middle">
-                                <button
-                                    className="btn btn-danger"
-                                    onClick={() => handleButtonClick("device/flags/abort_cap")}
-                                >
-                                    Abort Capture
-                                </button>
-                            </th>
-                        </tr>
-                    </tbody>
-                </table>
+                <CaptureButton pico_endpoint={pico_endpoint} captureRunning={captureRunning} />
             </UICard>
         </>
     )
