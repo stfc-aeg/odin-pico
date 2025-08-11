@@ -1,10 +1,12 @@
-import React from 'react';
+import UICard from '../utils/UICard';
+
+import InfoBar from './InfoBar';
+
 import ChannelSetup from './Setup/ChannelSetup';
 import GeneralSetup from './Setup/GeneralSetup';
 import TriggerSetup from './Setup/TriggerSetup';
 import PHASettings from './Setup/PHASettings';
 
-import CaptureControl from './Capture/CaptureControl';
 import CaptureSettings from './Capture/CaptureSettings';
 import CaptureStatus from './Capture/CaptureStatus';
 
@@ -33,9 +35,8 @@ const ToggleSwitch = ({ className = '', ...props }) => (
 );
 const EndpointToggleSwitch = WithEndpoint(ToggleSwitch);
 
-const OptionsCard = ({ pico_endpoint }) => {
+const OptionsCard = ({ pico_endpoint, activeTab }) => {
 
-  const [gpibEnabled, setGpibEnabled] = React.useState(false);
   const channels = pico_endpoint?.data?.device?.settings?.channels;
   const captureRunning = pico_endpoint?.data?.device?.commands?.run_user_capture;
   const temperatureSweepActive = pico_endpoint?.data?.gpib?.temp_sweep?.active;
@@ -48,56 +49,15 @@ const OptionsCard = ({ pico_endpoint }) => {
       anyChannelActive = false;
   }
 
-
-  React.useEffect(() => {
-    pico_endpoint.get('gpib')
-      .then((response) => {
-        if (response.gpib && response.gpib.gpib_avail === true) {
-          setGpibEnabled(true);
-        } else {
-          setGpibEnabled(false);
-        }
-      })
-      .catch(() => {
-        setGpibEnabled(false);
-      });
-  }, []);
-  
-  const [activeTab, setActiveTab] = React.useState('setup');
-
   return (
     <div className="fixed-width" id="left-panel">
       <div className="tab-content p-3">
-        <div className="panel-heading panel-heading-nav" style={{ backgroundColor: '#f5f5f5' }}>
-          <ul className="nav nav-tabs">
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 'setup' ? 'active' : ''}`}
-                onClick={() => setActiveTab('setup')}
-              >
-                Setup
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 'capture' ? 'active' : ''}`}
-                onClick={() => setActiveTab('capture')}
-              >
-                Capture
-              </button>
-            </li>
-            {gpibEnabled && (
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${activeTab === 'gpib' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('gpib')}
-                >
-                  GPIB
-                </button>
-              </li>
-            )}
-          </ul>
-        </div>
+
+        <UICard title="Status">
+          <div style={{ padding: '10px' }}>
+            <InfoBar pico_endpoint={pico_endpoint} />
+          </div>
+        </UICard>
 
         {activeTab === 'setup' && (
           <>
@@ -131,22 +91,18 @@ const OptionsCard = ({ pico_endpoint }) => {
         )}
         {activeTab === 'capture' && (
           <>
-            <CaptureControl
+            <CaptureSettings
               pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
               captureRunning={captureRunning}
             />
             <CaptureStatus
               pico_endpoint={pico_endpoint}
               captureRunning={captureRunning}
             />
-            <CaptureSettings
-              pico_endpoint={pico_endpoint}
-              EndpointInput={EndpointInput}
-              captureRunning={captureRunning}
-            />
           </>
         )}
-        {activeTab === 'gpib' && gpibEnabled && (
+        {activeTab === 'gpib' && (
           <>
             <GpibControl
               pico_endpoint={pico_endpoint}

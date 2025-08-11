@@ -5,31 +5,25 @@ const CaptureControl = ({ pico_endpoint, captureRunning }) => {
 
     return (
         <>
-            <table className="table mb-0" style={{ fontSize: '14px' }}>
-                <tbody>
-                    <tr>
-                        {!captureRunning ? (
-                            <th className="align-middle">
-                                <button
-                                    className="btn btn-success"
-                                    onClick={() => handleButtonClick("device/commands/run_user_capture")}
-                                >
-                                    Start Capture
-                                </button>
-                            </th>
-                        ) : (
-                            <th className="align-middle">
-                                <button
-                                    className="btn btn-danger"
-                                    onClick={() => handleButtonClick("device/flags/abort_cap")}
-                                >
-                                    Abort Capture
-                                </button>
-                            </th>
-                        )}
-                    </tr>
-                </tbody>
-            </table>
+            {!captureRunning ? (
+                <th className="align-middle">
+                    <button
+                        className="btn btn-success"
+                        onClick={() => handleButtonClick("device/commands/run_user_capture")}
+                    >
+                        Start Capture
+                    </button>
+                </th>
+            ) : (
+                <th className="align-middle">
+                    <button
+                        className="btn btn-danger"
+                        onClick={() => handleButtonClick("device/flags/abort_cap")}
+                    >
+                        Abort Capture
+                    </button>
+                </th>
+            )}
         </>
     )
 }

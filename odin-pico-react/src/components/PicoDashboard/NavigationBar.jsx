@@ -1,96 +1,68 @@
 import React from 'react';
-import { Navbar, Container } from 'react-bootstrap';
+import { Navbar, Container, Nav } from 'react-bootstrap';
 import odinIcon from '../../assets/odin.png';
 import logo from '../../assets/logo.png';
 
-const NavigationBar = ({ pico_endpoint }) => {
-  let deviceStatus = null;
-  let statusError = false;
-  const deviceResponse = pico_endpoint?.data?.device;
+const NavigationBar = ({ pico_endpoint, activeTab, setActiveTab }) => {
+  const [gpibEnabled, setGpibEnabled] = React.useState(false);
 
-  if (deviceResponse === undefined) {
-    statusError = true;
-  } else {
-    const runUserCapture = deviceResponse?.commands?.run_user_capture;
-    const captureMode = deviceResponse?.settings?.capture?.capture_mode;
-
-    let captureType;
-    if (runUserCapture === true && captureMode === false) {
-      captureType = 'N Based Captures';
-    } else if (runUserCapture === true && captureMode === true) {
-      captureType = 'Time Based Captures';
-    } else if (runUserCapture === false) {
-      captureType = 'Live View';
-    } else {
-      captureType = '-';
-    }
-
-    deviceStatus ={
-      open_unit: deviceResponse?.status?.open_unit,
-      settings_verified: deviceResponse?.status?.settings_verified,
-      system_state: deviceResponse?.flags?.system_state,
-      capture_type: captureType,
-    };
-  }
-
-  // Helper function to display status fields
-  const renderField = (label, value) => (
-    <span>
-      {label}:{' '}
-      <span>
-        {statusError
-          ? 'Error'
-          : value !== undefined && value !== null
-          ? value
-          : '-'}
-      </span>
-    </span>
-  );
+  React.useEffect(() => {
+    pico_endpoint.get('gpib')
+      .then((response) => {
+        if (response.gpib && response.gpib.gpib_avail === true) {
+          setGpibEnabled(true);
+        } else {
+          setGpibEnabled(false);
+        }
+      })
+      .catch(() => {
+        setGpibEnabled(false);
+      });
+  }, []);
 
   return (
-    <Navbar
-      bg="dark"
-      variant="dark"
-      sticky="top"
-      className="navbar-inverse"
-      style={{ paddingTop: 0, paddingBottom: 0 }}
-    >
+    <Navbar bg="dark" variant="dark" expand="lg" sticky="top" style={{ padding: 0 }}>
       <Container fluid>
-        <div
-          className="navbar-header d-flex align-items-center gap-3"
-          style={{ height: '80px', color: 'white' }}
-        >
-          <div>
+        <Navbar.Brand>
+          <div className="d-flex align-items-center gap-3">
             <img
               src={odinIcon}
               alt="Odin Icon"
-              style={{ filter: 'drop-shadow(0px 0px 30px white)' }}
+              style={{ filter: 'drop-shadow(0px 0px 30px white)', height: '50px' }}
             />
-          </div>
-          <div>
             <img
               src={logo}
               alt="Logo"
               style={{ width: '120px' }}
             />
           </div>
+        </Navbar.Brand>
 
-          <span>Status:</span>
-          {renderField(
-            'Connection',
-            deviceStatus?.open_unit === 0 ? 'True' : deviceStatus?.open_unit === 1 ? 'False' : null
-          )}
-          {renderField('Capture Type', deviceStatus?.capture_type)}
-          {renderField(
-            'Settings valid',
-            deviceStatus?.settings_verified === true
-              ? 'True'
-              : deviceStatus?.settings_verified === false
-              ? 'False'
-              : null
-          )}
-          {renderField('System State', deviceStatus?.system_state)}
-        </div>
+        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+        <Navbar.Collapse id="responsive-navbar-nav">
+          <Nav className="me-auto">
+            <Nav.Link
+              active={activeTab === 'setup'}
+              onClick={() => setActiveTab('setup')}
+            >
+              Setup
+            </Nav.Link>
+            <Nav.Link
+              active={activeTab === 'capture'}
+              onClick={() => setActiveTab('capture')}
+            >
+              Capture
+            </Nav.Link>
+            {gpibEnabled && (
+              <Nav.Link
+                active={activeTab === 'gpib'}
+                onClick={() => setActiveTab('gpib')}
+              >
+                GPIB
+              </Nav.Link>
+            )}
+          </Nav>
+        </Navbar.Collapse>
       </Container>
     </Navbar>
   );

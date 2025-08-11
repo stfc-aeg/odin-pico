@@ -1,6 +1,7 @@
 import UICard from '../../utils/UICard';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import ToggleButton from 'react-bootstrap/ToggleButton';
+import CaptureButton from './CaptureButton';
 
 const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
     const fileClass = pico_endpoint?.data?.device?.status?.file_name_verify ? 'bg-green' : 'bg-red';
@@ -45,7 +46,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                     ))}
                                 </ButtonGroup>
                             </th>
-                            <th colSpan="2" className="align-middle">
+                            <th className="align-middle">
                                 <label>{settingsTitle}</label>
                                 <EndpointInput
                                     endpoint={pico_endpoint}
@@ -58,6 +59,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                     <span>{capturePath?.[recMax]}</span>
                                 </div>
                             </th>
+                            <CaptureButton pico_endpoint={pico_endpoint} captureRunning={captureRunning} />
                         </tr>
                         <tr>
                             <th className="align-middle">

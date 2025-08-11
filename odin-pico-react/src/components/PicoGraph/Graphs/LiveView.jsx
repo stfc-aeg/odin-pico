@@ -1,8 +1,6 @@
 import { OdinGraph } from 'odin-react';
 import React, {useState, useEffect} from 'react';
 import UICard from '../../utils/UICard';
-import ButtonGroup from 'react-bootstrap/ButtonGroup';
-import ToggleButton from 'react-bootstrap/ToggleButton';
 
 const sourceOptions = [
   { value: 0, label: 'Channel A' },
