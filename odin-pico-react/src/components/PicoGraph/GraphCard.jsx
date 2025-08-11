@@ -1,6 +1,5 @@
 import LiveView from './Graphs/LiveView';
 import CurrentPHA from './Graphs/CurrentPHA';
-import UICard from '../utils/UICard';
 
 import { WithEndpoint } from 'odin-react';
 
@@ -19,18 +18,16 @@ const GraphCard = ({ pico_endpoint }) => {
 
     return (
         <>
-            <UICard title="Live View and PHA Data:">
-                <LiveView
-                    pico_endpoint={pico_endpoint}
-                    EndpointCheckbox={EndpointCheckbox}
-                    canRun={canRun}
-                />
-                <CurrentPHA
-                    pico_endpoint={pico_endpoint}
-                    EndpointCheckbox={EndpointCheckbox}
-                    canRun={canRun}
-                />
-            </UICard>
+            <LiveView
+                pico_endpoint={pico_endpoint}
+                EndpointCheckbox={EndpointCheckbox}
+                canRun={canRun}
+            />
+            <CurrentPHA
+                pico_endpoint={pico_endpoint}
+                EndpointCheckbox={EndpointCheckbox}
+                canRun={canRun}
+            />
         </>
     )
 }

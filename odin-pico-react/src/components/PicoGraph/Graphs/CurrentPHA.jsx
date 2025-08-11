@@ -1,5 +1,6 @@
 import { OdinGraph } from 'odin-react';
 import React, {useState, useEffect} from 'react';
+import UICard from '../../utils/UICard';
 
 const sourceOptions = [
   { value: 0, label: 'Channel A' },
@@ -74,9 +75,6 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
         yaxis: {
             title: { text: "Counts" },
         },
-        title: {
-            text: 'Current PHA Data'
-        },
         margin: {
             t: 40,
             b: 40,
@@ -97,61 +95,67 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
 
     return (
         <>
-            <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></link>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                <div>
-                    <span style={{ marginRight: '8px' }}>Select Channels to preview PHA:</span>
-                    {channels.map((ch) => (
-                        <React.Fragment key={ch}>
-                            <EndpointCheckbox
-                                id={`channel-${ch}-pha`}
-                                endpoint={pico_endpoint}
-                                fullpath={`device/settings/channels/${ch}/pha_active`}
-                                disabled={!canRun[ch]}
-                            />
-                            <span style={{ margin: '0 8px' }}>{ch.toUpperCase()}</span>
-                        </React.Fragment>
-                    ))}
-                </div>
+            <UICard
+                headerContent={
+                    <>
+                        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></link>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                            PHA
+                            <div>
+                                <span style={{ marginRight: '18px', marginLeft: '125px' }}>Channels:</span>
+                                {channels.map((ch) => (
+                                    <React.Fragment key={ch}>
+                                        <EndpointCheckbox
+                                            id={`channel-${ch}-pha`}
+                                            endpoint={pico_endpoint}
+                                            fullpath={`device/settings/channels/${ch}/pha_active`}
+                                            disabled={!canRun[ch]}
+                                        />
+                                        <span style={{ margin: '0 8px' }}>{ch.toUpperCase()}</span>
+                                    </React.Fragment>
+                                ))}
+                            </div>
 
-                <div style={{ marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
-                    <span>Clear PHA Data</span>
-                    <button
-                        type="button"
-                        id="clear_pha_btn"
-                        onClick={handleClearPHA}
-                        style={{
-                            marginLeft: '8px',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Clear
-                    </button>
-                </div>
+                            <div style={{ marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
+                                <span>Clear PHA Data</span>
+                                <button
+                                    type="button"
+                                    id="clear_pha_btn"
+                                    onClick={handleClearPHA}
+                                    style={{
+                                        marginLeft: '8px',
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                            </div>
 
-                <button
-                    id="p_p_button_pha"
-                    className="icon-button"
-                    onClick={toggle_play}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        marginLeft: 'auto',
-                        paddingRight: '150px',
-                    }}
-                >
-                    <span className="material-icons">{isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}</span>
-                </button>
-            </div>
-
+                            <button
+                                id="p_p_button_pha"
+                                className="icon-button"
+                                onClick={toggle_play}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    marginLeft: 'auto',
+                                }}
+                            >
+                                <span className="material-icons">{isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}</span>
+                            </button>
+                        </div>
+                    </>
+                }
+            >
             <OdinGraph
                 data={prepared_data}
                 layout={layout}
                 style={{ height: '300px' }}
             />
+            </UICard>
         </>
     )
 }

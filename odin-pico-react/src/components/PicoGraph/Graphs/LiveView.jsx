@@ -1,5 +1,8 @@
 import { OdinGraph } from 'odin-react';
 import React, {useState, useEffect} from 'react';
+import UICard from '../../utils/UICard';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import ToggleButton from 'react-bootstrap/ToggleButton';
 
 const sourceOptions = [
   { value: 0, label: 'Channel A' },
@@ -137,9 +140,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             nticks: 15,
             //tickformat: '.1f',
         },
-        title: {
-            text: 'Live View of PicoScope Traces'
-        },
         margin: {
             t: 40,
             b: 40,
@@ -162,44 +162,50 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
 
     return (
         <>
-            <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></link>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                <div>
-                    <span style={{ marginRight: '8px' }}>Select Live View Channels:</span>
-                    {channels.map((ch) => (
-                        <React.Fragment key={ch}>
-                            <EndpointCheckbox
-                                id={`channel-${ch}-liveview`}
-                                endpoint={pico_endpoint}
-                                fullpath={`device/settings/channels/${ch}/live_view`}
-                                disabled={!canRun[ch]}
-                            />
-                            <span style={{ margin: '0 8px' }}>{ch.toUpperCase()}</span>
-                        </React.Fragment>
-                    ))}
-                </div>
+            <UICard
+                headerContent={
+                    <>
+                        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></link>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                            Live View
+                            <div>
+                                <span style={{ marginRight: '18px', marginLeft: '80px' }}>Channels:</span>
+                                {channels.map((ch) => (
+                                    <React.Fragment key={ch}>
+                                        <EndpointCheckbox
+                                            id={`channel-${ch}-liveview`}
+                                            endpoint={pico_endpoint}
+                                            fullpath={`device/settings/channels/${ch}/live_view`}
+                                            disabled={!canRun[ch]}
+                                        />
+                                        <span style={{ margin: '0 8px' }}>{ch.toUpperCase()}</span>
+                                    </React.Fragment>
+                                ))}
+                            </div>
 
-                <button
-                    id="p_p_button_lv"
-                    className="icon-button"
-                    onClick={toggle_play}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        marginLeft: 'auto',
-                        paddingRight: '150px',
-                    }}
-                >
-                    <span className="material-icons">{isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}</span>
-                </button>
-            </div>
-
+                            <button
+                                id="p_p_button_lv"
+                                className="icon-button"
+                                onClick={toggle_play}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    marginLeft: 'auto',
+                                }}
+                            >
+                                <span className="material-icons">{isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}</span>
+                            </button>
+                        </div>
+                    </>
+                }
+            >
             <OdinGraph
                 data={prepared_data}
                 layout={layout}
                 style={{ height: '300px' }}
             />
+            </UICard>
         </>
     )
 }
