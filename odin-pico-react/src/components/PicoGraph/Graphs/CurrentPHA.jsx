@@ -117,7 +117,6 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
                             </div>
 
                             <div style={{ marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
-                                <span>Clear PHA Data</span>
                                 <button
                                     type="button"
                                     id="clear_pha_btn"
@@ -129,7 +128,7 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
                                         cursor: 'pointer'
                                     }}
                                 >
-                                    Clear
+                                    Clear Data
                                 </button>
                             </div>
 

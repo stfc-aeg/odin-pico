@@ -91,7 +91,7 @@ const InfoBar = ({ pico_endpoint }) => {
       ) : (
         <>
           <CustomBadge 
-            text={deviceStatus?.open_unit === 0 ? "Pico: Connected" : "Pico: Disconnected"}
+            text={deviceStatus?.open_unit === 0 ? "Scope: Connected" : "Scope: Disconnected"}
             variant={deviceStatus?.open_unit === 0 ? "success" : "danger"}
           />
           <CustomBadge

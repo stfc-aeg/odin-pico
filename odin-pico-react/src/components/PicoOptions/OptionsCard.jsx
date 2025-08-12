@@ -53,7 +53,7 @@ const OptionsCard = ({ pico_endpoint, activeTab }) => {
     <div className="fixed-width" id="left-panel">
       <div className="tab-content p-3">
 
-        <UICard title="Status">
+        <UICard title="Status" noTopMargin>
           <div style={{ padding: '10px' }}>
             <InfoBar pico_endpoint={pico_endpoint} />
           </div>
