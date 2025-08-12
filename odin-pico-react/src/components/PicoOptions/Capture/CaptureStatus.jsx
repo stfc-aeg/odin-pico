@@ -24,12 +24,6 @@ const CaptureStatus = ({ pico_endpoint, captureRunning }) => {
                                 {recorded}
                             </th>
                         </tr>
-                        <tr>
-                            <th>
-                                System State:<br/>
-                                {systemState}
-                            </th>
-                        </tr>
                         <tr className={progressClass}>
                             <th colSpan="2" className="align-middle">
                                 <ProgressBar
