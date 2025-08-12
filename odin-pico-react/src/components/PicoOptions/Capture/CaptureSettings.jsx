@@ -4,7 +4,8 @@ import ToggleButton from 'react-bootstrap/ToggleButton';
 import CaptureButton from './CaptureButton';
 
 const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
-    const fileClass = pico_endpoint?.data?.device?.status?.file_name_verify ? 'bg-green' : 'bg-red';
+    const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify
+    const fileClass = fileValid ? 'bg-green' : 'bg-red';
 
     const capturePath = pico_endpoint?.data?.device?.settings?.capture ?? {};
     const captureMode = capturePath?.capture_mode;
@@ -59,7 +60,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                                     <span>{capturePath?.[recMax]}</span>
                                 </div>
                             </th>
-                            <CaptureButton pico_endpoint={pico_endpoint} captureRunning={captureRunning} />
+                            <CaptureButton pico_endpoint={pico_endpoint} captureRunning={captureRunning} fileValid={fileValid} />
                         </tr>
                         <tr>
                             <th className="align-middle">
