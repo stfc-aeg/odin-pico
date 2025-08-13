@@ -13,38 +13,20 @@ const GpibTecStatus = ({ pico_endpoint }) => {
                 <tbody>
                     <tr>
                         <th>
-                            Set-point °C
+                            Set-point: {setPoint}°C
                         </th>
 
                         <th>
-                            {setPoint}
+                            Measured: {measured}°C
                         </th>
                     </tr>
                     <tr>
                         <th>
-                            Measured °C
+                            Current: {toSiUnit(current)}A
                         </th>
 
                         <th>
-                            {measured}
-                        </th>
-                    </tr>
-                    <tr>
-                        <th>
-                            Current
-                        </th>
-
-                        <th>
-                            {toSiUnit(current)}A
-                        </th>
-                    </tr>
-                    <tr>
-                        <th>
-                            Voltage V
-                        </th>
-
-                        <th>
-                            {toSiUnit(voltage)}V
+                            Voltage: {toSiUnit(voltage)}V
                         </th>
                     </tr>
                 </tbody>

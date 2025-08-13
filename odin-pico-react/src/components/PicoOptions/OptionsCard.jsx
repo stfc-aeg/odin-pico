@@ -1,11 +1,14 @@
-import React from 'react';
+import UICard from '../utils/UICard';
+
+import InfoBar from './InfoBar';
+
 import ChannelSetup from './Setup/ChannelSetup';
 import GeneralSetup from './Setup/GeneralSetup';
 import TriggerSetup from './Setup/TriggerSetup';
 import PHASettings from './Setup/PHASettings';
 
 import CaptureSettings from './Capture/CaptureSettings';
-import CaptureControl from './Capture/CaptureControl';
+import CaptureStatus from './Capture/CaptureStatus';
 
 import GpibControl from './GPIB/GpibControl';
 import GpibTecSet from './GPIB/GpibTecSet';
@@ -24,13 +27,16 @@ const EndpointSelect = WithEndpoint((props) => (
   </select>
 ));
 
-const EndpointCheckbox = WithEndpoint((props) => (
-  <input type="checkbox" {...props} />
-));
+const ToggleSwitch = ({ className = '', ...props }) => (
+  <label className={`switch ${className}`}>
+    <input type="checkbox" {...props} />
+    <span className="slider round"></span>
+  </label>
+);
+const EndpointToggleSwitch = WithEndpoint(ToggleSwitch);
 
-const OptionsCard = ({ pico_endpoint }) => {
+const OptionsCard = ({ pico_endpoint, activeTab }) => {
 
-  const [gpibEnabled, setGpibEnabled] = React.useState(false);
   const channels = pico_endpoint?.data?.device?.settings?.channels;
   const captureRunning = pico_endpoint?.data?.device?.commands?.run_user_capture;
   const temperatureSweepActive = pico_endpoint?.data?.gpib?.temp_sweep?.active;
@@ -43,56 +49,15 @@ const OptionsCard = ({ pico_endpoint }) => {
       anyChannelActive = false;
   }
 
-
-  React.useEffect(() => {
-    pico_endpoint.get('gpib')
-      .then((response) => {
-        if (response.gpib && response.gpib.gpib_avail === true) {
-          setGpibEnabled(true);
-        } else {
-          setGpibEnabled(false);
-        }
-      })
-      .catch(() => {
-        setGpibEnabled(false);
-      });
-  }, []);
-  
-  const [activeTab, setActiveTab] = React.useState('setup');
-
   return (
     <div className="fixed-width" id="left-panel">
       <div className="tab-content p-3">
-        <div className="panel-heading panel-heading-nav" style={{ backgroundColor: '#f5f5f5' }}>
-          <ul className="nav nav-tabs">
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 'setup' ? 'active' : ''}`}
-                onClick={() => setActiveTab('setup')}
-              >
-                Setup
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 'capture' ? 'active' : ''}`}
-                onClick={() => setActiveTab('capture')}
-              >
-                Capture
-              </button>
-            </li>
-            {gpibEnabled && (
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${activeTab === 'gpib' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('gpib')}
-                >
-                  GPIB
-                </button>
-              </li>
-            )}
-          </ul>
-        </div>
+
+        <UICard title="Status" noTopMargin>
+          <div style={{ padding: '10px' }}>
+            <InfoBar pico_endpoint={pico_endpoint} />
+          </div>
+        </UICard>
 
         {activeTab === 'setup' && (
           <>
@@ -100,7 +65,6 @@ const OptionsCard = ({ pico_endpoint }) => {
               anyActive={anyChannelActive}
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
-              EndpointSelect={EndpointSelect}
               captureRunning={captureRunning}
             />
             <ChannelSetup
@@ -108,13 +72,14 @@ const OptionsCard = ({ pico_endpoint }) => {
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               EndpointSelect={EndpointSelect}
-              EndpointCheckbox={EndpointCheckbox}
+              EndpointToggleSwitch={EndpointToggleSwitch}
               captureRunning={captureRunning}
             />
             <TriggerSetup
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               EndpointSelect={EndpointSelect}
+              EndpointToggleSwitch={EndpointToggleSwitch}
               captureRunning={captureRunning}
             />
             <PHASettings
@@ -126,22 +91,23 @@ const OptionsCard = ({ pico_endpoint }) => {
         )}
         {activeTab === 'capture' && (
           <>
-            <CaptureControl
-              pico_endpoint={pico_endpoint}
-              captureRunning={captureRunning}
-            />
             <CaptureSettings
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               captureRunning={captureRunning}
             />
+            <CaptureStatus
+              pico_endpoint={pico_endpoint}
+              captureRunning={captureRunning}
+            />
           </>
         )}
-        {activeTab === 'gpib' && gpibEnabled && (
+        {activeTab === 'gpib' && (
           <>
             <GpibControl
               pico_endpoint={pico_endpoint}
               EndpointSelect={EndpointSelect}
+              EndpointToggleSwitch={EndpointToggleSwitch}
               captureRunning={captureRunning}
             />
             {temperatureSweepActive ? (

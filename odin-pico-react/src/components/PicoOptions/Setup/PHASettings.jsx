@@ -10,7 +10,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
         <tbody>
           <tr className={is_pha_verified === 0 ? 'bg-green' : 'bg-red'}>
             <th>
-              <label htmlFor="num_bins">Number Bins:</label>
+              <label htmlFor="num_bins">Number Bins</label>
               <EndpointInput
                 id="num_bins"
                 endpoint={pico_endpoint}
@@ -20,7 +20,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
               />
             </th>
             <th>
-              <label htmlFor="lower_range">Lower range of ADC_Counts:</label>
+              <label htmlFor="lower_range">Lower range</label>
               <EndpointInput
                 id="lower_range"
                 endpoint={pico_endpoint}
@@ -30,7 +30,7 @@ const PHASettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
               />
             </th>
             <th>
-              <label htmlFor="upper_range">Upper range of ADC_Counts:</label>
+              <label htmlFor="upper_range">Upper range</label>
               <EndpointInput
                 id="upper_range"
                 endpoint={pico_endpoint}

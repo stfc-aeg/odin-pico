@@ -1,14 +1,13 @@
 import UICard from '../../utils/UICard';
 
 const GpibTempSweep = ({ pico_endpoint, EndpointInput, captureRunning }) => {
-    const tempSweep = pico_endpoint?.data?.gpib?.temp_sweep;
     return (
         <UICard title="Temperature Sweep">
             <table className="table mb-0">
                 <tbody>
                     <tr>
                         <th>
-                            Start °C:
+                            Start °C
                             <EndpointInput
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/temp_sweep/t_start"
@@ -18,7 +17,7 @@ const GpibTempSweep = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                         </th>
 
                         <th>
-                            End °C:
+                            End °C
                             <EndpointInput
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/temp_sweep/t_end"
@@ -29,7 +28,7 @@ const GpibTempSweep = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                     </tr>
                     <tr>
                         <th>
-                            Step °C:
+                            Step °C
                             <EndpointInput
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/temp_sweep/t_step"
@@ -39,7 +38,7 @@ const GpibTempSweep = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                         </th>
 
                         <th>
-                            Tol °C:
+                            Tolerance °C
                             <EndpointInput
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/temp_sweep/tol"

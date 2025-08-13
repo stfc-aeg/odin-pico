@@ -11,7 +11,7 @@ const GpibTecSet = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                 <tbody>
                     <tr>
                         <th>
-                            Target °C:
+                            Target °C
                             <EndpointInput
                                 endpoint={pico_endpoint}
                                 fullpath="gpib/set/temp_target"
