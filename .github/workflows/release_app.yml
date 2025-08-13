@@ -1,0 +1,49 @@
+name: release_app
+run-name: Build static app and publish with a release
+on:
+  push:
+   tags:
+     - '*'
+
+jobs:
+
+  release:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: odin-pico-react
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Use node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Clean install app
+        run: npm ci
+      - name: Build app
+        run: npm run build
+      - name: Create TGZ archive
+        run: |
+          cd dist
+          tar -cvzf app_build.tgz app
+      - name: Create ZIP archive
+        run: |
+          cd dist
+          zip -r app_build.zip app
+      - name: List built files
+        run: ls -lR dist
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            control/app/dist/app_build.tgz
+            control/app/dist/app_build.zip
