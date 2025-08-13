@@ -28,7 +28,7 @@ const GpibTecStatus = ({ pico_endpoint }) => {
                         <th>
                             Voltage: {toSiUnit(voltage)}V
                         </th>
-                    </tr>``
+                    </tr>
                 </tbody>
             </table>
         </UICard>
