@@ -32,12 +32,10 @@ jobs:
         run: npm run build
       - name: Create TGZ archive
         run: |
-          cd dist
-          tar -cvzf app_build.tgz app
+          tar -cvzf app_build.tgz dist
       - name: Create ZIP archive
         run: |
-          cd dist
-          zip -r app_build.zip app
+          zip -r app_build.zip dist
       - name: List built files
         run: ls -lR dist
       - name: Create release
