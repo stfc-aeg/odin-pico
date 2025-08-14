@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "odin-pico"
+description = "PicoScope control and data acqusition software for Material Characterisation as part of the Alpha-Spec System"
+authors = [
+    {name = "Josh Harris", email = "josh.harris@stfc.ac.uk"},
+    {name = "Will Brown", email = "william.brown@stfc.ac.uk"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.8.10",
+]
+dynamic = ["version"]
+requires-python = ">=3.10.0"
+dependencies = [
+    "odin-control @ git+https://github.com/odin-detector/odin-control@1.5.0#egg=odin-control",
+    "picosdk",
+    "h5py", 
+    "numpy",
+    "psutil",
+]
+
+[project.optional-dependencies]
+gpib = [
+    "odin-gpib @ git+https://github.com/stfc-aeg/odin-gpib@main"
+]
+
+[project.urls]
+GitHub = "https://github.com/stfc-aeg/odin-pico"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+# Optional settings for setuptools_scm
+write_to = "src/odin_pico/_version.py"
+version_scheme = "no-guess-dev"
+local_scheme = "node-and-date"

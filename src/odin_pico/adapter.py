@@ -1,6 +1,6 @@
 """Adapter for a PicoScope 5444D."""
 
-import threading
+import logging
 from odin.adapters.adapter import (
     ApiAdapter,
     ApiAdapterResponse,
@@ -18,12 +18,19 @@ class PicoAdapter(ApiAdapter):
         """Initialise the PicoAdapter Object."""
         super(PicoAdapter, self).__init__(**kwargs)
 
-        self.lock = threading.Lock()
         update_loop = True
         data_output_path = self.options.get("data_output_path", "/tmp/")
         max_caps = int(self.options.get("max_caps", 100000000))
+        simulate = bool(int(self.options.get("simulate", False)))
 
-        self.pico_controller = PicoController(self.lock, update_loop, data_output_path, max_caps)
+        logging.debug(f"Simulate set to : {simulate}")
+        self.pico_controller = PicoController(update_loop, data_output_path, max_caps, simulate)
+   
+    def initialize(self, adapters):
+        """Initialize the adapter after it has been loaded."""
+        self.adapters = dict((k, v) for k, v in adapters.items() if v is not self)
+        logging.debug(f"adapters loaded:{self.adapters}")
+        self.pico_controller.initialize_adapters(self.adapters)
 
     @response_types("application/json", default="application/json")
     def get(self, path, request):
@@ -38,6 +45,8 @@ class PicoAdapter(ApiAdapter):
 
         content_type = "application/json"
 
+        if content_type != "application/json":
+            logging.debug(f"Type: {content_type}, Status: {status_code}")
         return ApiAdapterResponse(
             response, content_type=content_type, status_code=status_code
         )

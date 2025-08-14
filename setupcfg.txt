@@ -1,0 +1,35 @@
+[metadata]
+name = odin-pico
+description = ODIN picoscope integration
+url = https://github.com/stfc-aeg/odin-pico
+author = Josh Harris
+author_email = josh.harris@stfc.ac.uk
+license = Apache License 2.0
+long_description = file: README
+long_description_content_type = text/markdown
+classifiers =
+    Development Status :: 4 - Beta
+    License :: OSI Approved :: Apache Software License
+    Programming Language :: Python :: 2.7
+    Programming Language :: Python :: 3.7
+    Programming Language :: Python :: 3.8
+    Programming Language :: Python :: 3.9
+
+[options]
+packages = find:
+package_dir =
+    =src
+install_requires =
+    odin-control @ git+https://github.com/odin-detector/odin-control@1.5.0#egg=odin-control
+    picosdk
+    h5py
+
+[options.packages.find]
+where = src
+
+[versioneer]
+VCS = git
+style = pep440
+versionfile_source = src/odin_pico/_version.py
+versionfile_build = odin_pico/_version.py
+tag_prefix=
