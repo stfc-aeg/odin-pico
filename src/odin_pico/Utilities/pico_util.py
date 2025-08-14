@@ -1,12 +1,9 @@
-"""File with several useful methods for the use of the scope."""
-
 import math
 import logging
 import numpy as np
 
 from picosdk.ps5000a import ps5000a as ps
 from odin.adapters.adapter import ApiAdapterRequest
-
 
 class PicoUtil:
     """Class containing several functions, useful for the PicoScope."""
@@ -87,17 +84,8 @@ class PicoUtil:
     def get_range_value_mv(self, key):
         """Convert channel ranges from a key to an actual range."""
         range_values = {
-            0: 10,
-            1: 20,
-            2: 50,
-            3: 100,
-            4: 200,
-            5: 500,
-            6: 1000,
-            7: 2000,
-            8: 5000,
-            9: 10000,
-            10: 20000,
+            0: 10, 1: 20, 2: 50, 3: 100, 4: 200, 5: 500,
+            6: 1000,7: 2000, 8: 5000, 9: 10000, 10: 20000,
         }
         if key in range_values:
             return range_values[key]
@@ -107,81 +95,6 @@ class PicoUtil:
         unit_values = {0: -15, 1: -12, 2: -9, 3: -6, 4: -3, 5: 0}
         if key in unit_values:
             return unit_values[key]
-
-    def verify_mode_settings(self, chan_active, mode):
-        """Check if chosen PicoScope settings are logically correct."""
-        channel_count = 0
-
-        for chan in chan_active:
-            if chan:
-                channel_count += 1
-
-        if mode.resolution == 1:
-            if mode.timebase < 1:
-                return -1
-            elif mode.timebase == 1 and channel_count > 0 and channel_count < 2:
-                return 0
-            elif mode.timebase == 2 and channel_count > 0 and channel_count < 3:
-                return 0
-            elif mode.timebase >= 3 and channel_count > 0 and channel_count <= 4:
-                return 0
-            else:
-                return -1
-
-        if mode.resolution == 0:
-            if mode.timebase < 0:
-                return -1
-            elif mode.timebase == 0 and channel_count > 0 and channel_count < 2:
-                return 0
-            elif mode.timebase == 1 and channel_count > 0 and channel_count < 3:
-                return 0
-            elif mode.timebase >= 2 and channel_count > 0 and channel_count <= 4:
-                return 0
-            else:
-                return -1
-
-        if channel_count == 0:
-            return -1
-
-    def verify_channel_settings(self, offset):
-        """Check if chosen channel settings are logically correct."""
-        if (offset >= -100) and (offset <= 100):
-            return True
-        else:
-            return False
-
-    def set_channel_verify_flag(self, channels):
-        """Clarify if channel settings are verified, even when channel is active."""
-        error_count = 0
-        for chan in channels:
-            if (chan.active) and (not chan.verified):
-                error_count += 1
-        if error_count == 0:
-            return 0
-        else:
-            return -1
-
-    def verify_trigger(self, channels, trigger):
-        """Check if chosen trigger settings are logically correct."""
-        source_chan = channels[trigger.source]
-        if not (source_chan.active):
-            return -1
-        if trigger.threshold > self.get_range_value_mv(source_chan.range):
-            return -1
-        if not (trigger.delay >= 0 and trigger.delay <= 4294967295):
-            return -1
-        if not (trigger.auto_trigger_ms >= 0 and trigger.auto_trigger_ms <= 32767):
-            return -1
-        return 0
-
-    def verify_capture(self, capture):
-        """Check if chosen capture settings are logically correct."""
-        total_samples = capture.pre_trig_samples + capture.post_trig_samples
-        if total_samples < 1:
-            return -1
-        if capture.n_captures < 1:
-            return -1
-        return 0
 
     def calc_offset(self, range, off_per):
         """Calculate the offset, depending on range of channel."""
@@ -216,6 +129,7 @@ class PicoUtil:
                 flat_d[key] = value
         return flat_d
     
+    @staticmethod
     def adc2mV(bufferADC, range, maxADC):
         """
         Convert a buffer of raw ADC count values into millivolts.
@@ -301,3 +215,4 @@ class PicoUtil:
         if response.status_code != 200:
             logging.error(f"IAC SET failed for adapter {adapter}, path {path}: {response.data}")
         return response.data
+    

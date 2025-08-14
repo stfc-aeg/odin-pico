@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8.10",
 ]
 dynamic = ["version"]
-requires-python = ">=3.8.10"
+requires-python = ">=3.10.0"
 dependencies = [
     "odin-control @ git+https://github.com/odin-detector/odin-control@1.5.0#egg=odin-control",
     "picosdk",

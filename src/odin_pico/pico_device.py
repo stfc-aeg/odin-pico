@@ -10,9 +10,9 @@ from picosdk.functions import mV2adc
 from picosdk.ps5000a import ps5000a as ps
 
 from odin_pico.buffer_manager import BufferManager
-from odin_pico.DataClasses.device_config import DeviceConfig
-from odin_pico.DataClasses.device_status import DeviceStatus
-from odin_pico.pico_util import PicoUtil
+from odin_pico.DataClasses.pico_config import DeviceConfig
+from odin_pico.DataClasses.pico_status import DeviceStatus
+from odin_pico.Utilities.pico_util import PicoUtil
 from odin_pico.PS5000A_Trigger_Info import Trigger_Info
 from odin_pico.file_writer import FileWriter
 from odin_pico.analysis import PicoAnalysis
@@ -23,12 +23,8 @@ class PicoDevice:
     """Class that communicates with the scope to collect data."""
 
     def __init__(
-        self,
-        max_samples,
-        dev_conf=DeviceConfig(),
-        pico_status=DeviceStatus(),
-        buffer_manager=BufferManager(),
-        analysis=PicoAnalysis(),
+        self, max_samples, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
+        buffer_manager=BufferManager(), analysis=PicoAnalysis(),
         file_writer=FileWriter()
     ):
         """Initialise the PicoDevice class."""
@@ -38,20 +34,19 @@ class PicoDevice:
         self.buffer_manager = buffer_manager
         self.file_writer = file_writer
         self.analysis = analysis
-        self.cap_time = 30
+        self.max_samples = max_samples
+        
+        self.channels = [
+            getattr(self.dev_conf, f"channel_{name}")
+            for name in self.dev_conf.channel_names
+        ]
+
+        self._tb_current_block = None
         self.seg_caps = 0
         self.prev_seg_caps = 0
         self.elapsed_time = 0.0
-        self.channels = [
-            self.dev_conf.channel_a,
-            self.dev_conf.channel_b,
-            self.dev_conf.channel_c,
-            self.dev_conf.channel_d,
-        ]
-        self.max_samples = max_samples
         self.rec_caps = 0
         self.rec_time = 0
-        self._tb_current_block = None
 
     def open_unit(self):
         """Initalise connection with the picoscope, and settings the status values."""
@@ -140,6 +135,8 @@ class PicoDevice:
             self.dev_conf.trigger.delay,
             self.dev_conf.trigger.auto_trigger_ms,
         )
+        if self.pico_status.flags.user_capture:
+            logging.debug(f"Trigger: {self.dev_conf.trigger.active}")
 
     def set_channels(self):
         """Set the channel information for each channel on the picoscope."""
@@ -243,7 +240,10 @@ class PicoDevice:
         self.dev_conf.meta_data.max_samples = ctypes.c_int32(
             self.dev_conf.meta_data.total_cap_samples
         )
-
+        if not self.file_writer.file_error and not self.pico_status.flags.user_capture:
+            self.pico_status.flags.system_state = "Collecting LV Data"
+        else:
+            self.pico_status.flags.system_state = "N capture collection"
         ps.ps5000aRunBlock(
             self.dev_conf.mode.handle,
             self.dev_conf.capture.pre_trig_samples,
@@ -269,12 +269,11 @@ class PicoDevice:
             )
 
             if time.time() - t >= 2.5:
-                self.pico_status.flags.system_state = "Waiting for Trigger"
-                t = time.time()
-                self.get_cap_count()
-
+                if self.seg_caps == 0:
+                    self.pico_status.flags.system_state = "Waiting for Trigger"
+                    t = time.time()
+                
             if (time.time() - start_time) > 10:
-                self.get_cap_count()
                 if self.seg_caps == 0:
                     logging.debug("Aborting due to waiting for over 10s for trigger")
                     self.pico_status.flags.abort_cap = True
@@ -286,12 +285,11 @@ class PicoDevice:
                 collect = False
 
             time.sleep(0.05)
+            self.get_cap_count()
             self.prev_seg_caps = self.seg_caps
 
         self.pico_status.flags.system_state = current_system_state
         self.get_cap_count()
-        if not self.file_writer.file_error and not self.pico_status.flags.user_capture:
-            self.pico_status.flags.system_state = "Collecting LV Data"
 
         if self.pico_status.flags.abort_cap:
             seg_to_indx = self.seg_caps
@@ -337,7 +335,7 @@ class PicoDevice:
         while True:
             self.elapsed_time = time.time() - start_time
             self.pico_status.flags.system_state = (
-                f"Time based collection running")
+                f"Time based collection")
             # User Aborted OR time limit reached
             if self.pico_status.flags.abort_cap or \
             (time.time() - start_time) >= total_time:
@@ -514,6 +512,7 @@ class PicoDevice:
         """Query PicoScope to check how many traces have been captured."""
         caps = ctypes.c_uint32(0)
         ps.ps5000aGetNoOfCaptures(self.dev_conf.mode.handle, ctypes.byref(caps))
+        #logging.debug(f"Got {caps}: captures")
         self.seg_caps = caps.value
         self.dev_conf.capture_run.live_cap_comp = (
             self.dev_conf.capture_run.caps_comp + caps.value

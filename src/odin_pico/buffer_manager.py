@@ -5,29 +5,29 @@ import logging
 from collections import deque
 from typing import List
 import numpy as np
-from odin_pico.DataClasses.device_config import DeviceConfig
-from odin_pico.pico_util import PicoUtil
+from odin_pico.DataClasses.pico_config import DeviceConfig
+from odin_pico.Utilities.pico_util import PicoUtil
 import psutil
 import math
 
 class BufferManager:
     """Class which manages the buffers that are filled with data by the PicoScope."""
 
-    def __init__(self, channels=[], dev_conf=DeviceConfig()):
+    def __init__(self, dev_conf=DeviceConfig()):
         """Initialise the BufferManager Class."""
         self.dev_conf = dev_conf
-        self.channels = channels
-        self.active_channels = []
         self.util = PicoUtil()
+        self.channels = [
+            getattr(self.dev_conf, f"channel_{name}")
+            for name in self.dev_conf.channel_names
+        ]
 
+        self.active_channels = []
         self.overflow = None
         self.np_channel_arrays = []
-        self.pha_arrays = []
         self.trigger_times = []
         self.capture_blocks: List[List[np.ndarray]] = []
         self.trigger_blocks:  List[np.ndarray]   = []
-
-        ### Add to self.options
         self.trigger_intervals = deque(maxlen=500)
 
         self.lv_channel_arrays = []
@@ -35,17 +35,17 @@ class BufferManager:
 
         self.pha_channels_active = [False] * 4
         self.pha_active_channels = []
-        self.current_pha_channels = []
         self.bin_edges = []
-        self.pha_counts = [[]] * 4
+        self.pha_counts = np.zeros((len(self.dev_conf.channel_names), 
+                                    self.dev_conf.pha.num_bins), dtype=np.int64)
+        self.bin_edges = np.empty(self.dev_conf.pha.num_bins, dtype=np.float64)
 
     def estimate_max_time(self):
         """
         Return estimated seconds of acquisition that can still fit into RAM,
         or 0 if avg trigger times unavailable.
         """
-        avg_dt = self.avg_trigger_dt()
-        if avg_dt is None:
+        if self.avg_trigger_dt() is None:
             return 0
 
         n_chan = len(self.active_channels) or 1
@@ -62,7 +62,7 @@ class BufferManager:
             return 0
 
         max_caps = allowed // bytes_per_cap
-        return math.trunc(max_caps * (capture_dur + avg_dt))
+        return math.trunc(max_caps * (capture_dur + self.avg_trigger_dt()))
 
     def add_trigger_intervals(self, deltas):
         """Append trigger timing values to the deque."""
@@ -91,22 +91,36 @@ class BufferManager:
             + self.dev_conf.capture.post_trig_samples)
 
         for i in range(len(self.active_channels)):
+            #logging.debug(f"Creating array for channel for {i}")
             self.np_channel_arrays.append(np.zeros(shape=(n_captures, samples), dtype=np.int16))
 
-    def accumulate_pha(self, chan, pha_data):
+    def accumulate_pha(self, chan, counts):
         """Add the new PHA data to the previous data, if there is any data."""
-        current_pha_data = (self.pha_arrays[pha_data]).tolist()
-        self.bin_edges = current_pha_data[0]
-        pha_counts = (current_pha_data)[1]
+        # create references to bin_edges and counts for this channels pha
 
-        # Adds PHA to previous data, unless there is no previous data
-        if len(self.pha_counts[chan]) != 0:
-            self.pha_counts[chan] = np.array(pha_counts) + np.array(
-                self.pha_counts[chan]
-            )
-            self.pha_counts[chan] = self.pha_counts[chan].tolist()
-        else:
-            self.pha_counts[chan] = pha_counts
+        self.pha_counts[chan] += counts
+
+        # logging.debug(f"pha arrays shape: {self.pha_arrays}")
+        # bin_edges, counts = self.pha_arrays[pha_idx]
+        # # store bin_edges
+        # self.bin_edges = bin_edges
+
+        # self.pha
+            
+        #     #self.
+
+        # current_pha_data = (self.pha_arrays[pha_idx]).tolist()
+        # self.bin_edges = current_pha_data[0]
+        # pha_counts = (current_pha_data)[1]
+
+        # # Adds PHA to previous data, unless there is no previous data
+        # if len(self.pha_counts[chan]) != 0:
+        #     self.pha_counts[chan] = np.array(pha_counts) + np.array(
+        #         self.pha_counts[chan]
+        #     )
+        #     self.pha_counts[chan] = self.pha_counts[chan].tolist()
+        # else:
+        #     self.pha_counts[chan] = pha_counts
 
     def check_channels(self):
         """Check which channels are active, LV active and PHA active."""
@@ -126,7 +140,7 @@ class BufferManager:
 
         for c, b in zip(self.active_channels, self.np_channel_arrays):
             # Find current data, along with channel range and offset
-            values = PicoUtil.adc2mV(
+            values = self.util.adc2mV(
                 b[(self.dev_conf.capture_run.caps_in_run - 1)],
                 self.channels[c].range,
                 self.dev_conf.meta_data.max_adc,
@@ -191,3 +205,11 @@ class BufferManager:
         self.capture_blocks: List[List[np.ndarray]] = []
         self.trigger_blocks:  List[np.ndarray]   = []
         self.pha_channels_active = [False] * 4
+
+    def reset_pha(self):
+        """Reset PHA counts array based on current channel count and bin settings."""
+        self.pha_counts = np.zeros(
+            (len(self.dev_conf.channel_names), self.dev_conf.pha.num_bins), 
+            dtype=np.int64
+        )
+        self.bin_edges = np.empty(self.dev_conf.pha.num_bins, dtype=np.float64)

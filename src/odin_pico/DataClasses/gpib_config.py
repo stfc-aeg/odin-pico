@@ -1,8 +1,18 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
-class TempSweepConfig:
-    active: bool  = False   
+class GPIBConfig:
+
+    avail: bool = False
+    control_enabled: bool = False
+    tec_devices: list[str] = field(default_factory=list)
+    selected_tec: str = ""
+    temp_setpoint: float = 0.0 #remove?
+    temp_target: float = 0.0
+    voltage_limit: float = 0.0
+    current_limit: float = 0.0
+    
+    active: bool = False   
     t_start: float = 0.0
     t_end:   float = 0.0
     t_step:  float =  0.0
@@ -13,4 +23,4 @@ class TempSweepConfig:
     stability_time: float = 5          # Time in seconds to check for stability
     max_wait_time: float = 300.0          # Maximum wait time in seconds
     min_stability_readings: int = 5       # Minimum readings regardless of time
-    max_stability_readings: int = 100     # Lenght of reading lsit
+    max_stability_readings: int = 100     # Lenght of reading lsit    
