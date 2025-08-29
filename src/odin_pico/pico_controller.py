@@ -20,6 +20,7 @@ from odin_pico.file_writer import FileWriter
 from odin_pico.pico_device import PicoDevice
 from odin_pico.Utilities.controller_util import ControllerUtil
 from odin_pico.Utilities.pico_util import PicoUtil
+from odin_pico.Utilities.gpib_util import GPIBUtil
 
 from odin_pico.ParameterTrees.gpib_tree import GPIBTreeBuilder
 from odin_pico.ParameterTrees.pico_tree import PicoTreeBuilder
@@ -39,6 +40,7 @@ class PicoController:
         self.gpib_config = GPIBConfig()
         self.pico_status = DeviceStatus()
         self.util = PicoUtil()
+        self.gpib_util = GPIBUtil(self)
         self.ctrl_util = ControllerUtil(self)
 
         # Initialise objects to represent different system components
@@ -147,7 +149,7 @@ class PicoController:
                                 if (self.gpib_config.active and
                                     self.gpib_config.control_enabled and
                                     self.gpib_config.avail):
-                                    self.run_temperature_sweep()
+                                    self.gpib_util.run_temperature_sweep()
                                 else:
                                     self.user_capture(True)
                         else:
@@ -159,7 +161,7 @@ class PicoController:
                                 if (self.gpib_config.active and
                                     self.gpib_config.control_enabled and
                                     self.gpib_config.avail):
-                                    self.run_temperature_sweep()
+                                    self.gpib_util.run_temperature_sweep()
                                 else:
                                     self.tb_capture()
                         
@@ -219,7 +221,7 @@ class PicoController:
         self.ctrl_util.set_capture_run_length()
     
         # checks run_setup completes successfully, calls it with captures if save_file is not true
-        if self.pico.run_setup() if save_file else self.pico.run_setup(captures):
+        if (self.pico.run_setup() if save_file else self.pico.run_setup(captures)):
             while self.dev_conf.capture_run.caps_comp < captures:
                 if not self.pico_status.flags.abort_cap:
                     self.ctrl_util.set_capture_run_length()
@@ -263,79 +265,6 @@ class PicoController:
         self.buffer_manager.clear_arrays()
         self.pico_status.flags.abort_cap = False
    
-    def run_temperature_sweep(self):
-        """
-        Iterate over every temperature in the listeven in SIM mode
-        and acquire data.  A guard flag prevents any single capture from
-        setting `abort_cap` and killing the rest of the sweep.
-        """
-        sweep = self.gpib_config
-        if not sweep.active:
-            return
-
-        temps    = self.ctrl_util.temp_range(sweep.t_start, sweep.t_end, sweep.t_step)
-        self.gpib_config.sweep_points = len(temps)
-        logging.info(f"[TEC-sweep] Set-points: {temps}")
-
-        base_fname = self.ctrl_util.clean_base_fname()
-
-        # local flag so abort in one capture doesn’t cancel the sweep
-        sweep_abort = False
-
-        for idx, T in enumerate(temps):
-            self.gpib_config.sweep_index  = idx
-            logging.debug(f"Current temp sweep: {self.gpib_config.sweep_index}")
-            if sweep_abort:
-                break
-
-            # Set temperature on Tec
-            if self.simulate:
-                logging.info(f"[SIM] TEC set-point {T:.2f} °C")
-            else:
-                self.util.iac_set(
-                    self.gpib,
-                    f"devices/{self.gpib_config.selected_tec}/set/temp_set",
-                    float(T)
-                )
-            self.buffer_manager.temp_set_last = T
-
-            # ── 2) wait / mock wait until stable ────────────────────────────
-
-            if self.simulate:
-                time.sleep(sweep.poll_s)
-                self.buffer_manager.temp_meas_last = T
-            else:
-                self.ctrl_util.wait_for_tec(T, sweep.tol)
-                self.buffer_manager.temp_meas_last = self.util.iac_get(
-                    self.gpib,
-                    f"devices/{self.gpib_config.selected_tec}/info/tec_temp_meas")
-                
-            # self.dev_conf.file.file_name = (
-            #     base_fname + self.ctrl_util.temp_suffix(T)
-            # )
-            self.dev_conf.file.temp_suffix = str(self.ctrl_util.temp_suffix(T))
-
-            # reset abort flag before each capture; if *this* capture sets it,
-            # finish the file and then abandon the remaining temps
-            self.pico_status.flags.abort_cap = False
-
-            try:
-                if self.dev_conf.capture.capture_type:     # time-based
-                    self.tb_capture()
-                else:                                      # fixed-count
-                    self.user_capture(True)
-            except Exception as e:
-                logging.error(f"Capture failed at {T}°C: {e}")
-                sweep_abort = True
-
-        # restore original file_name
-        self.dev_conf.file.file_name = base_fname + ".hdf5"
-    
-        # clear temperature suffix and reset sweep index to 0
-        self.dev_conf.file.temp_suffix = None
-        self.gpib_config.sweep_points = 0
-        self.gpib_config.sweep_index  = 0 
-
     def set_temp_single_shot(self, _=None):
         """
         Called when the user clicks /gpib/set/set_temp.
@@ -350,12 +279,8 @@ class PicoController:
     @run_on_executor
     def _bg_set_and_wait(self, T: float):
         """
-        Background thread:
-        a) write the setpoint
-        b) wait_for_tec until stable
-        c) flip flags & update status
+        Background thread to write the setpoint and wait_for_tec until stable
         """
-        # a)
         try:
             logging.debug(f"Temp : {T}")
             self.util.iac_set(self.gpib,
@@ -368,9 +293,8 @@ class PicoController:
             logging.debug(f"iac_get returned: {val}")
         except Exception as e:
             logging.error(e)
-        # b)
-        self.ctrl_util.wait_for_tec(T, self.gpib_config.tol)
-            # c)
+        self.gpib_util.wait_for_tec(T, self.gpib_config.tol)
+
         self.pico_status.flags.temp_set     = False
         self.pico_status.flags.temp_reached = True
 
