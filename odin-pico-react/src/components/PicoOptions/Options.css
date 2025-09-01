@@ -18,6 +18,10 @@
   --bs-table-bg: transparent;
 }
 
+.align-top {
+  vertical-align: top;
+}
+
 .form {
   display: block;
 }
