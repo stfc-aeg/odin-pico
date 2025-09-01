@@ -97,6 +97,17 @@ class FileWriter:
                 "timebase": self.dev_conf.mode.timebase,
             }
         )
+
+        channel_key = {
+            0: "channel_a",
+            1: "channel_b",
+            2: "channel_c",
+            3: "channel_d",
+        }
+        
+        (getattr(self.dev_conf, channel_key[metadata["active_channels"]]).PHAToggled)
+        # put into for loops that temp changes active channels, if none there just end the thing early saying no pha enabled or something
+        #print(.PHAToggled)
         
         fname = (
                 self.dev_conf.file.file_path
