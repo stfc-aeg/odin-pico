@@ -41,15 +41,16 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
         <table className="table" style={{ marginBottom: '0px' }}>
           <thead>
             <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
-              <th rowSpan="2" className="align-top">Enable</th>
-              <th rowSpan="2" className="align-top">Coupling</th>
-              <th rowSpan="2" className="align-top">Range</th>
-              <th rowSpan="2" className="align-top">Offset (%)</th>
-              <th colSpan="2">Toggle</th>
+              <th rowSpan="2" className="align-top" style={{ width: '10%' }}>Enable</th>
+              <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Coupling</th>
+              <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Range</th>
+              <th rowSpan="2" className="align-top" style={{ width: '2%' }}>Offset (%)</th>
+              <th colSpan="3">Toggle</th>
             </tr>
             <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
-              <th>PHA</th>
-              <th>Waveform</th>
+              <th style={{ fontSize: '12px' }}>Waveform</th>
+              <th style={{ fontSize: '12px' }}>Captures</th>
+              <th style={{ fontSize: '12px' }}>PHA</th>
             </tr>
           </thead>
           <tbody>
@@ -113,7 +114,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <EndpointToggleSwitch
                       endpoint={pico_endpoint}
-                      fullpath={`device/settings/channels/${id}/PHAToggled`}
+                      fullpath={`device/settings/channels/${id}/waveformsToggled`}
                       disabled={captureRunning}
                     />
                   </div>
@@ -122,7 +123,16 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <EndpointToggleSwitch
                       endpoint={pico_endpoint}
-                      fullpath={`device/settings/channels/${id}/waveformsToggled`}
+                      fullpath={`device/settings/channels/${id}/capturesToggled`}
+                      disabled={captureRunning}
+                    />
+                  </div>
+                </th>
+                <th className="align-middle">
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <EndpointToggleSwitch
+                      endpoint={pico_endpoint}
+                      fullpath={`device/settings/channels/${id}/PHAToggled`}
                       disabled={captureRunning}
                     />
                   </div>
