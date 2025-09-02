@@ -105,10 +105,21 @@ class FileWriter:
             3: "channel_d",
         }
         
-        (getattr(self.dev_conf, channel_key[metadata["active_channels"]]).PHAToggled)
-        # put into for loops that temp changes active channels, if none there just end the thing early saying no pha enabled or something
-        #print(.PHAToggled)
-        
+        pha_toggled_channels = [
+            chan for chan in self.buffer_manager.active_channels
+            if getattr(self.dev_conf, channel_key[chan]).PHAToggled
+        ]
+        waveform_toggled_channels = [
+            chan for chan in self.buffer_manager.active_channels
+            if getattr(self.dev_conf, channel_key[chan]).waveformsToggled
+        ]
+        capture_toggled_channels = [
+            chan for chan in self.buffer_manager.active_channels
+            if getattr(self.dev_conf, channel_key[chan]).capturesToggled
+        ]
+        if not pha_toggled_channels and waveform_toggled_channels and capture_toggled_channels:
+            return # no channels toggled, so skip writing file
+
         fname = (
                 self.dev_conf.file.file_path
                 + self.dev_conf.file.folder_name
@@ -122,7 +133,7 @@ class FileWriter:
             with h5py.File(fname, "w") as f:
 
                 # Create metadata group
-                meta = f.create_group("metadata")
+                meta = f.create_group("metadata") # add a check here to not run any of it if there is no toggled waveform active channels
                 for k, v in metadata.items():
                     meta.attrs[k] = v
 
@@ -145,7 +156,7 @@ class FileWriter:
                             shape   =(total_captures, samples_per_cap),
                             dtype   =capture_blocks[0][0].dtype
                         )
-                        for ch_id in self.buffer_manager.active_channels
+                        for ch_id in self.buffer_manager.active_channels # HERE (AS WELL AS THIS PART IS THE LOOP THAT NEEDS A CHECK)
                     }
 
                     # Create trigger_timing datasets
@@ -162,7 +173,7 @@ class FileWriter:
                         row_slice = slice(next_row, next_row + seg_caps) # Slice the block if captures_completed < size of array
 
                         # write capture for every active channel
-                        for chan_arr, ch_id in zip(block, self.buffer_manager.active_channels):
+                        for chan_arr, ch_id in zip(block, self.buffer_manager.active_channels): # HERE (AS WELL AS THIS PART IS THE LOOP THAT NEEDS A CHECK) (check if the channel is toggled before adding the chan_arr to the datasets, because they wont exist)
                             channel_datasets[ch_id][row_slice] = chan_arr
 
                         # write corresponding trigger intervals
@@ -179,7 +190,7 @@ class FileWriter:
                     source = self.buffer_manager.np_channel_arrays
                     trigger_times = self.buffer_manager.trigger_times
 
-                    for ch_id, data in zip(self.buffer_manager.active_channels, source):
+                    for ch_id, data in zip(self.buffer_manager.active_channels, source): # HERE (THIS LOOP ALSO NEEDS AN IF CHECK (to avoid errors mentioned in messages))
                         logging.debug(f"[HDF5] adc_counts_{ch_id} : {data.shape[0]} captures")
                         f.create_dataset(f"adc_counts_{ch_id}", data=data)
 
@@ -187,7 +198,7 @@ class FileWriter:
 
                 # PHA datasets 
                 edges = self.buffer_manager.bin_edges
-                for ch_id in self.buffer_manager.active_channels:
+                for ch_id in self.buffer_manager.active_channels: # HERE (THIS LOOP PROBABLY ALSO NEEDS AN IF CHECK (to avoid errors mentioned in messages))
                     counts = self.buffer_manager.pha_counts[ch_id]
                     if len(edges) > 0 and len(edges) == len(counts):
                         f.create_dataset(f"pha_{ch_id}", data=[edges, counts])
