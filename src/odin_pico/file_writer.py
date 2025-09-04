@@ -117,8 +117,6 @@ class FileWriter:
             chan for chan in self.buffer_manager.active_channels
             if getattr(self.dev_conf, channel_key[chan]).capturesToggled
         ]
-        if not pha_toggled_channels and waveform_toggled_channels and capture_toggled_channels:
-            return # no channels toggled, so skip writing file
 
         fname = (
                 self.dev_conf.file.file_path
@@ -133,7 +131,7 @@ class FileWriter:
             with h5py.File(fname, "w") as f:
 
                 # Create metadata group
-                meta = f.create_group("metadata") # add a check here to not run any of it if there is no toggled waveform active channels
+                meta = f.create_group("metadata")
                 for k, v in metadata.items():
                     meta.attrs[k] = v
 
@@ -156,7 +154,8 @@ class FileWriter:
                             shape   =(total_captures, samples_per_cap),
                             dtype   =capture_blocks[0][0].dtype
                         )
-                        for ch_id in self.buffer_manager.active_channels # HERE (AS WELL AS THIS PART IS THE LOOP THAT NEEDS A CHECK)
+                        for ch_id in self.buffer_manager.active_channels
+                        if ch_id in waveform_toggled_channels
                     }
 
                     # Create trigger_timing datasets
@@ -173,8 +172,9 @@ class FileWriter:
                         row_slice = slice(next_row, next_row + seg_caps) # Slice the block if captures_completed < size of array
 
                         # write capture for every active channel
-                        for chan_arr, ch_id in zip(block, self.buffer_manager.active_channels): # HERE (AS WELL AS THIS PART IS THE LOOP THAT NEEDS A CHECK) (check if the channel is toggled before adding the chan_arr to the datasets, because they wont exist)
-                            channel_datasets[ch_id][row_slice] = chan_arr
+                        for chan_arr, ch_id in zip(block, self.buffer_manager.active_channels):
+                            if ch_id in waveform_toggled_channels:
+                                channel_datasets[ch_id][row_slice] = chan_arr
 
                         # write corresponding trigger intervals
                         trig_dataset[row_slice] = trigger_blocks[blk_idx]
@@ -190,18 +190,20 @@ class FileWriter:
                     source = self.buffer_manager.np_channel_arrays
                     trigger_times = self.buffer_manager.trigger_times
 
-                    for ch_id, data in zip(self.buffer_manager.active_channels, source): # HERE (THIS LOOP ALSO NEEDS AN IF CHECK (to avoid errors mentioned in messages))
-                        logging.debug(f"[HDF5] adc_counts_{ch_id} : {data.shape[0]} captures")
-                        f.create_dataset(f"adc_counts_{ch_id}", data=data)
+                    for ch_id, data in zip(self.buffer_manager.active_channels, source):
+                        if ch_id in capture_toggled_channels:
+                            logging.debug(f"[HDF5] adc_counts_{ch_id} : {data.shape[0]} captures")
+                            f.create_dataset(f"adc_counts_{ch_id}", data=data)
 
                     f.create_dataset("trigger_timings", data=trigger_times)
 
                 # PHA datasets 
                 edges = self.buffer_manager.bin_edges
-                for ch_id in self.buffer_manager.active_channels: # HERE (THIS LOOP PROBABLY ALSO NEEDS AN IF CHECK (to avoid errors mentioned in messages))
-                    counts = self.buffer_manager.pha_counts[ch_id]
-                    if len(edges) > 0 and len(edges) == len(counts):
-                        f.create_dataset(f"pha_{ch_id}", data=[edges, counts])
+                for ch_id in self.buffer_manager.active_channels:
+                    if ch_id in pha_toggled_channels:
+                        counts = self.buffer_manager.pha_counts[ch_id]
+                        if len(edges) > 0 and len(edges) == len(counts):
+                            f.create_dataset(f"pha_{ch_id}", data=[edges, counts])
                         
             self.dev_conf.file.last_write_success = True
 
