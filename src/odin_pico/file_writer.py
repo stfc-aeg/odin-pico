@@ -2,6 +2,10 @@
 time-based acquisitions.
 """
 
+import time # for time testing
+import json # for time testing again
+from pathlib import Path
+
 import logging
 import math
 import os
@@ -84,7 +88,9 @@ class FileWriter:
             False - normal capture of N waveforms.
             True  - time-based capture.
         """
-        # build metadata dictionary from channel informaiton
+        start_time = time.perf_counter()  # high-resolution start time
+
+        # build metadata dictionary from channel information
         metadata = self.util.flatten_metadata_dict(
             {
                 "active_channels": self.buffer_manager.active_channels[:],
@@ -213,3 +219,62 @@ class FileWriter:
             return
 
         self.dev_conf.file.last_write_success = True
+
+#########################################
+
+        # calculate time taken
+        elapsed_time = time.perf_counter() - start_time
+        print("")
+        print("")
+        logging.info(f"HDF5 file written in {elapsed_time:.6f} seconds")
+        print("")
+        print("")
+        json_path = Path("write_times.json")
+
+        basename = Path(fname).stem  # strip path + extension
+        parts = basename.split("_")
+
+        fname_key = None
+        valid_caps = True
+
+        if len(parts) == 4:
+            dataset_id, num_caps_str, channels, repeat_str = parts
+            try:
+                num_caps_expected = int(num_caps_str)
+                repeat_count = int(repeat_str)
+                # actual number of captures from buffer_manager
+                num_caps_actual = self.buffer_manager.np_channel_arrays[0].shape[0]
+                if num_caps_expected != num_caps_actual:
+                    logging.warning(
+                        f"Filename {fname} has {num_caps_expected} captures but code has {num_caps_actual}, skipping log"
+                    )
+                    valid_caps = False
+                else:
+                    fname_key = f"{dataset_id}_{num_caps_expected}_{channels}"
+            except ValueError:
+                fname_key = basename
+        else:
+            fname_key = basename  # fallback if unexpected format
+
+        if valid_caps:
+            # ---- JSON logging (with averages) ----
+            results = {}
+            if json_path.exists():
+                try:
+                    with open(json_path, "r") as jf:
+                        results = json.load(jf)
+                except Exception as e:
+                    logging.warning(f"Could not read JSON log: {e}")
+
+            if fname_key not in results:
+                results[fname_key] = {
+                    "times": [elapsed_time],
+                    "average": elapsed_time
+                }
+            else:
+                results[fname_key]["times"].append(elapsed_time)
+                times = results[fname_key]["times"]
+                results[fname_key]["average"] = sum(times) / len(times)
+
+            with open(json_path, "w") as jf:
+                json.dump(results, jf, indent=4)
