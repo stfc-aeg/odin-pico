@@ -119,10 +119,6 @@ class FileWriter:
             chan for chan in self.buffer_manager.active_channels
             if getattr(self.dev_conf, channel_key[chan]).waveformsToggled
         ]
-        capture_toggled_channels = [
-            chan for chan in self.buffer_manager.active_channels
-            if getattr(self.dev_conf, channel_key[chan]).capturesToggled
-        ]
 
         fname = (
                 self.dev_conf.file.file_path
@@ -197,7 +193,7 @@ class FileWriter:
                     trigger_times = self.buffer_manager.trigger_times
 
                     for ch_id, data in zip(self.buffer_manager.active_channels, source):
-                        if ch_id in capture_toggled_channels:
+                        if ch_id in waveform_toggled_channels:
                             logging.debug(f"[HDF5] adc_counts_{ch_id} : {data.shape[0]} captures")
                             f.create_dataset(f"adc_counts_{ch_id}", data=data)
 

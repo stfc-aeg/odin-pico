@@ -143,7 +143,6 @@ class ChannelConfig:
     pha_active: bool = False
     PHAToggled: bool = False
     waveformsToggled: bool = False
-    capturesToggled: bool = False
 
     @staticmethod
     def default_channel_configs():
