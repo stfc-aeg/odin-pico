@@ -45,11 +45,10 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
               <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Coupling</th>
               <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Range</th>
               <th rowSpan="2" className="align-top" style={{ width: '2%' }}>Offset (%)</th>
-              <th colSpan="3">Toggle</th>
+              <th colSpan="2">Toggle</th>
             </tr>
             <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
               <th style={{ fontSize: '12px' }}>Waveform</th>
-              <th style={{ fontSize: '12px' }}>Captures</th>
               <th style={{ fontSize: '12px' }}>PHA</th>
             </tr>
           </thead>
@@ -115,15 +114,6 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     <EndpointToggleSwitch
                       endpoint={pico_endpoint}
                       fullpath={`device/settings/channels/${id}/waveformsToggled`}
-                      disabled={captureRunning}
-                    />
-                  </div>
-                </th>
-                <th className="align-middle">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <EndpointToggleSwitch
-                      endpoint={pico_endpoint}
-                      fullpath={`device/settings/channels/${id}/capturesToggled`}
                       disabled={captureRunning}
                     />
                   </div>
