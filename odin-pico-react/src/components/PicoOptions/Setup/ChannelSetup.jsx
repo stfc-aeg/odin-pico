@@ -45,7 +45,7 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
               <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Coupling</th>
               <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Range</th>
               <th rowSpan="2" className="align-top" style={{ width: '2%' }}>Offset (%)</th>
-              <th colSpan="2">Toggle</th>
+              <th colSpan="2">Output</th>
             </tr>
             <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
               <th style={{ fontSize: '12px' }}>Waveform</th>

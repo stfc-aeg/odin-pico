@@ -188,7 +188,6 @@ class ChannelConfig:
             "pha_active": self.pha_active,
             "PHAToggled": self.PHAToggled,
             "waveformsToggled": self.waveformsToggled,
-            "capturesToggled": self.capturesToggled,
         }
     
 
