@@ -1,4 +1,8 @@
 """File to control the PicoScope processing."""
+import time
+import json
+import logging
+from pathlib import Path
 
 import logging
 import math
@@ -117,6 +121,7 @@ class PicoController:
 
             # Check if user has requested a capture
             if self.pico_status.flags.user_capture:
+                start_time = time.perf_counter()  # Start timing the function
                 if self.file_writer.check_file_name():
 
                     self.file_writer.file_error = False
@@ -201,6 +206,50 @@ class PicoController:
             self.pico_status.flags.verify_all is False
         ):
             self.pico_status.flags.system_state = "Connected to PicoScope, Idle"
+
+        # --- Timing and JSON logging logic starts here ---
+        if "start_time" in locals():
+            elapsed_time = time.perf_counter() - start_time
+            logging.info(f"run_capture finished in {elapsed_time:.6f} seconds")
+
+            json_path = Path("capture_times.json")
+
+            key_name = None
+            if self.dev_conf.file.file_name:
+                base_name = Path(self.dev_conf.file.file_name).stem
+                parts = base_name.split("_")
+
+                # If filename looks like: wf_7000_4_3 -> collapse into wf_7000_4
+                if len(parts) >= 4 and parts[-1].isdigit():
+                    key_name = "_".join(parts[:-1])
+                else:
+                    key_name = base_name
+
+            if key_name:
+                results = {}
+                if json_path.exists():
+                    try:
+                        with open(json_path, "r") as jf:
+                            results = json.load(jf)
+                    except (json.JSONDecodeError, IOError) as e:
+                        logging.warning(f"Could not read or parse {json_path}: {e}")
+                        results = {}
+
+                if key_name not in results:
+                    results[key_name] = {
+                        "times": [elapsed_time],
+                        "average": elapsed_time
+                    }
+                else:
+                    results[key_name]["times"].append(elapsed_time)
+                    times = results[key_name]["times"]
+                    results[key_name]["average"] = sum(times) / len(times)
+
+                try:
+                    with open(json_path, "w") as jf:
+                        json.dump(results, jf, indent=4)
+                except IOError as e:
+                    logging.error(f"Could not write to {json_path}: {e}")
 
     def user_capture(self, save_file):
         """Run the appropriate steps for a set of captures."""
