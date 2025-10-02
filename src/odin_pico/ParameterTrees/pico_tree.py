@@ -79,6 +79,14 @@ class PicoTreeBuilder:
                 partial(get_dc_value, self.dev_conf, channel_attr, "pha_active"),
                 partial(set_dc_chan_value, self.controller, self.dev_conf, channel_attr, "pha_active"),
             ),
+            "PHAToggled": (
+                partial(get_dc_value, self.dev_conf, channel_attr, "PHAToggled"),
+                partial(set_dc_chan_value, self.controller, self.dev_conf, channel_attr, "PHAToggled"),
+            ),
+            "waveformsToggled": (
+                partial(get_dc_value, self.dev_conf, channel_attr, "waveformsToggled"),
+                partial(set_dc_chan_value, self.controller, self.dev_conf, channel_attr, "waveformsToggled"),
+            ),
         })
 
     def create_trigger_tree(self):

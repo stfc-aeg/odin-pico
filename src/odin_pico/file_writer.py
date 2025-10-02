@@ -84,7 +84,8 @@ class FileWriter:
             False - normal capture of N waveforms.
             True  - time-based capture.
         """
-        # build metadata dictionary from channel informaiton
+
+        # build metadata dictionary from channel information
         metadata = self.util.flatten_metadata_dict(
             {
                 "active_channels": self.buffer_manager.active_channels[:],
@@ -97,7 +98,23 @@ class FileWriter:
                 "timebase": self.dev_conf.mode.timebase,
             }
         )
+
+        channel_key = {
+            0: "channel_a",
+            1: "channel_b",
+            2: "channel_c",
+            3: "channel_d",
+        }
         
+        pha_toggled_channels = [
+            chan for chan in self.buffer_manager.active_channels
+            if getattr(self.dev_conf, channel_key[chan]).PHAToggled
+        ]
+        waveform_toggled_channels = [
+            chan for chan in self.buffer_manager.active_channels
+            if getattr(self.dev_conf, channel_key[chan]).waveformsToggled
+        ]
+
         fname = (
                 self.dev_conf.file.file_path
                 + self.dev_conf.file.folder_name
@@ -135,6 +152,7 @@ class FileWriter:
                             dtype   =capture_blocks[0][0].dtype
                         )
                         for ch_id in self.buffer_manager.active_channels
+                        if ch_id in waveform_toggled_channels
                     }
 
                     # Create trigger_timing datasets
@@ -152,7 +170,8 @@ class FileWriter:
 
                         # write capture for every active channel
                         for chan_arr, ch_id in zip(block, self.buffer_manager.active_channels):
-                            channel_datasets[ch_id][row_slice] = chan_arr
+                            if ch_id in waveform_toggled_channels:
+                                channel_datasets[ch_id][row_slice] = chan_arr
 
                         # write corresponding trigger intervals
                         trig_dataset[row_slice] = trigger_blocks[blk_idx]
@@ -169,17 +188,19 @@ class FileWriter:
                     trigger_times = self.buffer_manager.trigger_times
 
                     for ch_id, data in zip(self.buffer_manager.active_channels, source):
-                        logging.debug(f"[HDF5] adc_counts_{ch_id} : {data.shape[0]} captures")
-                        f.create_dataset(f"adc_counts_{ch_id}", data=data)
+                        if ch_id in waveform_toggled_channels:
+                            logging.debug(f"[HDF5] adc_counts_{ch_id} : {data.shape[0]} captures")
+                            f.create_dataset(f"adc_counts_{ch_id}", data=data)
 
                     f.create_dataset("trigger_timings", data=trigger_times)
 
                 # PHA datasets 
                 edges = self.buffer_manager.bin_edges
                 for ch_id in self.buffer_manager.active_channels:
-                    counts = self.buffer_manager.pha_counts[ch_id]
-                    if len(edges) > 0 and len(edges) == len(counts):
-                        f.create_dataset(f"pha_{ch_id}", data=[edges, counts])
+                    if ch_id in pha_toggled_channels:
+                        counts = self.buffer_manager.pha_counts[ch_id]
+                        if len(edges) > 0 and len(edges) == len(counts):
+                            f.create_dataset(f"pha_{ch_id}", data=[edges, counts])
                         
             self.dev_conf.file.last_write_success = True
 

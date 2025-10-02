@@ -38,7 +38,7 @@ class BufferManager:
         self.bin_edges = []
         self.pha_counts = np.zeros((len(self.dev_conf.channel_names), 
                                     self.dev_conf.pha.num_bins), dtype=np.int64)
-        self.bin_edges = np.empty(self.dev_conf.pha.num_bins, dtype=np.float64)
+        self.bin_edges = np.zeros(self.dev_conf.pha.num_bins, dtype=np.float64)
 
     def estimate_max_time(self):
         """
@@ -161,11 +161,11 @@ class BufferManager:
         )
 
         block = [
-            np.empty((caps_in_run, samples_per_cap), dtype=np.int16)
+            np.zeros((caps_in_run, samples_per_cap), dtype=np.int16)
             for _ in self.active_channels
         ]
         self.capture_blocks.append(block)
-        self.trigger_blocks.append(np.empty(caps_in_run, dtype=np.float64))
+        self.trigger_blocks.append(np.zeros(caps_in_run, dtype=np.float64))
 
         # reference to the newly created block to use in funcitons that expect data to be 
         # accessible in self.np_channel_arrays
@@ -212,4 +212,4 @@ class BufferManager:
             (len(self.dev_conf.channel_names), self.dev_conf.pha.num_bins), 
             dtype=np.int64
         )
-        self.bin_edges = np.empty(self.dev_conf.pha.num_bins, dtype=np.float64)
+        self.bin_edges = np.zeros(self.dev_conf.pha.num_bins, dtype=np.float64)
