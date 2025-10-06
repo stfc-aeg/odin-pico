@@ -41,10 +41,15 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
         <table className="table" style={{ marginBottom: '0px' }}>
           <thead>
             <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
-              <th>Enable</th>
-              <th>Channel Coupling</th>
-              <th>Channel Range</th>
-              <th>Offset (%)</th>
+              <th rowSpan="2" className="align-top" style={{ width: '10%' }}>Enable</th>
+              <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Coupling</th>
+              <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Range</th>
+              <th rowSpan="2" className="align-top" style={{ width: '2%' }}>Offset (%)</th>
+              <th colSpan="2">Output</th>
+            </tr>
+            <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
+              <th style={{ fontSize: '12px' }}>Waveform</th>
+              <th style={{ fontSize: '12px' }}>PHA</th>
             </tr>
           </thead>
           <tbody>
@@ -103,6 +108,24 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     type="number"
                     disabled={captureRunning}
                   />
+                </th>
+                <th className="align-middle">
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <EndpointToggleSwitch
+                      endpoint={pico_endpoint}
+                      fullpath={`device/settings/channels/${id}/waveformsToggled`}
+                      disabled={captureRunning}
+                    />
+                  </div>
+                </th>
+                <th className="align-middle">
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <EndpointToggleSwitch
+                      endpoint={pico_endpoint}
+                      fullpath={`device/settings/channels/${id}/PHAToggled`}
+                      disabled={captureRunning}
+                    />
+                  </div>
                 </th>
               </tr>
             ))}

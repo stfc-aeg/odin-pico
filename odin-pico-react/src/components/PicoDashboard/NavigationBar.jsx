@@ -21,7 +21,7 @@ const NavigationBar = ({ pico_endpoint, activeTab, setActiveTab }) => {
   }, []);
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" sticky="top" style={{ padding: 0 }}>
+    <Navbar bg="dark" variant="dark" sticky="top" style={{ padding: 0 }}>
       <Container fluid>
         <Navbar.Brand>
           <div className="d-flex align-items-center gap-3">
