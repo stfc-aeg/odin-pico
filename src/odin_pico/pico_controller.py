@@ -132,6 +132,8 @@ class PicoController:
                         delay = 0
 
                     for capture_run in range(cap_loop):
+                        if not(self.update_loop_active):
+                            return
 
                         if cap_loop > 1:
                             self.dev_conf.file.repeat_suffix = "_" + str((capture_run+1))
@@ -267,8 +269,8 @@ class PicoController:
    
     def set_temp_single_shot(self, _=None):
         """
-        Called when the user clicks /gpib/set/set_temp.
-        Reads temp_target and kicks off the background wait.
+        Called when the user sets /gpib/set/set_temp.
+        Reads temp_target and starts a background waiting thread.
         """
         T = self.gpib_config.temp_target
         self.pico_status.flags.temp_set     = True
@@ -305,7 +307,6 @@ class PicoController:
     def update_loop(self):
         """Execute thread, responsible for calling the run_capture function at timed intervals."""
         while self.update_loop_active:
-            #logging.debug(f"temp target : {(self.gpib_config.temp_target)}")
             self.run_capture()
             time.sleep(0.2)
 
