@@ -3,6 +3,10 @@ Python package based on odin-control to manage a picoscope 5444D
 
 <br><br>
 
+# Installing GPIB functionality
+
+Refer to /docs/GPIB_integration.md for instructions
+
 # Running the UI
 
 Download the app.build from odin-pico either .tgz or .zip
