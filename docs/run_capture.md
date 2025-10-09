@@ -112,7 +112,7 @@ After all repetitions complete, reset all flags and tracking variables, clear fi
 
 ### 10. Background Live View
 
-When no user capture is active, continuously collect 2 waveforms for UI display via `user_capture(False)`. No file saving. 2 captures are completed due to the trigger_timing data returned with the first trigger_timing always shows as 0 due. The trigger timings are used to help estimate the system can for when running in time based mode. 
+When no user capture is active, continuously collect 2 waveforms for UI display via `user_capture(False)`. No file saving. 2 captures are completed due to the trigger_timing data returned having the first trigger_timing as 0 due to it being the first capture in that sequence. The trigger timings are used to help estimate how long the system can for when running in time based mode. 
 
 ---
 
