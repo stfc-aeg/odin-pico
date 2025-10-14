@@ -89,28 +89,18 @@ class GPIBUtil:
             logging.debug(f"Current temp sweep: {self.controller.gpib_config.sweep_index}")
             if sweep_abort:
                 break
-
-            # Set temperature on Tec
-            if self.controller.simulate:
-                logging.info(f"[SIM] TEC set-point {T:.2f} °C")
-            else:
-                self.controller.util.iac_set(
-                    self.controller.gpib,
-                    f"devices/{self.controller.gpib_config.selected_tec}/set/temp_set",
-                    float(T)
-                )
+            
+            self.controller.util.iac_set(
+                self.controller.gpib,
+                f"devices/{self.controller.gpib_config.selected_tec}/set/temp_set",
+                float(T)
+            )
             self.controller.buffer_manager.temp_set_last = T
 
-            # ── 2) wait / mock wait until stable ────────────────────────────
-
-            if self.controller.simulate:
-                time.sleep(sweep.poll_s)
-                self.controller.buffer_manager.temp_meas_last = T
-            else:
-                self.wait_for_tec(T, sweep.tol)
-                self.controller.buffer_manager.temp_meas_last = self.controller.util.iac_get(
-                    self.controller.gpib,
-                    f"devices/{self.controller.gpib_config.selected_tec}/info/tec_temp_meas")
+            self.wait_for_tec(T, sweep.tol)
+            self.controller.buffer_manager.temp_meas_last = self.controller.util.iac_get(
+                self.controller.gpib,
+                f"devices/{self.controller.gpib_config.selected_tec}/info/tec_temp_meas")
                 
             self.controller.dev_conf.file.temp_suffix = str(self.temp_suffix(T))
 

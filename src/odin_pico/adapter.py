@@ -18,13 +18,10 @@ class PicoAdapter(ApiAdapter):
         """Initialise the PicoAdapter Object."""
         super(PicoAdapter, self).__init__(**kwargs)
 
-        update_loop = True
+        update_loop = self.options.get("background_task_enable", True)
         data_output_path = self.options.get("data_output_path", "/tmp/")
-        max_caps = int(self.options.get("max_caps", 100000000))
-        simulate = bool(int(self.options.get("simulate", False)))
 
-        logging.debug(f"Simulate set to : {simulate}")
-        self.pico_controller = PicoController(update_loop, data_output_path, max_caps, simulate)
+        self.pico_controller = PicoController(update_loop, data_output_path)
    
     def initialize(self, adapters):
         """Initialize the adapter after it has been loaded."""
