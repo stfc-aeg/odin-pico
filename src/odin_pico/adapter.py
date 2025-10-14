@@ -18,7 +18,7 @@ class PicoAdapter(ApiAdapter):
         """Initialise the PicoAdapter Object."""
         super(PicoAdapter, self).__init__(**kwargs)
 
-        update_loop = True
+        update_loop = self.options.get("background_task_enable", True)
         data_output_path = self.options.get("data_output_path", "/tmp/")
 
         self.pico_controller = PicoController(update_loop, data_output_path)
