@@ -23,7 +23,7 @@ class PicoDevice:
     """Class that communicates with the scope to collect data."""
 
     def __init__(
-        self, max_samples, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
+        self, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
         buffer_manager=BufferManager(), analysis=PicoAnalysis(),
         file_writer=FileWriter()
     ):
@@ -34,7 +34,6 @@ class PicoDevice:
         self.buffer_manager = buffer_manager
         self.file_writer = file_writer
         self.analysis = analysis
-        self.max_samples = max_samples
         
         self.channels = [
             getattr(self.dev_conf, f"channel_{name}")
@@ -221,8 +220,7 @@ class PicoDevice:
             return True
 
     def run_block(self):
-        """Complete a PicoScope capture run using the rap
-        
+        """Complete a PicoScope capture run using the rapid block functions        
 
         Responsible for telling the picoscope how much data to collect and
         when to collect it, retrives that data into local buffers once
@@ -512,7 +510,6 @@ class PicoDevice:
         """Query PicoScope to check how many traces have been captured."""
         caps = ctypes.c_uint32(0)
         ps.ps5000aGetNoOfCaptures(self.dev_conf.mode.handle, ctypes.byref(caps))
-        #logging.debug(f"Got {caps}: captures")
         self.seg_caps = caps.value
         self.dev_conf.capture_run.live_cap_comp = (
             self.dev_conf.capture_run.caps_comp + caps.value
@@ -528,7 +525,7 @@ class PicoDevice:
         if active_chans == 0:
             active_chans = 1
 
-        total_caps = (self.max_samples / active_chans)
+        total_caps = (self.util.max_samples(self.dev_conf.mode.resolution) / active_chans)
         total_samples = self.dev_conf.capture.pre_trig_samples + (
             self.dev_conf.capture.post_trig_samples)
         self.rec_caps = int(round((total_caps / total_samples), 0))

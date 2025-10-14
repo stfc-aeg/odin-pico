@@ -29,11 +29,10 @@ class PicoController:
     """Class which holds parameter trees and manages the PicoScope capture process."""
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
-    def __init__(self, loop, path, max_caps, simulate):
+    def __init__(self, loop, path):
         """Initialise the PicoController Class."""
         # Threading lock and control variables
         self.update_loop_active = loop
-        self.simulate = simulate
 
         # Objects for handling configuration, status and utilities
         self.dev_conf = DeviceConfig()
@@ -49,7 +48,7 @@ class PicoController:
         self.analysis = PicoAnalysis(
             self.dev_conf, self.buffer_manager, self.pico_status
         )
-        self.pico = PicoDevice(max_caps, self.dev_conf, self.pico_status,
+        self.pico = PicoDevice(self.dev_conf, self.pico_status,
                                self.buffer_manager, self.analysis, self.file_writer)
         
         # Initialise parameter tree to None, is built in initialize_adapters with access to other adapters
