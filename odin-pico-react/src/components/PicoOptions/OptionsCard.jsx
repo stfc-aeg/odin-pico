@@ -1,5 +1,3 @@
-import UICard from '../utils/UICard';
-
 import InfoBar from './InfoBar';
 
 import ChannelSetup from './Setup/ChannelSetup';
@@ -51,7 +49,7 @@ const OptionsCard = ({ pico_endpoint, activeTab }) => {
       <div className="tab-content p-3">
 
       <Alert variant="light" className="border d-flex flex-wrap align-items-center gap-2 py-2 mb-2">
-        <strong className="me-2">Status:</strong>
+        <strong className="me-2">Status</strong>
         <InfoBar pico_endpoint={pico_endpoint} />
       </Alert>
 

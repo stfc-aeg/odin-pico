@@ -18,7 +18,7 @@ const GpibControl = ({ pico_endpoint, EndpointSelect, EndpointToggleSwitch, capt
   return (
     <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
       <Card.Header
-        className="px-3 py-2 border-bottom"
+        className="px-3 py-2 border-bottom fw-semibold"
         style={{ fontSize: '0.85rem', backgroundColor: '#f5f5f5' }}
       >
         Control

@@ -19,7 +19,6 @@ const channelColours = {
 const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [phaCounts, setPhaCounts] = useState(undefined);
-  const [deviceSettings, setDeviceSettings] = useState(undefined);
   const [phaActiveChannels, setPhaActiveChannels] = useState(undefined);
   const [lowerRange, setLowerRange] = useState(0);
   const [upperRange, setUpperRange] = useState(0);
@@ -28,43 +27,54 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
   const toggle_play = () => setIsPlaying(prev => !prev);
 
   useEffect(() => {
-    if (isPlaying) {
-      const data = pico_endpoint?.data?.device?.live_view?.pha_counts;
-      const settings = pico_endpoint?.data?.device?.settings;
-      const activeChannels = pico_endpoint?.data?.device?.live_view?.pha_active_channels;
-      const low = pico_endpoint?.data?.device?.settings?.pha?.lower_range;
-      const up = pico_endpoint?.data?.device?.settings?.pha?.upper_range;
-      const edges = pico_endpoint?.data?.device?.live_view?.pha_bin_edges;
+    if (!isPlaying) return;
 
-      setPhaCounts(data);
-      setDeviceSettings(settings);
-      setPhaActiveChannels(activeChannels);
-      setLowerRange(low);
-      setUpperRange(up);
-      setBinEdges(edges);
-    }
+    const data = pico_endpoint?.data?.device?.live_view?.pha_counts;
+    const activeChannels = pico_endpoint?.data?.device?.live_view?.pha_active_channels;
+    const low = pico_endpoint?.data?.device?.settings?.pha?.lower_range;
+    const up = pico_endpoint?.data?.device?.settings?.pha?.upper_range;
+    const edges = pico_endpoint?.data?.device?.live_view?.pha_bin_edges;
+
+    setPhaCounts(data);
+    setPhaActiveChannels(activeChannels);
+    setLowerRange(Number.isFinite(low) ? low : 0);
+    setUpperRange(Number.isFinite(up) ? up : 0);
+    setBinEdges(Array.isArray(edges) ? edges : []);
   }, [isPlaying, pico_endpoint.updateFlag]);
 
-  if (phaCounts === undefined) {
+  if (!phaCounts) {
     return <div>Loading live data...</div>;
   }
 
-  const prepared_data = phaActiveChannels.map((channel_idx) => {
-    const y_array = phaCounts[channel_idx];
-    const x_array = binEdges;
-    const found = sourceOptions.find(opt => opt.value === channel_idx);
-    const channel_name = found ? found.label : `Channel ${channel_idx}`;
-    return {
-      x: x_array,
-      y: y_array,
-      name: channel_name,
-      line: { color: channelColours[channel_name] },
-    };
-  });
+  const channels = ['a', 'b', 'c', 'd'];
+
+  const safeActive = Array.isArray(phaActiveChannels) ? phaActiveChannels : [];
+  const prepared_data = safeActive
+    .map((channel_idx) => {
+      const y_array = Array.isArray(phaCounts[channel_idx]) ? phaCounts[channel_idx] : null;
+      const x_array = Array.isArray(binEdges) ? binEdges : null;
+      if (!y_array || !x_array) return null;
+
+      const found = sourceOptions.find(opt => opt.value === channel_idx);
+      const channel_name = found ? found.label : `Channel ${channel_idx}`;
+      return {
+        x: x_array,
+        y: y_array,
+        name: channel_name,
+        mode: 'lines',
+        line: { color: channelColours[channel_name] || undefined },
+      };
+    })
+    .filter(Boolean);
+
+  // Ensure OdinGraph always receives a valid array for data
+  const graphData = prepared_data.length
+    ? prepared_data
+    : [{ x: [], y: [], name: 'No data', mode: 'lines' }];
 
   const layout = {
     uirevision: 'true',
-    showlegend: phaActiveChannels.length === 0 ? false : true,
+    showlegend: prepared_data.length > 0,
     xaxis: { title: { text: 'Energy Level' }, range: [lowerRange, upperRange] },
     yaxis: { title: { text: 'Counts' } },
     margin: { t: 40, b: 40, l: 50, r: 50 },
@@ -74,12 +84,10 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     pico_endpoint.put(true, 'device/commands/clear_pha');
   };
 
-  const channels = ['a', 'b', 'c', 'd'];
-
   return (
     <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
       <Card.Header
-        className="px-3 py-2 border-bottom"
+        className="px-3 py-2 border-bottom fw-semibold"
         style={{ fontSize: '0.85rem', backgroundColor: '#f5f5f5' }}
       >
         <>
@@ -105,12 +113,7 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
             </div>
 
             <div className="mx-auto">
-              <Button
-                id="clear_pha_btn"
-                size="sm"
-                variant="primary"
-                onClick={handleClearPHA}
-              >
+              <Button id="clear_pha_btn" size="sm" variant="primary" onClick={handleClearPHA}>
                 Clear Data
               </Button>
             </div>
@@ -131,7 +134,7 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
       </Card.Header>
 
       <Card.Body className="p-0">
-        <OdinGraph data={prepared_data} layout={layout} style={{ height: '300px' }} />
+        <OdinGraph data={graphData} layout={layout} style={{ height: '300px' }} />
       </Card.Body>
     </Card>
   );

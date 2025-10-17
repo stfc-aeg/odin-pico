@@ -48,7 +48,7 @@ const ChannelSetup = ({
   return (
       <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
       <Card.Title
-        className="px-3 py-2 border-bottom m-0"
+        className="px-3 py-2 border-bottom m-0 fw-semibold"
         style={{ 
           fontSize: '0.85rem', 
           backgroundColor: '#f5f5f5' 
@@ -60,7 +60,7 @@ const ChannelSetup = ({
           <Col md={2} className="align-top"><label>Coupling</label></Col>
           <Col md={2} className="align-top"><label>Range</label></Col>
           <Col md={2} className="align-top"><label>Offset (%)</label></Col>
-          <Col md={4} className="text-center"><label>Dataset Toggle</label></Col>
+          <Col md={4} className="text-center"><label>Output</label></Col>
         </Row>
         {channelStates.map(({ id, label, active, coupling, range, offset }) => {
           const rowClass =
@@ -125,8 +125,8 @@ const ChannelSetup = ({
                   />
                 </InputGroup>
               </Col>
-              <Col md={2} className="d-flex align-items-center gap-2 py-2">
-                <label>Channels</label>
+              <Col md={2} className="d-flex align-items-center gap-1 py-2">
+                <label>Waveform</label>
                 <EndpointToggleSwitch
                   id={`channel-${id}-waveform`}
                   endpoint={pico_endpoint}
