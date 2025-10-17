@@ -27,7 +27,7 @@ export function toSiUnit(num) {
     testnum = numin / Math.pow(10, pow[i]);
   }
 
-  const formatted = testnum.toFixed(2) + ' ' + siUnit[i];
+  const formatted = testnum.toFixed(0) + siUnit[i];
   return isNegative ? '-' + formatted : formatted;
 }
 

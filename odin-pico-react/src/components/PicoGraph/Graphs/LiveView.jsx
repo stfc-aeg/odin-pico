@@ -1,6 +1,6 @@
 import { OdinGraph } from 'odin-react';
 import React, {useState, useEffect} from 'react';
-import UICard from '../../utils/UICard';
+import { Card, Button } from 'react-bootstrap';
 
 const sourceOptions = [
   { value: 0, label: 'Channel A' },
@@ -160,53 +160,54 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
 
     return (
         <>
-            <UICard
-                headerContent={
-                    <>
-                        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></link>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            Live View
-                            <div>
-                                <span style={{ marginRight: '18px', marginLeft: '80px' }}>Channels:</span>
-                                {channels.map((ch) => (
-                                    <React.Fragment key={ch}>
-                                        <EndpointCheckbox
-                                            id={`channel-${ch}-liveview`}
-                                            endpoint={pico_endpoint}
-                                            fullpath={`device/settings/channels/${ch}/live_view`}
-                                            disabled={!canRun[ch]}
-                                        />
-                                        <span style={{ margin: '0 8px' }}>{ch.toUpperCase()}</span>
-                                    </React.Fragment>
-                                ))}
-                            </div>
-
-                            <button
-                                id="p_p_button_lv"
-                                className="icon-button"
-                                onClick={toggle_play}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    marginLeft: 'auto',
-                                }}
-                            >
-                                <span className="material-icons">{isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}</span>
-                            </button>
-                        </div>
-                    </>
-                }
+            <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
+            <Card.Header
+                className="px-3 py-2 border-bottom"
+                style={{ fontSize: '0.85rem', backgroundColor: '#f5f5f5' }}
             >
-            <OdinGraph
-                data={prepared_data}
-                layout={layout}
-                style={{ height: '300px' }}
-            />
-            </UICard>
+                <>
+                <link
+                    href="https://fonts.googleapis.com/icon?family=Material+Icons"
+                    rel="stylesheet"
+                />
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    Live View
+                    <div>
+                    <span style={{ marginRight: '18px', marginLeft: '80px' }}>Channels:</span>
+                    {channels.map((ch) => (
+                        <React.Fragment key={ch}>
+                        <EndpointCheckbox
+                            id={`channel-${ch}-liveview`}
+                            endpoint={pico_endpoint}
+                            fullpath={`device/settings/channels/${ch}/live_view`}
+                            disabled={!canRun[ch]}
+                        />
+                        <span style={{ margin: '0 8px' }}>{ch.toUpperCase()}</span>
+                        </React.Fragment>
+                    ))}
+                    </div>
+
+                    <Button
+                        id="p_p_button_pha"
+                        variant="link"
+                        className="ms-auto p-0"
+                        onClick={toggle_play}
+                        aria-label={isPlaying ? 'Pause' : 'Play'}
+                        >
+                    <span className="material-icons">
+                        {isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}
+                    </span>
+                    </Button>
+                </div>
+                </>
+            </Card.Header>
+
+            <Card.Body className="p-0">
+                <OdinGraph data={prepared_data} layout={layout} style={{ height: '300px' }} />
+            </Card.Body>
+            </Card>
         </>
     )
 }
-
 
 export default LiveView

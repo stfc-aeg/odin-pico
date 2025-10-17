@@ -7,6 +7,9 @@ import GeneralSetup from './Setup/GeneralSetup';
 import TriggerSetup from './Setup/TriggerSetup';
 import PHASettings from './Setup/PHASettings';
 
+import Form from 'react-bootstrap/Form';
+import { Alert } from 'react-bootstrap';
+
 import CaptureSettings from './Capture/CaptureSettings';
 import CaptureStatus from './Capture/CaptureStatus';
 
@@ -17,15 +20,9 @@ import GpibTempSweep from './GPIB/GpibTempSweep';
 
 import { WithEndpoint } from 'odin-react';
 
-const EndpointInput = WithEndpoint((props) => (
-  <input {...props} className={`form small-text ${props.className || ''}`} />
-));
+const EndpointInput = WithEndpoint(Form.Control);
 
-const EndpointSelect = WithEndpoint((props) => (
-  <select {...props} className={`form ${props.className || ''}`}>
-    {props.children}
-  </select>
-));
+const EndpointSelect = WithEndpoint(Form.Select);
 
 const ToggleSwitch = ({ className = '', ...props }) => (
   <label className={`switch ${className}`}>
@@ -53,11 +50,10 @@ const OptionsCard = ({ pico_endpoint, activeTab }) => {
     <div className="fixed-width" id="left-panel">
       <div className="tab-content p-3">
 
-        <UICard title="Status" noTopMargin>
-          <div style={{ padding: '10px' }}>
-            <InfoBar pico_endpoint={pico_endpoint} />
-          </div>
-        </UICard>
+      <Alert variant="light" className="border d-flex flex-wrap align-items-center gap-2 py-2 mb-2">
+        <strong className="me-2">Status:</strong>
+        <InfoBar pico_endpoint={pico_endpoint} />
+      </Alert>
 
         {activeTab === 'setup' && (
           <>
