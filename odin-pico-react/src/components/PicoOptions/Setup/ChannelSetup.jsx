@@ -1,4 +1,4 @@
-import UICard from '../../utils/UICard';
+import { Row, Col, InputGroup, Card } from 'react-bootstrap';
 import { getChannelRowClass } from '../../utils/utils';
 
 const couplingOptions = [
@@ -20,7 +20,14 @@ const rangeOptions = [
   { value: '10', label: '20 V' },
 ];
 
-const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect, EndpointToggleSwitch, captureRunning }) => {
+const ChannelSetup = ({
+  anyActive,
+  pico_endpoint,
+  EndpointInput,
+  EndpointSelect,
+  EndpointToggleSwitch,
+  captureRunning
+}) => {
   const channelObj = pico_endpoint?.data?.device?.settings?.channels ?? {};
   const channelStates = Object.entries(channelObj).map(([id, data]) => ({
     id,
@@ -30,49 +37,57 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
     range: String(data.range),
     offset: String(data.offset),
   }));
+
   const activeChannels = channelStates.filter(ch => ch.active);
-  const allOffsetsInvalid = activeChannels.length > 0 && activeChannels.every(
-    ch => Number(ch.offset) > 100 || Number(ch.offset) < -100
-  );
+  const allOffsetsInvalid =
+    activeChannels.length > 0 &&
+    activeChannels.every(ch => Number(ch.offset) > 100 || Number(ch.offset) < -100);
+
+  const headerRowClass = allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true);
 
   return (
-    <div className="col-sm-12" id="chan-6-div">
-      <UICard title="Channel Setup">
-        <table className="table" style={{ marginBottom: '0px' }}>
-          <thead>
-            <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
-              <th rowSpan="2" className="align-top" style={{ width: '10%' }}>Enable</th>
-              <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Coupling</th>
-              <th rowSpan="2" className="align-top" style={{ width: '8%' }}>Range</th>
-              <th rowSpan="2" className="align-top" style={{ width: '2%' }}>Offset (%)</th>
-              <th colSpan="2">Output</th>
-            </tr>
-            <tr className={allOffsetsInvalid ? 'bg-red' : getChannelRowClass(true, anyActive, true)} id="chan-row">
-              <th style={{ fontSize: '12px' }}>Waveform</th>
-              <th style={{ fontSize: '12px' }}>PHA</th>
-            </tr>
-          </thead>
-          <tbody>
-            {channelStates.map(({ id, label, active, coupling, range, offset }, i) => (
-              <tr
-                key={id}
-                className={(Number(offset) > 100 || Number(offset) < -100) ? 'bg-red' : getChannelRowClass(active, anyActive, true)}
-                id={`channel-${id}-set`}
-              >
-                <th className="align-middle">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <label htmlFor={`channel-${id}-active`}>
-                      {label}&nbsp;&nbsp;&nbsp;&nbsp;
-                    </label>
-                    <EndpointToggleSwitch
-                      id={`channel-${id}-active`}
-                      endpoint={pico_endpoint}
-                      fullpath={`device/settings/channels/${id}/active`}
-                      disabled={captureRunning}
-                    />
-                  </div>
-                </th>
-                <th>
+      <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
+      <Card.Title
+        className="px-3 py-2 border-bottom m-0 fw-semibold"
+        style={{ 
+          fontSize: '0.85rem', 
+          backgroundColor: '#f5f5f5' 
+        }}
+        >Channel Setup
+        </Card.Title>
+        <Row className={headerRowClass} id="chan-row" style={{ margin: 0, padding: '0.5rem 0' }}>
+          <Col md={2} className="text-center"><label>Enable</label></Col>
+          <Col md={2} className="align-top"><label>Coupling</label></Col>
+          <Col md={2} className="align-top"><label>Range</label></Col>
+          <Col md={2} className="align-top"><label>Offset (%)</label></Col>
+          <Col md={4} className="text-center"><label>Output</label></Col>
+        </Row>
+        {channelStates.map(({ id, label, active, coupling, range, offset }) => {
+          const rowClass =
+            Number(offset) > 100 || Number(offset) < -100
+              ? 'bg-red'
+              : getChannelRowClass(active, anyActive, true);
+
+          return (
+            <Row key={id} id={`channel-${id}-set`} className={rowClass}>
+              <Col md={2} className="d-flex justify-content-center align-items-center py-2">
+                <div 
+                  className="d-flex align-items-center justify-content-center gap-2"
+                  style={{ minWidth: 'fit-content' }}
+                >
+                  <label className="mb-0 text-nowrap text-center" style={{ minWidth: '60px' }}>
+                    {label}
+                  </label>
+                  <EndpointToggleSwitch
+                    id={`channel-${id}-active`}
+                    endpoint={pico_endpoint}
+                    fullpath={`device/settings/channels/${id}/active`}
+                    disabled={captureRunning}
+                  />
+                </div>
+              </Col>
+              <Col md={2} className="py-2">
+                <InputGroup size="sm" className="mb-2">
                   <EndpointSelect
                     id={`channel-${id}-coupl`}
                     endpoint={pico_endpoint}
@@ -80,13 +95,13 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     disabled={captureRunning}
                   >
                     {couplingOptions.map(({ value, label }) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
+                      <option key={value} value={value}>{label}</option>
                     ))}
                   </EndpointSelect>
-                </th>
-                <th>
+                </InputGroup>
+              </Col>
+              <Col md={2} className="py-2">
+                <InputGroup size="sm" className="mb-2">
                   <EndpointSelect
                     id={`channel-${id}-range`}
                     endpoint={pico_endpoint}
@@ -94,13 +109,13 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     disabled={captureRunning}
                   >
                     {rangeOptions.map(({ value, label }) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
+                      <option key={value} value={value}>{label}</option>
                     ))}
                   </EndpointSelect>
-                </th>
-                <th>
+                </InputGroup>
+              </Col>
+              <Col md={2} className="py-2">
+                <InputGroup size="sm" className="mb-2">
                   <EndpointInput
                     id={`channel-${id}-offset`}
                     endpoint={pico_endpoint}
@@ -108,31 +123,32 @@ const ChannelSetup = ({ anyActive, pico_endpoint, EndpointInput, EndpointSelect,
                     type="number"
                     disabled={captureRunning}
                   />
-                </th>
-                <th className="align-middle">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <EndpointToggleSwitch
-                      endpoint={pico_endpoint}
-                      fullpath={`device/settings/channels/${id}/waveformsToggled`}
-                      disabled={captureRunning}
-                    />
-                  </div>
-                </th>
-                <th className="align-middle">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <EndpointToggleSwitch
-                      endpoint={pico_endpoint}
-                      fullpath={`device/settings/channels/${id}/PHAToggled`}
-                      disabled={captureRunning}
-                    />
-                  </div>
-                </th>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </UICard>
-    </div>
+                </InputGroup>
+              </Col>
+              <Col md={2} className="d-flex align-items-center gap-1 py-2">
+                <label>Waveform</label>
+                <EndpointToggleSwitch
+                  id={`channel-${id}-waveform`}
+                  endpoint={pico_endpoint}
+                  fullpath={`device/settings/channels/${id}/waveformsToggled`}
+                  disabled={captureRunning}
+                />
+              </Col>
+              <Col md={2} className="d-flex justify-content-center align-items-center gap-2 py-2">
+                <label>
+                  PHA
+                </label>
+                <EndpointToggleSwitch
+                  id={`channel-${id}-pha`}
+                  endpoint={pico_endpoint}
+                  fullpath={`device/settings/channels/${id}/PHAToggled`}
+                  disabled={captureRunning}
+                />
+              </Col>
+            </Row>
+          );
+        })}
+      </Card>
   );
 };
 

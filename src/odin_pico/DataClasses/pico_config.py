@@ -141,8 +141,8 @@ class ChannelConfig:
     _coupling: int = 1
     _range: int = 0
     pha_active: bool = False
-    PHAToggled: bool = False
-    waveformsToggled: bool = False
+    PHAToggled: bool = True
+    waveformsToggled: bool = True
 
     @staticmethod
     def default_channel_configs():
