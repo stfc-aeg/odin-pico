@@ -20,6 +20,7 @@ class PicoTreeBuilder:
         self.buffer_manager = controller.buffer_manager
         self.pico = controller.pico
         self.gpib_config = controller.gpib_config  # Keep this for live_view references
+        self.gpio_config = controller.gpio_config
         
     def create_adapter_status_tree(self):
         """Create the adapter status parameter tree."""
@@ -252,6 +253,15 @@ class PicoTreeBuilder:
             "current_capture": (lambda: self.controller.dev_conf.capture_run.current_capture, None),
         })
 
+    def create_gpio_tree(self):
+        return ParameterTree({
+            "capturing": (lambda: self.gpio_config.capture, None),
+            "capture_run": (lambda: self.gpio_config.capture_run, self.gpio_config.set_capture_run),
+            "enabled": (lambda: self.gpio_config.enabled, None),
+            "gpio_captures": (lambda: self.gpio_config.gpio_captures, None),
+            "missed_triggers": (lambda: self.gpio_config.missed_triggers, None)
+        })
+
     def build_device_tree(self):
         """Build the complete PicoScope device parameter tree structure."""
         # Create all component trees
@@ -259,6 +269,7 @@ class PicoTreeBuilder:
         pico_commands = self.create_commands_tree()
         pico_flags = self.create_flags_tree()
         live_view = self.create_live_view_tree()
+        gpio_tree = self.create_gpio_tree()
         
         # Create settings tree
         pico_settings = ParameterTree({
@@ -277,4 +288,5 @@ class PicoTreeBuilder:
             "settings": pico_settings,
             "flags": pico_flags,
             "live_view": live_view,
+            "gpio": gpio_tree 
         })

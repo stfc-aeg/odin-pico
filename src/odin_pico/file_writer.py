@@ -31,9 +31,11 @@ class FileWriter:
         self.file_error = False
 
     def check_file_name(self) -> bool:
+        print("CHECKING FILE NAME")
         """Check file name settings are valid, return True when a new file can safely be created."""
 
         if self.dev_conf.file.file_name == "":
+            print("EMPTY FILE NAME")
             return False
 
         # ensure ".hdf5" extension
@@ -63,6 +65,7 @@ class FileWriter:
         return True
     
     def _build_filename(self):
+        print("BUILDING FILENAME")
         """
         create <base><temp><repeat>.hdf5
         """
@@ -72,8 +75,11 @@ class FileWriter:
 
         if self.dev_conf.file.temp_suffix:
             base += self.dev_conf.file.temp_suffix
+        if self.dev_conf.file.trig_suffix:
+            base += self.dev_conf.file.trig_suffix
         if self.dev_conf.file.repeat_suffix:
             base += self.dev_conf.file.repeat_suffix
+        print("BASE", base)
         return base + ".hdf5"
 
     def write_hdf5(self, write_accumulated: bool = False):

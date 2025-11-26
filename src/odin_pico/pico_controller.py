@@ -14,6 +14,7 @@ from odin_pico.analysis import PicoAnalysis
 from odin_pico.buffer_manager import BufferManager
 from odin_pico.DataClasses.pico_config import DeviceConfig
 from odin_pico.DataClasses.gpib_config import GPIBConfig
+from odin_pico.DataClasses.gpio_config import GPIOConfig
 from odin_pico.DataClasses.pico_status import DeviceStatus
 
 from odin_pico.file_writer import FileWriter
@@ -31,12 +32,14 @@ class PicoController:
 
     def __init__(self, loop, path):
         """Initialise the PicoController Class."""
+
         # Threading lock and control variables
         self.update_loop_active = loop
 
         # Objects for handling configuration, status and utilities
         self.dev_conf = DeviceConfig()
         self.gpib_config = GPIBConfig()
+        self.gpio_config = GPIOConfig()
         self.pico_status = DeviceStatus()
         self.util = PicoUtil()
         self.gpib_util = GPIBUtil(self)
@@ -67,6 +70,18 @@ class PicoController:
             self.gpib = adapters['gpib'] if adapters else None
         except:
             self.gpib = None
+
+        try:
+            self.comms = adapters['triggering'] if adapters else None
+            self.trigger_controller = self.comms.get_controller()
+            self.trigger_controller.register_event(self.trigger_received)
+            self.gpio_config.reply_method = self.trigger_controller.get_reply_method()
+            self.gpio_config.set_active = self.trigger_controller.get_active_method()
+            self.gpio_config.enabled = True
+        except Exception as e:
+            print("no comms", e)
+            self.comms = None
+        
         try:
             if self.gpib:
                 devices = self.util.iac_get(self.gpib, "devices")
@@ -91,8 +106,26 @@ class PicoController:
                 "device": device_tree,
                 "gpib": gpib_tree
             })
+
+
         except Exception as e:
             logging.error(e)
+
+    def trigger_received(self, triggers, identity):
+
+        # Do some logic here to check capture not running and also check events not being missed
+
+        logging.debug("Got trigger event {}".format(triggers))
+
+        if self.gpio_config.capture:
+            logging.debug("Capture already in progress!")
+            self.gpio_config.missed_triggers += 1
+            return
+
+        self.gpio_config.gpio_captures += 1
+        self.dev_conf.file.trig_suffix = f"_{self.gpio_config.gpio_captures:04d}"
+        self.gpio_config.identity = identity
+        self.gpio_config.capture = True
 
     def run_capture(self):
         """Tell the picoscope to collect and return data."""
@@ -117,7 +150,8 @@ class PicoController:
             self.ctrl_util.check_res()
 
             # Check if user has requested a capture
-            if self.pico_status.flags.user_capture:
+            if self.pico_status.flags.user_capture | self.gpio_config.capture:
+                print("USER CAPTURE")
                 if self.file_writer.check_file_name():
 
                     self.file_writer.file_error = False
@@ -186,6 +220,13 @@ class PicoController:
                     self.pico_status.flags.abort_cap = False
                     self.dev_conf.file.repeat_suffix = None
 
+                    if self.gpio_config.capture:
+                        if self.gpio_config.gpio_captures == self.gpio_config.capture_run:
+                            self.gpio_config.set_active(False)
+                            self.gpio_config.gpio_captures = 0
+                        self.gpio_config.capture = False
+                        self.gpio_config.reply_method(self.gpio_config.identity)
+
                 else:
                     self.file_writer.file_error = True
                     self.pico_status.flags.system_state = (
@@ -225,6 +266,7 @@ class PicoController:
         if (self.pico.run_setup() if save_file else self.pico.run_setup(captures)):
             while self.dev_conf.capture_run.caps_comp < captures:
                 if not self.pico_status.flags.abort_cap:
+
                     self.ctrl_util.set_capture_run_length()
                     self.capture_run()
                     self.dev_conf.capture_run.caps_remaining -= (
