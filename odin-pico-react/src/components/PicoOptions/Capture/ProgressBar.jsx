@@ -9,6 +9,20 @@ const ProgressBar = ({ response }) => {
     useEffect(() => {
         if (!response) return;
 
+        if (response.device?.gpio?.listening === true) {
+            const capturesDone = response.device.gpio.gpio_captures || 0;
+            const capturesTarget = response.device.gpio.capture_run || 1;
+
+
+            const percent = Math.min(100, (capturesDone / capturesTarget) * 100);
+
+
+            setProgress(percent);
+            setRepeat(`${capturesDone}/${capturesTarget}`);
+            setLabel(`GPIO Capture Progress`);
+            return;
+        }
+
         if (response.device?.commands?.run_user_capture === true) {
             // Progress calculation logic
             const isRepeatingEnabled = response.device.settings.capture.capture_repeat === true;

@@ -124,8 +124,8 @@ class PicoController:
             self.gpio_config.identity = identity
             self.pico_status.flags.system_state = f"Listening. Captures completed: {self.gpio_config.gpio_captures}"
             self.gpio_config.capture = True
-        else:
-            self.gpio_config.missed_triggers += 1
+        # else:
+        #     self.gpio_config.missed_triggers += 1
 
     def run_capture(self):
         """Tell the picoscope to collect and return data."""
@@ -323,6 +323,8 @@ class PicoController:
         self.gpio_config.listening = value
         if value:
             self.pico_status.flags.system_state = "Listening for triggers"
+            self.gpio_config.missed_triggers = 0
+
 
     @run_on_executor
     def _bg_set_and_wait(self, T: float):
