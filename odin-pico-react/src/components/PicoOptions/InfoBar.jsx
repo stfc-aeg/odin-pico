@@ -61,6 +61,10 @@ const InfoBar = ({ pico_endpoint }) => {
     if (statusText.startsWith("Setting TEC")) {
       return "warning";
     }
+    if(statusText.startsWith("Listening") || statusText.startsWith("Completing")) {
+      return "success"
+    }
+    
     
     // Default to yellow for any other message
     return "warning";

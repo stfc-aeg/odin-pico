@@ -255,10 +255,12 @@ class PicoTreeBuilder:
 
     def create_gpio_tree(self):
         return ParameterTree({
+            "active": (lambda: self.gpio_config.active, self.gpio_config.set_active),
             "capturing": (lambda: self.gpio_config.capture, None),
             "capture_run": (lambda: self.gpio_config.capture_run, self.gpio_config.set_capture_run),
             "enabled": (lambda: self.gpio_config.enabled, None),
             "gpio_captures": (lambda: self.gpio_config.gpio_captures, None),
+            "listening": (lambda: self.gpio_config.listening, self.controller.set_listening),
             "missed_triggers": (lambda: self.gpio_config.missed_triggers, None)
         })
 

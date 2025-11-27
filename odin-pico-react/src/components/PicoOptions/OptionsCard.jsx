@@ -16,8 +16,6 @@ import GpibTecSet from './GPIB/GpibTecSet';
 import GpibTecStatus from './GPIB/GpibTecStatus';
 import GpibTempSweep from './GPIB/GpibTempSweep';
 
-import GpioTriggering from './GPIO/GpioTriggering'
-
 import { WithEndpoint } from 'odin-react';
 
 const EndpointInput = WithEndpoint(Form.Control);
@@ -32,10 +30,12 @@ const ToggleSwitch = ({ className = '', ...props }) => (
 );
 const EndpointToggleSwitch = WithEndpoint(ToggleSwitch);
 
-const OptionsCard = ({ pico_endpoint, gpio_endpoint, activeTab }) => {
+const OptionsCard = ({ pico_endpoint, activeTab }) => {
 
   const channels = pico_endpoint?.data?.device?.settings?.channels;
-  const captureRunning = pico_endpoint?.data?.device?.commands?.run_user_capture;
+  const captureRunning = 
+    pico_endpoint?.data?.device?.commands?.run_user_capture ||
+    pico_endpoint?.data?.device?.gpio?.listening;
   const temperatureSweepActive = pico_endpoint?.data?.gpib?.temp_sweep?.active;
 
   let anyChannelActive;
@@ -91,19 +91,12 @@ const OptionsCard = ({ pico_endpoint, gpio_endpoint, activeTab }) => {
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               captureRunning={captureRunning}
+              EndpointToggleSwitch={EndpointToggleSwitch}
             />
             <CaptureStatus
               pico_endpoint={pico_endpoint}
               captureRunning={captureRunning}
             />
-            {gpio_endpoint && (
-              <GpioTriggering
-                pico_endpoint={pico_endpoint}
-                gpio_endpoint={gpio_endpoint}
-                EndpointToggleSwitch={EndpointToggleSwitch}
-                EndpointInput={EndpointInput}
-              />
-            )}
           </>
         )}
         {activeTab === 'gpib' && (

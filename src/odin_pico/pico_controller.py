@@ -52,7 +52,7 @@ class PicoController:
             self.dev_conf, self.buffer_manager, self.pico_status
         )
         self.pico = PicoDevice(self.dev_conf, self.pico_status,
-                               self.buffer_manager, self.analysis, self.file_writer)
+                               self.buffer_manager, self.analysis, self.file_writer, self.gpio_config)
         
         # Initialise parameter tree to None, is built in initialize_adapters with access to other adapters
         self.param_tree = None
@@ -76,10 +76,8 @@ class PicoController:
             self.trigger_controller = self.comms.get_controller()
             self.trigger_controller.register_event(self.trigger_received)
             self.gpio_config.reply_method = self.trigger_controller.get_reply_method()
-            self.gpio_config.set_active = self.trigger_controller.get_active_method()
             self.gpio_config.enabled = True
         except Exception as e:
-            print("no comms", e)
             self.comms = None
         
         try:
@@ -111,21 +109,23 @@ class PicoController:
         except Exception as e:
             logging.error(e)
 
-    def trigger_received(self, triggers, identity):
+    def trigger_received(self, identity):
 
         # Do some logic here to check capture not running and also check events not being missed
 
-        logging.debug("Got trigger event {}".format(triggers))
+        if self.gpio_config.listening:
+            if self.gpio_config.capture:
+                logging.debug("Capture already in progress!")
+                self.gpio_config.missed_triggers += 1
+                return
 
-        if self.gpio_config.capture:
-            logging.debug("Capture already in progress!")
+            self.gpio_config.gpio_captures += 1
+            self.dev_conf.file.trig_suffix = f"_{self.gpio_config.gpio_captures:04d}"
+            self.gpio_config.identity = identity
+            self.pico_status.flags.system_state = f"Listening. Captures completed: {self.gpio_config.gpio_captures}"
+            self.gpio_config.capture = True
+        else:
             self.gpio_config.missed_triggers += 1
-            return
-
-        self.gpio_config.gpio_captures += 1
-        self.dev_conf.file.trig_suffix = f"_{self.gpio_config.gpio_captures:04d}"
-        self.gpio_config.identity = identity
-        self.gpio_config.capture = True
 
     def run_capture(self):
         """Tell the picoscope to collect and return data."""
@@ -151,7 +151,6 @@ class PicoController:
 
             # Check if user has requested a capture
             if self.pico_status.flags.user_capture | self.gpio_config.capture:
-                print("USER CAPTURE")
                 if self.file_writer.check_file_name():
 
                     self.file_writer.file_error = False
@@ -222,10 +221,11 @@ class PicoController:
 
                     if self.gpio_config.capture:
                         if self.gpio_config.gpio_captures == self.gpio_config.capture_run:
-                            self.gpio_config.set_active(False)
+                            self.gpio_config.set_listening(False)
                             self.gpio_config.gpio_captures = 0
                         self.gpio_config.capture = False
                         self.gpio_config.reply_method(self.gpio_config.identity)
+                        self.pico_status.flags.system_state = f"Listening. Captures completed: {self.gpio_config.gpio_captures}"
 
                 else:
                     self.file_writer.file_error = True
@@ -235,7 +235,7 @@ class PicoController:
 
             # If user hasn't requested a capture, complete a LV capture run
             else:
-                if not self.file_writer.file_error:
+                if not self.file_writer.file_error and not self.gpio_config.listening:
                     self.pico_status.flags.system_state = "Collecting LV Data"
                 self.pico.calc_max_caps()
                 self.user_capture(False)
@@ -318,6 +318,11 @@ class PicoController:
         self.pico_status.flags.temp_reached = False
         self.pico_status.flags.system_state = f"Setting TEC {T:.2f} °C"
         self._bg_set_and_wait(T)
+
+    def set_listening(self, value):
+        self.gpio_config.listening = value
+        if value:
+            self.pico_status.flags.system_state = "Listening for triggers"
 
     @run_on_executor
     def _bg_set_and_wait(self, T: float):

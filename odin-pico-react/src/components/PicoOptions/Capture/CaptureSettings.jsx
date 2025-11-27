@@ -1,7 +1,7 @@
 import { Card, Container, Row, Col, ButtonGroup, ToggleButton, InputGroup } from 'react-bootstrap';
 import CaptureButton from './CaptureButton';
 
-const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
+const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, EndpointToggleSwitch }) => {
   const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify;
   const fileClass = fileValid ? 'bg-green' : 'bg-red';
 
@@ -89,6 +89,51 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                 captureRunning={captureRunning}
                 fileValid={fileValid}
               />
+            </Col>
+          </Row>
+          <Row className="g-3 align-items-left mt-1">
+            <Col md={4}>
+              <InputGroup size="sm" className="mb-2">
+                <InputGroup.Text>GPIO Triggering</InputGroup.Text>
+                <ButtonGroup size="sm" className="flex-grow-1">
+                  {[
+                    { name: 'Off', value: false },
+                    { name: 'On', value: true}
+                  ].map((radio, idx) => (
+                    <ToggleButton
+                      key={idx}
+                      type="radio"
+                      variant="outline-primary"
+                      name="gpioActive"
+                      value={radio.value.toString()}
+                      checked={pico_endpoint?.data?.device?.gpio?.active === radio.value}
+                      onClick={() =>
+                        pico_endpoint.put(radio.value, 'device/gpio/active')
+                      }
+                      disabled={captureRunning}
+                      className={
+                        pico_endpoint?.data?.device?.gpio?.active !== radio.value
+                          ? 'bg-white'
+                          : ''
+                      }
+                    >
+                      {radio.name}
+                    </ToggleButton>
+                  ))}
+                </ButtonGroup>
+              </InputGroup>         
+            </Col>
+            <Col md={4}>
+              <InputGroup size="sm" className="mb-2">
+                <InputGroup.Text>Triggers</InputGroup.Text>
+                <EndpointInput
+                id="gpio-capture-run"
+                endpoint={pico_endpoint}
+                fullpath="device/gpio/capture_run"
+                type="number"
+                disabled={captureRunning}
+                />
+              </InputGroup>
             </Col>
           </Row>
           <Row className="g-3 align-items-center mt-1">

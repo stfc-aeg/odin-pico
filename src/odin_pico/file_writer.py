@@ -65,7 +65,6 @@ class FileWriter:
         return True
     
     def _build_filename(self):
-        print("BUILDING FILENAME")
         """
         create <base><temp><repeat>.hdf5
         """
@@ -79,7 +78,6 @@ class FileWriter:
             base += self.dev_conf.file.trig_suffix
         if self.dev_conf.file.repeat_suffix:
             base += self.dev_conf.file.repeat_suffix
-        print("BASE", base)
         return base + ".hdf5"
 
     def write_hdf5(self, write_accumulated: bool = False):
