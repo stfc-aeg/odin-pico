@@ -111,21 +111,17 @@ class PicoController:
 
     def trigger_received(self, identity):
 
-        # Do some logic here to check capture not running and also check events not being missed
-
         if self.gpio_config.listening:
             if self.gpio_config.capture:
-                logging.debug("Capture already in progress!")
                 self.gpio_config.missed_triggers += 1
                 return
 
             self.gpio_config.gpio_captures += 1
             self.dev_conf.file.trig_suffix = f"_{self.gpio_config.gpio_captures:04d}"
             self.gpio_config.identity = identity
-            self.pico_status.flags.system_state = f"Listening. Captures completed: {self.gpio_config.gpio_captures}"
             self.gpio_config.capture = True
-        # else:
-        #     self.gpio_config.missed_triggers += 1
+        else:
+            self.gpio_config.unexpected_triggers += 1
 
     def run_capture(self):
         """Tell the picoscope to collect and return data."""
@@ -221,8 +217,9 @@ class PicoController:
 
                     if self.gpio_config.capture:
                         if self.gpio_config.gpio_captures == self.gpio_config.capture_run:
-                            self.gpio_config.set_listening(False)
+                            self.set_listening(False)
                             self.gpio_config.gpio_captures = 0
+                            self.dev_conf.file.trig_suffix = ""
                         self.gpio_config.capture = False
                         self.gpio_config.reply_method(self.gpio_config.identity)
                         self.pico_status.flags.system_state = f"Listening. Captures completed: {self.gpio_config.gpio_captures}"
@@ -324,6 +321,9 @@ class PicoController:
         if value:
             self.pico_status.flags.system_state = "Listening for triggers"
             self.gpio_config.missed_triggers = 0
+            self.gpio_config.unexpected_triggers = 0
+        else:
+            self.gpio_config.gpio_captures = 0
 
 
     @run_on_executor

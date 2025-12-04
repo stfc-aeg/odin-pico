@@ -95,6 +95,7 @@ const OptionsCard = ({ pico_endpoint, activeTab }) => {
             />
             <CaptureStatus
               pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
               captureRunning={captureRunning}
             />
           </>

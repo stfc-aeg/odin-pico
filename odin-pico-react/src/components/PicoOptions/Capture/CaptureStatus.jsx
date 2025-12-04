@@ -1,13 +1,12 @@
-import { Card, Container, Row, Col } from 'react-bootstrap';
+import { Card, Container, Row, Col, InputGroup } from 'react-bootstrap';
 import ProgressBar from './ProgressBar';
 
-const CaptureStatus = ({ pico_endpoint, captureRunning }) => {
+const CaptureStatus = ({ pico_endpoint, EndpointInput, captureRunning }) => {
   const progressClass = captureRunning ? 'bg-green' : '';
   const fileSettingsPath = pico_endpoint?.data?.device?.settings?.file ?? {};
 
   const file = fileSettingsPath?.curr_file_name;
   const recorded = fileSettingsPath?.last_write_success ? "True" : "False";
-  const systemState = pico_endpoint?.data?.device?.flags?.system_state;
 
   return (
     <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
@@ -18,19 +17,18 @@ const CaptureStatus = ({ pico_endpoint, captureRunning }) => {
         Capture Status
       </Card.Header>
 
-      <Card.Body className={`p-3 ${progressClass}`} style={{ fontSize: '14px' }}>
-        <Container fluid>
-          <Row className="mb-2">
-            <Col md={6}>
+      <Card.Body className={`p-0 ${progressClass}`} style={{ fontSize: '14px' }}>
+        <Container fluid className="px-3 py-3">
+          <Row className="g-3 align-items-center">
+            <Col md={8}>
               <strong>Filename:</strong><br />
               {file || '—'}
             </Col>
-            <Col md={6}>
+            <Col md={4}>
               <strong>Recorded:</strong><br />
               {recorded}
             </Col>
           </Row>
-
           <Row>
             <Col>
               <ProgressBar response={pico_endpoint?.data} />

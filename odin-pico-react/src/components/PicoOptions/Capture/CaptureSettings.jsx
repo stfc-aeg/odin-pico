@@ -15,6 +15,9 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
     (fileSettingsPath?.folder_name || '') +
     (fileSettingsPath?.file_name || '');
 
+  const missedTriggers = pico_endpoint?.data?.device?.gpio?.missed_triggers
+  const unexpectedTriggers = pico_endpoint?.data?.device?.gpio?.unexpected_triggers
+
   const settingsLabel = captureMode ? 'Time (s)' : 'Captures';
   const settingsPath = captureMode ? 'capture_time' : 'n_captures';
   const recMax = captureMode ? 'max_time' : 'max_captures';
@@ -132,24 +135,19 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
                   endpoint={pico_endpoint}
                   fullpath="device/gpio/capture_run"
                   type="number"
-                  disabled={captureRunning}
+                  disabled={captureRunning || !pico_endpoint?.data?.device?.gpio?.active}
                   />
                 </InputGroup>
               </Col>
-              {pico_endpoint.data?.device?.gpio?.listening === true &&
                 <Col md={4}>
-                  <InputGroup size="sm" className="mb-2">
-                    <InputGroup.Text>Missed Triggers</InputGroup.Text>
-                    <EndpointInput
-                    id="gpio-missed-triggers"
-                    endpoint={pico_endpoint}
-                    fullpath="device/gpio/missed_triggers"
-                    type="number"
-                    disabled={true}
-                    />
-                  </InputGroup>
+                  <div className="fw-semibold mb-2 text-center" style={{ fontSize: '12px' }}>
+                    Tiggers Missed / Unexpected:
+                  </div>
+                  <Row style={{ fontSize: '12px' }}>
+                    <Col className="text-center" style={{ wordBreak: 'break-all' }}>{missedTriggers}</Col>
+                    <Col className="text-center" style={{ wordBreak: 'break-all' }}>{unexpectedTriggers}</Col>
+                  </Row>
                 </Col>
-              }
             </Row>
           }
           <Row className="g-3 align-items-center mt-1">
@@ -239,7 +237,6 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
               <div style={{ fontSize: '12px', wordBreak: 'break-all' }}>{filename}</div>
             </Col>
           </Row>
-
         </Container>
       </Card.Body>
     </Card>

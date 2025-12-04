@@ -23,7 +23,7 @@ const ProgressBar = ({ response }) => {
             return;
         }
 
-        if (response.device?.commands?.run_user_capture === true) {
+        if (response.device?.commands?.run_user_capture === true || response.device?.gpio?.listening === true) {
             // Progress calculation logic
             const isRepeatingEnabled = response.device.settings.capture.capture_repeat === true;
             const repeatAmount = isRepeatingEnabled ? (response.device.settings.capture.repeat_amount || 1) : 1;
@@ -62,18 +62,22 @@ const ProgressBar = ({ response }) => {
             state.lastRepeat = currentRepeat;
             state.lastSweepIndex = sweepIndex;
 
-            setProgress(totalProgress);
-            setRepeat(`${currentRepeat + 1}/${repeatAmount}`);
+            if (response.device?.gpio?.listening === true) {
+                setProgress(progress + (totalProgress / response.device.gpio.capture_run))
+            } else {
+                setProgress(totalProgress);
+                setRepeat(`${currentRepeat + 1}/${repeatAmount}`);
 
-            let statusText = "";
-            if (isRepeatingEnabled) {
-                statusText += `Repeat ${currentRepeat + 1}/${repeatAmount}`;
+                let statusText = "";
+                if (isRepeatingEnabled) {
+                    statusText += `Repeat ${currentRepeat + 1}/${repeatAmount}`;
+                }
+                if (isTempSweepEffective) {
+                    if (statusText) statusText += ", ";
+                    statusText += `Temp ${sweepIndex + 1}/${sweepTotal}`;
+                }
+                setLabel(statusText ? `Capture Progress: ${statusText}` : 'Capture Progress');
             }
-            if (isTempSweepEffective) {
-                if (statusText) statusText += ", ";
-                statusText += `Temp ${sweepIndex + 1}/${sweepTotal}`;
-            }
-            setLabel(statusText ? `Capture Progress: ${statusText}` : 'Capture Progress');
 
         } else {
             setProgress(0);

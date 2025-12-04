@@ -72,7 +72,7 @@ class FileConfig:
     last_write_success: bool = False
     temp_suffix: str = None   # e.g. "_25-0c"
     repeat_suffix: str = None   # e.g. "_3"
-    trig_suffix: str = "0000"   # e.g. "0001"
+    trig_suffix: str = ""   # e.g. "0001"
 
     @property
     def file_path(self) -> str:

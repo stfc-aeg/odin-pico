@@ -261,7 +261,8 @@ class PicoTreeBuilder:
             "enabled": (lambda: self.gpio_config.enabled, None),
             "gpio_captures": (lambda: self.gpio_config.gpio_captures, None),
             "listening": (lambda: self.gpio_config.listening, self.controller.set_listening),
-            "missed_triggers": (lambda: self.gpio_config.missed_triggers, None)
+            "missed_triggers": (lambda: self.gpio_config.missed_triggers, None),
+            "unexpected_triggers": (lambda: self.gpio_config.unexpected_triggers, None)
         })
 
     def build_device_tree(self):

@@ -31,11 +31,9 @@ class FileWriter:
         self.file_error = False
 
     def check_file_name(self) -> bool:
-        print("CHECKING FILE NAME")
         """Check file name settings are valid, return True when a new file can safely be created."""
 
         if self.dev_conf.file.file_name == "":
-            print("EMPTY FILE NAME")
             return False
 
         # ensure ".hdf5" extension

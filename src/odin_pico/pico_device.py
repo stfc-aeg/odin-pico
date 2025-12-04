@@ -239,12 +239,14 @@ class PicoDevice:
         self.dev_conf.meta_data.max_samples = ctypes.c_int32(
             self.dev_conf.meta_data.total_cap_samples
         )
-        if not self.file_writer.file_error and not self.pico_status.flags.user_capture and not self.gpio_config.listening:
-            self.pico_status.flags.system_state = "Collecting LV Data"
-        elif self.pico_status.flags.user_capture:
-            self.pico_status.flags.system_state = "N capture collection"
-        else:
-            self.pico_status.flags.system_state = f"Completing capture: {self.gpio_config.gpio_captures}"
+        if not self.file_writer.file_error:
+            if not self.pico_status.flags.user_capture and not self.gpio_config.listening:
+                self.pico_status.flags.system_state = "Collecting LV Data"
+            elif self.pico_status.flags.user_capture:
+                self.pico_status.flags.system_state = "N capture collection"
+            elif self.gpio_config.capture:
+                self.pico_status.flags.system_state = f"Completing capture: {self.gpio_config.gpio_captures}"
+
         ps.ps5000aRunBlock(
             self.dev_conf.mode.handle,
             self.dev_conf.capture.pre_trig_samples,
@@ -335,8 +337,9 @@ class PicoDevice:
 
         while True:
             self.elapsed_time = time.time() - start_time
-            self.pico_status.flags.system_state = (
-                f"Time based collection")
+            if not self.gpio_config.listening:
+                self.pico_status.flags.system_state = (
+                    f"Time based collection")
             # User Aborted OR time limit reached
             if self.pico_status.flags.abort_cap or \
             (time.time() - start_time) >= total_time:
