@@ -98,7 +98,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             <Row className="g-3 align-items-left mt-1">
               <Col md={4}>
                 <InputGroup size="sm" className="mb-2">
-                  <InputGroup.Text>GPIO Triggering</InputGroup.Text>
+                  <InputGroup.Text>Ext. Trigger</InputGroup.Text>
                   <ButtonGroup size="sm" className="flex-grow-1">
                     {[
                       { name: 'Off', value: false },

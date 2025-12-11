@@ -4,6 +4,7 @@ import logging
 import math
 import re
 import time
+import threading
 from concurrent import futures
 from functools import partial
 
@@ -114,6 +115,8 @@ class PicoController:
         if self.gpio_config.listening:
             if self.gpio_config.capture:
                 self.gpio_config.missed_triggers += 1
+                self.gpio_config.gpio_captures += 1
+                logging.warning(f"Trigger missed: {self.gpio_config.gpio_captures}")
                 return
 
             self.gpio_config.gpio_captures += 1
@@ -217,6 +220,8 @@ class PicoController:
 
                     if self.gpio_config.capture:
                         if self.gpio_config.gpio_captures == self.gpio_config.capture_run:
+                            if self.gpio_config.missed_triggers != 0:
+                                logging.warning(f"Trigger run complete. Triggers missed: {self.gpio_config.missed_triggers}")
                             self.set_listening(False)
                             self.gpio_config.gpio_captures = 0
                             self.dev_conf.file.trig_suffix = ""
@@ -319,9 +324,17 @@ class PicoController:
     def set_listening(self, value):
         self.gpio_config.listening = value
         if value:
-            self.pico_status.flags.system_state = "Listening for triggers"
-            self.gpio_config.missed_triggers = 0
-            self.gpio_config.unexpected_triggers = 0
+            if self.file_writer.check_file_name():
+                self.file_writer.file_error = False
+                self.pico_status.flags.system_state = "Listening for triggers"
+                self.gpio_config.missed_triggers = 0
+                self.gpio_config.unexpected_triggers = 0
+            else:
+                self.file_writer.file_error = True
+                self.pico_status.flags.system_state = (
+                    "File Name Empty or Already Exists")
+                self.pico_status.flags.user_capture = False
+                self.gpio_config.listening = False
         else:
             self.gpio_config.gpio_captures = 0
 
@@ -355,8 +368,14 @@ class PicoController:
     def update_loop(self):
         """Execute thread, responsible for calling the run_capture function at timed intervals."""
         while self.update_loop_active:
-            self.run_capture()
-            time.sleep(0.2)
+            if not self.gpio_config.listening:
+                self.run_capture()
+                time.sleep(0.2)
+            elif self.gpio_config.capture:
+                self.run_capture()
+                time.sleep(0.05)
+            else:
+                time.sleep(0.05)
 
     def set_update_loop_state(self, state=bool):
         """Set the state of the update_loop in the executor thread."""
@@ -366,6 +385,7 @@ class PicoController:
         """Responsible for ensuring the picoscope is closed cleanly when the adapter is shutdown."""
         self.set_update_loop_state(False)
         self.pico_status.flags.abort_cap = True
+        self.gpio_config.listening = False
         self.pico.stop_scope()
         logging.debug("Stopping PicoScope services and closing device")
 

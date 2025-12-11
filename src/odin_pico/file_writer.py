@@ -2,6 +2,7 @@
 time-based acquisitions.
 """
 
+import glob
 import logging
 import math
 import os
@@ -34,6 +35,7 @@ class FileWriter:
         """Check file name settings are valid, return True when a new file can safely be created."""
 
         if self.dev_conf.file.file_name == "":
+            logging.debug("Empty file name")
             return False
 
         # ensure ".hdf5" extension
@@ -52,7 +54,10 @@ class FileWriter:
         )
 
         root, ext = os.path.splitext(full_path)
-        if os.path.isfile(full_path) or os.path.isfile(f"{root}_1{ext}"):
+        pattern = f"{root}_*{ext}"
+        # if os.path.isfile(full_path) or os.path.isfile(f"{root}_1{ext}"):
+        if os.path.isfile(full_path) or glob.glob(pattern):
+            logging.debug("False at pattern")
             return False
 
         # Create folder if missing
@@ -60,6 +65,7 @@ class FileWriter:
             self.dev_conf.file.file_path + self.dev_conf.file.folder_name,
             exist_ok=True,
         )
+        logging.debug("true")
         return True
     
     def _build_filename(self):
