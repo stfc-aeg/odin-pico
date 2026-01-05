@@ -125,9 +125,7 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
               onClick={toggle_play}
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
-              <span className="material-icons">
-                {isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}
-              </span>
+              <span className={`bi ${isPlaying ? 'bi-pause-circle' : 'bi-play-circle'} icons`} />
             </Button>
           </div>
         </>

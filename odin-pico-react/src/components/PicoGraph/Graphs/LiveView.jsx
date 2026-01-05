@@ -2,6 +2,8 @@ import { OdinGraph } from 'odin-react';
 import { useState, useEffect } from 'react';
 import { Card, Button } from 'react-bootstrap';
 
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
 const sourceOptions = [
   { value: 0, label: 'Channel A' },
   { value: 1, label: 'Channel B' },
@@ -138,7 +140,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
 
   const channels = ['a', 'b', 'c', 'd'];
   const handleTogglePlay = () => setIsPlaying(p => !p);
-  const icon = isPlaying ? 'pause_circle_outline' : 'play_circle_outline';
 
   return (
     <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
@@ -147,7 +148,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
         style={{ fontSize: '0.85rem', backgroundColor: '#f5f5f5' }}
       >
         <>
-          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
           <div className="d-flex align-items-center">
             <div className="d-flex align-items-center">
               <span>Live View</span>
@@ -174,7 +174,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
               onClick={handleTogglePlay}
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
-              <span className="material-icons">{icon}</span>
+              <span className={`bi ${isPlaying ? 'bi-pause-circle' : 'bi-play-circle'} icons`} />
             </Button>
           </div>
         </>
