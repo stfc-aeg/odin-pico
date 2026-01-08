@@ -294,7 +294,7 @@ class PicoController:
 
         # Process the data, for the purposes of LV and PHA
         if not self.pico_status.flags.abort_cap:
-            self.buffer_manager.save_lv_data()
+            self.buffer_manager.save_lv_data(False)
             self.analysis.pha_one_peak()
 
     def tb_capture(self):
@@ -307,6 +307,7 @@ class PicoController:
             self.dev_conf.capture.capture_time
             )
         self.file_writer.write_hdf5(write_accumulated=True)
+        self.buffer_manager.save_lv_data(True)
         self.buffer_manager.clear_arrays()
         self.pico_status.flags.abort_cap = False
    

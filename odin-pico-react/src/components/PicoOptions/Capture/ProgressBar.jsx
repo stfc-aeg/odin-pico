@@ -19,7 +19,7 @@ const ProgressBar = ({ response }) => {
 
             setProgress(percent);
             setRepeat(`${capturesDone}/${capturesTarget}`);
-            setLabel(`GPIO Capture Progress`);
+            setLabel(`Capture Progress`);
             return;
         }
 

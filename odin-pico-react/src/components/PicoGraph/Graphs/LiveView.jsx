@@ -34,8 +34,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
   const [lvActiveChannels, setLvActiveChannels] = useState(undefined);
   const [preTrigSamples, setPreTrigSamples] = useState(0);
   const [postTrigSamples, setPostTrigSamples] = useState(0);
-
-  const toggle_play = () => setIsPlaying(prev => !prev);
+  const [latchedActiveChannels, setLatchedActiveChannels] = useState([]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -53,6 +52,12 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     setPostTrigSamples(Number.isFinite(post) ? post : 0);
   }, [isPlaying, pico_endpoint.updateFlag]);
 
+  useEffect(() => {
+    if (Array.isArray(lvActiveChannels) && lvActiveChannels.length > 0) {
+      setLatchedActiveChannels(lvActiveChannels);
+    }
+  }, [lvActiveChannels]);
+
   if (!Array.isArray(lvData)) return <div>Loading live data...</div>;
 
   const getChannelLabel = (id) => {
@@ -69,15 +74,22 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     return [-yrange, yrange];
   };
 
-  const safeActive = Array.isArray(lvActiveChannels) ? lvActiveChannels : [];
+  const safeActive =
+    Array.isArray(lvActiveChannels) && lvActiveChannels.length > 0
+      ? lvActiveChannels
+      : latchedActiveChannels;
   const series_names = safeActive.map(getChannelLabel);
 
   const prepared_data = safeActive.map((chId, idx) => {
     const y_array = Array.isArray(lvData[idx]) ? lvData[idx] : null;
-    if (!y_array) return null;
+    if (!y_array) {
+      return null;
+    }
 
     const x_array = generateXValues(preTrigSamples, y_array);
-    if (!x_array.length || !y_array.length) return null;
+    if (!x_array.length || !y_array.length){
+      return null
+    } ;
 
     const name = series_names[idx] || `Channel ${idx}`;
     const trace = {
@@ -102,7 +114,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
       })
     );
   }
-
   // Always pass a valid array to OdinGraph
   const graphData = prepared_data.length
     ? prepared_data

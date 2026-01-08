@@ -125,25 +125,27 @@ const ChannelSetup = ({
                   />
                 </InputGroup>
               </Col>
-              <Col md={2} className="d-flex align-items-center gap-1 py-2">
-                <label>Waveform</label>
-                <EndpointToggleSwitch
-                  id={`channel-${id}-waveform`}
-                  endpoint={pico_endpoint}
-                  fullpath={`device/settings/channels/${id}/waveformsToggled`}
-                  disabled={captureRunning}
-                />
-              </Col>
-              <Col md={2} className="d-flex justify-content-center align-items-center gap-2 py-2">
-                <label>
-                  PHA
-                </label>
-                <EndpointToggleSwitch
-                  id={`channel-${id}-pha`}
-                  endpoint={pico_endpoint}
-                  fullpath={`device/settings/channels/${id}/PHAToggled`}
-                  disabled={captureRunning}
-                />
+              <Col md={4} className="py-2">
+                <Row>
+                  <Col md={7} className="d-flex justify-content-center align-items-center gap-2">
+                    <label className="mb-0 text-center">Waveform</label>
+                    <EndpointToggleSwitch
+                      id={`channel-${id}-waveform`}
+                      endpoint={pico_endpoint}
+                      fullpath={`device/settings/channels/${id}/waveformsToggled`}
+                      disabled={captureRunning}
+                    />
+                  </Col>
+                  <Col md={5} className="d-flex justify-content-center align-items-center gap-2">
+                    <label className="mb-0 text-center">PHA</label>
+                    <EndpointToggleSwitch
+                      id={`channel-${id}-pha`}
+                      endpoint={pico_endpoint}
+                      fullpath={`device/settings/channels/${id}/PHAToggled`}
+                      disabled={captureRunning}
+                    />
+                  </Col>
+                </Row>
               </Col>
             </Row>
           );
