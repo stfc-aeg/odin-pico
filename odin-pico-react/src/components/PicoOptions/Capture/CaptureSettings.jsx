@@ -2,7 +2,8 @@ import { Card, Container, Row, Col, ButtonGroup, ToggleButton, InputGroup } from
 import CaptureButton from './CaptureButton';
 
 const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, EndpointToggleSwitch }) => {
-  const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify;
+  const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify &&
+   (pico_endpoint?.data?.device?.status?.open_unit === 0);
   const fileClass = fileValid ? 'bg-green' : 'bg-red';
 
   const capturePath = pico_endpoint?.data?.device?.settings?.capture ?? {};

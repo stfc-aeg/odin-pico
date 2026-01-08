@@ -237,7 +237,7 @@ class PicoController:
 
             # If user hasn't requested a capture, complete a LV capture run
             else:
-                if not self.file_writer.file_error and not self.gpio_config.listening:
+                if not self.file_writer.file_error and not self.gpio_config.listening and self.pico_status.open_unit == 0:
                     self.pico_status.flags.system_state = "Collecting LV Data"
                 self.pico.calc_max_caps()
                 self.user_capture(False)
