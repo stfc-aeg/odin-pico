@@ -36,8 +36,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
           <Row className="g-3 align-items-center">
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Mode</InputGroup.Text>
-                <ButtonGroup size="sm" className="flex-grow-1">
+                <InputGroup.Text className="input-label-fixed">Mode</InputGroup.Text>
+                <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                   {[
                     { name: 'Number', value: false },
                     { name: 'Time', value: true },
@@ -69,7 +69,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             </Col>
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>{settingsLabel}</InputGroup.Text>
+                <InputGroup.Text className="fixed-input-label">{settingsLabel}</InputGroup.Text>
                 <EndpointInput
                   endpoint={pico_endpoint}
                   fullpath={`device/settings/capture/${settingsPath}`}
@@ -99,8 +99,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             <Row className="g-3 align-items-left mt-1">
               <Col md={4}>
                 <InputGroup size="sm" className="mb-2">
-                  <InputGroup.Text>Ext. Trigger</InputGroup.Text>
-                  <ButtonGroup size="sm" className="flex-grow-1">
+                  <InputGroup.Text className="input-label-fixed">Ext Trigger</InputGroup.Text>
+                  <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                     {[
                       { name: 'Off', value: false },
                       { name: 'On', value: true}
@@ -130,7 +130,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
               </Col>
               <Col md={4}>
                 <InputGroup size="sm" className="mb-2">
-                  <InputGroup.Text>Triggers</InputGroup.Text>
+                  <InputGroup.Text className="fixed-input-label">Triggers</InputGroup.Text>
                   <EndpointInput
                   id="gpio-capture-run"
                   endpoint={pico_endpoint}
@@ -154,8 +154,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
           <Row className="g-3 align-items-center mt-1">
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Acquisition</InputGroup.Text>
-                <ButtonGroup size="sm" className="flex-grow-1">
+                <InputGroup.Text className="input-label-fixed">Acquisition</InputGroup.Text>
+                <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                   {[
                     { name: 'Single', value: false },
                     { name: 'Repeat', value: true },
@@ -189,7 +189,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             </Col>
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Repeat #</InputGroup.Text>
+                <InputGroup.Text className="fixed-input-label">Repeat #</InputGroup.Text>
                 <EndpointInput
                   endpoint={pico_endpoint}
                   fullpath="device/settings/capture/repeat_amount"

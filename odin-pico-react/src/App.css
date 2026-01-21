@@ -35,3 +35,30 @@ input[type=number] {
   align-items: center;
   justify-content: center;
 }
+
+.capture-status-table td:nth-child(1) {
+  max-width: 0;
+  white-space: nowrap;
+}
+
+.scrollable-cell {
+  white-space: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.input-label-fixed {
+  width: 95px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.fixed-input-label {
+  width: 81px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.btn-group.equal-toggles > .btn {
+  flex: 1 1 0 !important;
+}

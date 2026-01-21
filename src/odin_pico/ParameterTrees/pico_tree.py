@@ -175,6 +175,7 @@ class PicoTreeBuilder:
     def create_file_tree(self):
         """Create file parameter tree."""
         return ParameterTree({
+            "available_space": (lambda: self.dev_conf.file.available_space, None),
             "folder_name": (
                 lambda: self.dev_conf.file.folder_name,
                 partial(set_dc_value, self.controller, self.dev_conf.file, "folder_name"),
@@ -186,6 +187,35 @@ class PicoTreeBuilder:
             "file_path": (lambda: self.dev_conf.file.file_path, None),
             "curr_file_name": (lambda: self.dev_conf.file.curr_file_name, None),
             "last_write_success": (lambda: self.dev_conf.file.last_write_success, None),
+            "max_acq_time": (
+                lambda: (
+                    round(max(self.controller.cap_times), 2)
+                    if self.controller.cap_times else None
+                ),
+                None,
+            ),
+            "max_file_time": (
+                lambda: (
+                    round(max(self.controller.file_writer.file_times), 2)
+                    if self.controller.file_writer.file_times else None
+                ),
+                None
+            ),
+            "mean_acq_time": (
+                lambda: (
+                    round(sum(self.controller.cap_times) / len(self.controller.cap_times), 2)
+                    if self.controller.cap_times else None
+                ),
+                None,
+            ),
+            "mean_file_time": (
+                lambda: (
+                    round(sum(self.controller.file_writer.file_times) / len(self.controller.file_writer.file_times), 2)
+                    if self.controller.file_writer.file_times else None
+                ),
+                None,
+            ),
+            "trigger_rate": (lambda: self.controller.trig_rate_hz, None)
         })
 
     def create_pha_tree(self):

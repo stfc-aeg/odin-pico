@@ -73,6 +73,7 @@ class FileConfig:
     temp_suffix: str = None   # e.g. "_25-0c"
     repeat_suffix: str = None   # e.g. "_3"
     trig_suffix: str = ""   # e.g. "0001"
+    available_space: str = ""
 
     @property
     def file_path(self) -> str:

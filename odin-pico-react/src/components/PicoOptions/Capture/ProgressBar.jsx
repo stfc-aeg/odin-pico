@@ -88,7 +88,7 @@ const ProgressBar = ({ response }) => {
 
     return (
         <>
-            <div style={{ fontSize: '14px' }}>{label}</div>
+            <div style={{ fontSize: '14px' }}><strong>{label}</strong></div>
 
             <div className="progress mt-2 position-relative">
                 <div

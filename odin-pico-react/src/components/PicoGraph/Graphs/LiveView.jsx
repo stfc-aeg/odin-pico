@@ -124,7 +124,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     showlegend: prepared_data.length > 0,
     xaxis: {
       title: { text: 'Sample Interval' },
-      range: [preTrigSamples, postTrigSamples],
+      autorange: true
     },
     yaxis: {
       nticks: 15,
