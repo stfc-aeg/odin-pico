@@ -1,6 +1,7 @@
 import { Card, Container, Row, Col, InputGroup } from 'react-bootstrap';
 import { OdinTable, OdinTableRow } from 'odin-react';
 import ProgressBar from './ProgressBar';
+import { ScrollToEnd } from '../../utils/utils';
 
 const CaptureStatus = ({ pico_endpoint, EndpointInput, captureRunning }) => {
   const progressClass = captureRunning ? 'bg-green' : '';
@@ -48,9 +49,9 @@ const CaptureStatus = ({ pico_endpoint, EndpointInput, captureRunning }) => {
               <OdinTableRow
                 row={{
                   filename: (
-                    <div className="scrollable-cell">
+                    <ScrollToEnd watch={file}>
                       {file || "—"}
-                    </div>
+                    </ScrollToEnd>
                   ),
                   disk: available_space ?? "—",
                   trigger: trigger_rate ?? "—",

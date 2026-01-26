@@ -1,5 +1,7 @@
 import { Card, Container, Row, Col, ButtonGroup, ToggleButton, InputGroup } from 'react-bootstrap';
 import CaptureButton from './CaptureButton';
+import { OdinTable, OdinTableRow } from 'odin-react';
+import { ScrollToEnd } from '../../utils/utils';
 
 const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, EndpointToggleSwitch }) => {
   const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify &&
@@ -211,7 +213,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             </Col>
           </Row>
           <Row className={`g-3 align-items-center mt-2 ${fileClass}`}>
-            <Col md={4}>
+            <Col md={6}>
               <InputGroup size="sm" className="mb-2">
                 <InputGroup.Text>Folder</InputGroup.Text>
                 <EndpointInput
@@ -221,7 +223,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
                 />
               </InputGroup>
             </Col>
-            <Col md={4}>
+            <Col md={6}>
               <InputGroup size="sm" className="mb-2">
                 <InputGroup.Text>File</InputGroup.Text>
                 <EndpointInput
@@ -231,12 +233,27 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
                 />
               </InputGroup>
             </Col>
-            <Col md={4}>
-              <div className="fw-semibold mb-1" style={{ fontSize: '12px' }}>
-                Filename Preview:
-              </div>
-              <div style={{ fontSize: '12px', wordBreak: 'break-all' }}>{filename}</div>
-            </Col>
+          </Row>
+          <Row className={`g-3 align-items-center pt-2 ${fileClass}`}>
+            <OdinTable
+              className="capture-status-table"
+              bordered
+              size="sm"
+              striped={true}
+              columns={{
+                filename: "Filename",
+              }}
+            >
+              <OdinTableRow
+                row={{
+                  filename: (
+                    <ScrollToEnd watch={filename}>
+                      {filename}
+                    </ScrollToEnd>
+                  ),
+                }}
+              />
+            </OdinTable>
           </Row>
         </Container>
       </Card.Body>

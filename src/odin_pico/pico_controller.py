@@ -261,13 +261,13 @@ class PicoController:
         if save_file:
             captures = self.dev_conf.capture.n_captures
         else:
-            captures = 5
+            captures = 2
             
         self.ctrl_util.set_capture_run_limits()
         
         # Set caps_remaining for liveview mode
         if not save_file:
-            self.dev_conf.capture_run.caps_remaining = 5
+            self.dev_conf.capture_run.caps_remaining = 2
             
         self.ctrl_util.set_capture_run_length()
     

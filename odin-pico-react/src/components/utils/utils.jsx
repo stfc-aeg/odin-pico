@@ -1,4 +1,5 @@
 import '../PicoOptions/Options.css'
+import { useEffect, useRef } from 'react';
 
 export function getChannelRowClass(active, anyActive, channelSetup = false) {
   if (channelSetup && !anyActive) return 'bg-grey';
@@ -31,3 +32,18 @@ export function toSiUnit(num) {
   return isNegative ? '-' + formatted : formatted;
 }
 
+export const ScrollToEnd = ({ children, watch }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.scrollLeft = ref.current.scrollWidth;
+    }
+  }, [watch]);
+
+  return (
+    <div ref={ref} className="scrollable-cell">
+      {children}
+    </div>
+  );
+};

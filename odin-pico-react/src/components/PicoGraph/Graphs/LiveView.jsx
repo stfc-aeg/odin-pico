@@ -1,7 +1,6 @@
 import { OdinGraph } from 'odin-react';
 import { useState, useEffect } from 'react';
 import { Card, Button } from 'react-bootstrap';
-
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const sourceOptions = [
