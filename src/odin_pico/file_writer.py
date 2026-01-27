@@ -229,9 +229,6 @@ class FileWriter:
         try:
             path = Path(self.disk_path)
 
-            # if not path.exists():
-            #     logging.error("File path does not exist")
-
             usage = shutil.disk_usage(path)
             available = usage.free / (usage.used + usage.free) * 100
             self.dev_conf.file.available_space = (f"{round(available, 1)}% {usage.free / (1024**3):.1f}GB")

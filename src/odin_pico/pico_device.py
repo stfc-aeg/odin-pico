@@ -60,6 +60,8 @@ class PicoDevice:
             ps.ps5000aMaximumValue(
                 self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_adc)
             )
+        else:
+            self.pico_status.flags.system_state = "Failed to Connect"
 
         if self.dev_conf.pha.upper_range == 0:
             self.dev_conf.pha.upper_range = self.dev_conf.meta_data.max_adc.value
