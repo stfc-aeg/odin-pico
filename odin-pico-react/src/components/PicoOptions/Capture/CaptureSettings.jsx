@@ -1,8 +1,11 @@
 import { Card, Container, Row, Col, ButtonGroup, ToggleButton, InputGroup } from 'react-bootstrap';
 import CaptureButton from './CaptureButton';
+import { OdinTable, OdinTableRow } from 'odin-react';
+import { ScrollToEnd } from '../../utils/utils';
 
 const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, EndpointToggleSwitch }) => {
-  const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify;
+  const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify &&
+   (pico_endpoint?.data?.device?.status?.open_unit === 0);
   const fileClass = fileValid ? 'bg-green' : 'bg-red';
 
   const capturePath = pico_endpoint?.data?.device?.settings?.capture ?? {};
@@ -35,8 +38,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
           <Row className="g-3 align-items-center">
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Mode</InputGroup.Text>
-                <ButtonGroup size="sm" className="flex-grow-1">
+                <InputGroup.Text className="input-label-fixed">Mode</InputGroup.Text>
+                <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                   {[
                     { name: 'Number', value: false },
                     { name: 'Time', value: true },
@@ -68,7 +71,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             </Col>
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>{settingsLabel}</InputGroup.Text>
+                <InputGroup.Text className="fixed-input-label">{settingsLabel}</InputGroup.Text>
                 <EndpointInput
                   endpoint={pico_endpoint}
                   fullpath={`device/settings/capture/${settingsPath}`}
@@ -98,8 +101,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             <Row className="g-3 align-items-left mt-1">
               <Col md={4}>
                 <InputGroup size="sm" className="mb-2">
-                  <InputGroup.Text>Ext. Trigger</InputGroup.Text>
-                  <ButtonGroup size="sm" className="flex-grow-1">
+                  <InputGroup.Text className="input-label-fixed">Ext Trigger</InputGroup.Text>
+                  <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                     {[
                       { name: 'Off', value: false },
                       { name: 'On', value: true}
@@ -129,7 +132,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
               </Col>
               <Col md={4}>
                 <InputGroup size="sm" className="mb-2">
-                  <InputGroup.Text>Triggers</InputGroup.Text>
+                  <InputGroup.Text className="fixed-input-label">Triggers</InputGroup.Text>
                   <EndpointInput
                   id="gpio-capture-run"
                   endpoint={pico_endpoint}
@@ -153,8 +156,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
           <Row className="g-3 align-items-center mt-1">
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Acquisition</InputGroup.Text>
-                <ButtonGroup size="sm" className="flex-grow-1">
+                <InputGroup.Text className="input-label-fixed">Acquisition</InputGroup.Text>
+                <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                   {[
                     { name: 'Single', value: false },
                     { name: 'Repeat', value: true },
@@ -188,7 +191,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             </Col>
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Repeat #</InputGroup.Text>
+                <InputGroup.Text className="fixed-input-label">Repeat #</InputGroup.Text>
                 <EndpointInput
                   endpoint={pico_endpoint}
                   fullpath="device/settings/capture/repeat_amount"
@@ -210,7 +213,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
             </Col>
           </Row>
           <Row className={`g-3 align-items-center mt-2 ${fileClass}`}>
-            <Col md={4}>
+            <Col md={6}>
               <InputGroup size="sm" className="mb-2">
                 <InputGroup.Text>Folder</InputGroup.Text>
                 <EndpointInput
@@ -220,7 +223,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
                 />
               </InputGroup>
             </Col>
-            <Col md={4}>
+            <Col md={6}>
               <InputGroup size="sm" className="mb-2">
                 <InputGroup.Text>File</InputGroup.Text>
                 <EndpointInput
@@ -230,12 +233,27 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, Endpoin
                 />
               </InputGroup>
             </Col>
-            <Col md={4}>
-              <div className="fw-semibold mb-1" style={{ fontSize: '12px' }}>
-                Filename Preview:
-              </div>
-              <div style={{ fontSize: '12px', wordBreak: 'break-all' }}>{filename}</div>
-            </Col>
+          </Row>
+          <Row className={`g-3 align-items-center pt-2 ${fileClass}`}>
+            <OdinTable
+              className="capture-status-table"
+              bordered
+              size="sm"
+              striped={true}
+              columns={{
+                filename: "Filename",
+              }}
+            >
+              <OdinTableRow
+                row={{
+                  filename: (
+                    <ScrollToEnd watch={filename}>
+                      {filename}
+                    </ScrollToEnd>
+                  ),
+                }}
+              />
+            </OdinTable>
           </Row>
         </Container>
       </Card.Body>

@@ -134,14 +134,19 @@ class BufferManager:
                     self.pha_channels_active[chan.channel_id] = True
                     self.pha_active_channels.append(chan.channel_id)
 
-    def save_lv_data(self):
+    def save_lv_data(self, time_based):
         """Return a live view of traces being captured."""
         self.lv_channel_arrays = []
 
         for c, b in zip(self.active_channels, self.np_channel_arrays):
             # Find current data, along with channel range and offset
+            if time_based:
+                array = b[-1]
+            else:
+                array = b[(self.dev_conf.capture_run.caps_in_run - 1)]
+
             values = self.util.adc2mV(
-                b[(self.dev_conf.capture_run.caps_in_run - 1)],
+                array,
                 self.channels[c].range,
                 self.dev_conf.meta_data.max_adc,
             ).tolist()

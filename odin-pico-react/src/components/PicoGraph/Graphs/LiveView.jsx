@@ -1,6 +1,7 @@
 import { OdinGraph } from 'odin-react';
 import { useState, useEffect } from 'react';
 import { Card, Button } from 'react-bootstrap';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const sourceOptions = [
   { value: 0, label: 'Channel A' },
@@ -32,8 +33,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
   const [lvActiveChannels, setLvActiveChannels] = useState(undefined);
   const [preTrigSamples, setPreTrigSamples] = useState(0);
   const [postTrigSamples, setPostTrigSamples] = useState(0);
-
-  const toggle_play = () => setIsPlaying(prev => !prev);
+  const [latchedActiveChannels, setLatchedActiveChannels] = useState([]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -51,6 +51,12 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     setPostTrigSamples(Number.isFinite(post) ? post : 0);
   }, [isPlaying, pico_endpoint.updateFlag]);
 
+  useEffect(() => {
+    if (Array.isArray(lvActiveChannels) && lvActiveChannels.length > 0) {
+      setLatchedActiveChannels(lvActiveChannels);
+    }
+  }, [lvActiveChannels]);
+
   if (!Array.isArray(lvData)) return <div>Loading live data...</div>;
 
   const getChannelLabel = (id) => {
@@ -67,15 +73,22 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     return [-yrange, yrange];
   };
 
-  const safeActive = Array.isArray(lvActiveChannels) ? lvActiveChannels : [];
+  const safeActive =
+    Array.isArray(lvActiveChannels) && lvActiveChannels.length > 0
+      ? lvActiveChannels
+      : latchedActiveChannels;
   const series_names = safeActive.map(getChannelLabel);
 
   const prepared_data = safeActive.map((chId, idx) => {
     const y_array = Array.isArray(lvData[idx]) ? lvData[idx] : null;
-    if (!y_array) return null;
+    if (!y_array) {
+      return null;
+    }
 
     const x_array = generateXValues(preTrigSamples, y_array);
-    if (!x_array.length || !y_array.length) return null;
+    if (!x_array.length || !y_array.length){
+      return null
+    } ;
 
     const name = series_names[idx] || `Channel ${idx}`;
     const trace = {
@@ -100,7 +113,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
       })
     );
   }
-
   // Always pass a valid array to OdinGraph
   const graphData = prepared_data.length
     ? prepared_data
@@ -111,7 +123,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
     showlegend: prepared_data.length > 0,
     xaxis: {
       title: { text: 'Sample Interval' },
-      range: [preTrigSamples, postTrigSamples],
+      autorange: true
     },
     yaxis: {
       nticks: 15,
@@ -138,7 +150,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
 
   const channels = ['a', 'b', 'c', 'd'];
   const handleTogglePlay = () => setIsPlaying(p => !p);
-  const icon = isPlaying ? 'pause_circle_outline' : 'play_circle_outline';
 
   return (
     <Card className="mt-3 border overflow-hidden" style={{ borderRadius: '3px' }}>
@@ -147,7 +158,6 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
         style={{ fontSize: '0.85rem', backgroundColor: '#f5f5f5' }}
       >
         <>
-          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
           <div className="d-flex align-items-center">
             <div className="d-flex align-items-center">
               <span>Live View</span>
@@ -174,7 +184,7 @@ const LiveView = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
               onClick={handleTogglePlay}
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
-              <span className="material-icons">{icon}</span>
+              <span className={`bi ${isPlaying ? 'bi-pause-circle' : 'bi-play-circle'} icons`} />
             </Button>
           </div>
         </>

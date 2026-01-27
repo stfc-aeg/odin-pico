@@ -31,7 +31,7 @@ class PicoController:
     """Class which holds parameter trees and manages the PicoScope capture process."""
     executor = futures.ThreadPoolExecutor(max_workers=2)
 
-    def __init__(self, loop, path):
+    def __init__(self, loop, path, disk):
         """Initialise the PicoController Class."""
 
         # Threading lock and control variables
@@ -48,16 +48,18 @@ class PicoController:
 
         # Initialise objects to represent different system components
         self.buffer_manager = BufferManager(self.dev_conf)
-        self.file_writer = FileWriter(self.dev_conf, self.buffer_manager, self.pico_status)
+        self.file_writer = FileWriter(disk, self.dev_conf, self.buffer_manager, self.pico_status)
         self.analysis = PicoAnalysis(
             self.dev_conf, self.buffer_manager, self.pico_status
         )
-        self.pico = PicoDevice(self.dev_conf, self.pico_status,
+        self.pico = PicoDevice(disk, self.dev_conf, self.pico_status,
                                self.buffer_manager, self.analysis, self.file_writer, self.gpio_config)
         
         # Initialise parameter tree to None, is built in initialize_adapters with access to other adapters
         self.param_tree = None
         self.dev_conf.file.file_path = path
+        self.trig_rate_hz = 0.0
+        self.cap_times = []
 
         if self.update_loop_active:
             self.update_loop()
@@ -106,7 +108,6 @@ class PicoController:
                 "gpib": gpib_tree
             })
 
-
         except Exception as e:
             logging.error(e)
 
@@ -151,6 +152,10 @@ class PicoController:
             # Check if user has requested a capture
             if self.pico_status.flags.user_capture | self.gpio_config.capture:
                 if self.file_writer.check_file_name():
+
+                    if not self.gpio_config.capture:
+                        self.cap_times = []
+                        self.file_writer.file_times = []
 
                     self.file_writer.file_error = False
 
@@ -217,6 +222,7 @@ class PicoController:
                     self.pico_status.flags.user_capture = False
                     self.pico_status.flags.abort_cap = False
                     self.dev_conf.file.repeat_suffix = None
+                    self.file_writer.calc_disk_space()
 
                     if self.gpio_config.capture:
                         if self.gpio_config.gpio_captures == self.gpio_config.capture_run:
@@ -225,6 +231,7 @@ class PicoController:
                             self.set_listening(False)
                             self.gpio_config.gpio_captures = 0
                             self.dev_conf.file.trig_suffix = ""
+
                         self.gpio_config.capture = False
                         self.gpio_config.reply_method(self.gpio_config.identity)
                         self.pico_status.flags.system_state = f"Listening. Captures completed: {self.gpio_config.gpio_captures}"
@@ -237,7 +244,7 @@ class PicoController:
 
             # If user hasn't requested a capture, complete a LV capture run
             else:
-                if not self.file_writer.file_error and not self.gpio_config.listening:
+                if not self.file_writer.file_error and not self.gpio_config.listening and self.pico_status.open_unit == 0:
                     self.pico_status.flags.system_state = "Collecting LV Data"
                 self.pico.calc_max_caps()
                 self.user_capture(False)
@@ -258,14 +265,15 @@ class PicoController:
             
         self.ctrl_util.set_capture_run_limits()
         
-        #set caps_remaining for liveview mode
+        # Set caps_remaining for liveview mode
         if not save_file:
             self.dev_conf.capture_run.caps_remaining = 2
             
         self.ctrl_util.set_capture_run_length()
     
-        # checks run_setup completes successfully, calls it with captures if save_file is not true
+        # Checks run_setup completes successfully, calls it with captures if save_file is not true
         if (self.pico.run_setup() if save_file else self.pico.run_setup(captures)):
+            start_acq_time = time.time()
             while self.dev_conf.capture_run.caps_comp < captures:
                 if not self.pico_status.flags.abort_cap:
 
@@ -279,7 +287,10 @@ class PicoController:
 
             # Saves captures to a file, if requested
             if save_file:
+                self.cap_times.append(time.time() - start_acq_time)
+                start_fw_time = time.time()
                 self.file_writer.write_hdf5()
+                self.file_writer.file_times.append(time.time() - start_fw_time)
 
         self.dev_conf.capture_run.reset()
 
@@ -287,14 +298,16 @@ class PicoController:
         """Run the necessary steps for a capture."""
         # Run the scope, and update the captures completed
         self.pico.assign_pico_memory()
+        start_time = time.time()
         self.pico.run_block()
+        self.trig_rate_hz = f"{round(self.pico.seg_caps / (time.time() - start_time), 2)}Hz"
         self.dev_conf.capture_run.caps_comp += self.pico.seg_caps * len(
             self.buffer_manager.active_channels
         )
 
         # Process the data, for the purposes of LV and PHA
         if not self.pico_status.flags.abort_cap:
-            self.buffer_manager.save_lv_data()
+            self.buffer_manager.save_lv_data(False)
             self.analysis.pha_one_peak()
 
     def tb_capture(self):
@@ -303,10 +316,13 @@ class PicoController:
         # validate this method of calculating max captures!
         self.ctrl_util.set_capture_run_limits()
         self.dev_conf.capture_run.caps_in_run = int(self.dev_conf.capture_run.caps_max/2)
+        start_tb_time = time.time()
         self.pico.run_time_based_capture(
             self.dev_conf.capture.capture_time
             )
+        self.cap_times.append(time.time() - start_tb_time)
         self.file_writer.write_hdf5(write_accumulated=True)
+        self.buffer_manager.save_lv_data(True)
         self.buffer_manager.clear_arrays()
         self.pico_status.flags.abort_cap = False
    
@@ -329,6 +345,8 @@ class PicoController:
                 self.pico_status.flags.system_state = "Listening for triggers"
                 self.gpio_config.missed_triggers = 0
                 self.gpio_config.unexpected_triggers = 0
+                self.cap_times = []
+                self.file_writer.file_times = []
             else:
                 self.file_writer.file_error = True
                 self.pico_status.flags.system_state = (

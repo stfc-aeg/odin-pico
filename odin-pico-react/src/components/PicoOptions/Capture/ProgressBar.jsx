@@ -19,7 +19,7 @@ const ProgressBar = ({ response }) => {
 
             setProgress(percent);
             setRepeat(`${capturesDone}/${capturesTarget}`);
-            setLabel(`GPIO Capture Progress`);
+            setLabel(`Capture Progress`);
             return;
         }
 
@@ -88,8 +88,9 @@ const ProgressBar = ({ response }) => {
 
     return (
         <>
-            <div style={{ fontSize: '14px' }}>{label}</div>
-            <div className="progress mt-2">
+            <div style={{ fontSize: '14px' }}><strong>{label}</strong></div>
+
+            <div className="progress mt-2 position-relative">
                 <div
                     id="capture-progress-bar"
                     className="progress-bar"
@@ -98,9 +99,18 @@ const ProgressBar = ({ response }) => {
                     aria-valuenow={progress}
                     aria-valuemin="0"
                     aria-valuemax="100"
+                />
+
+                <span
+                    className="position-absolute w-100 text-center"
+                    style={{
+                        color: 'black',
+                        fontSize: '13px',
+                        lineHeight: '20px'
+                    }}
                 >
-                    {progress.toFixed(1)}%  ({repeatAmount})
-                </div>
+                    {progress.toFixed(1)}% ({repeatAmount})
+                </span>
             </div>
         </>
     );

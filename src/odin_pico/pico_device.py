@@ -23,16 +23,16 @@ class PicoDevice:
     """Class that communicates with the scope to collect data."""
 
     def __init__(
-        self, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
+        self, disk, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
         buffer_manager=BufferManager(), analysis=PicoAnalysis(),
-        file_writer=FileWriter(), gpio_config=GPIOConfig()
+        file_writer=None, gpio_config=GPIOConfig()
     ):
         """Initialise the PicoDevice class."""
         self.util = PicoUtil()
         self.dev_conf = dev_conf
         self.pico_status = pico_status
         self.buffer_manager = buffer_manager
-        self.file_writer = file_writer
+        self.file_writer = file_writer or FileWriter(disk)
         self.analysis = analysis
         self.gpio_config = gpio_config
         
@@ -60,6 +60,8 @@ class PicoDevice:
             ps.ps5000aMaximumValue(
                 self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_adc)
             )
+        else:
+            self.pico_status.flags.system_state = "Failed to Connect"
 
         if self.dev_conf.pha.upper_range == 0:
             self.dev_conf.pha.upper_range = self.dev_conf.meta_data.max_adc.value
