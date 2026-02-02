@@ -33,7 +33,9 @@ const EndpointToggleSwitch = WithEndpoint(ToggleSwitch);
 const OptionsCard = ({ pico_endpoint, activeTab }) => {
 
   const channels = pico_endpoint?.data?.device?.settings?.channels;
-  const captureRunning = pico_endpoint?.data?.device?.commands?.run_user_capture;
+  const captureRunning = 
+    pico_endpoint?.data?.device?.commands?.run_user_capture ||
+    pico_endpoint?.data?.device?.gpio?.listening;
   const temperatureSweepActive = pico_endpoint?.data?.gpib?.temp_sweep?.active;
 
   let anyChannelActive;
@@ -89,9 +91,11 @@ const OptionsCard = ({ pico_endpoint, activeTab }) => {
               pico_endpoint={pico_endpoint}
               EndpointInput={EndpointInput}
               captureRunning={captureRunning}
+              EndpointToggleSwitch={EndpointToggleSwitch}
             />
             <CaptureStatus
               pico_endpoint={pico_endpoint}
+              EndpointInput={EndpointInput}
               captureRunning={captureRunning}
             />
           </>

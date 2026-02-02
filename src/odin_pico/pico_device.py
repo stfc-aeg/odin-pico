@@ -3,6 +3,7 @@
 import ctypes
 import logging
 import math
+import psutil
 import sys
 import time
 
@@ -16,24 +17,24 @@ from odin_pico.Utilities.pico_util import PicoUtil
 from odin_pico.PS5000A_Trigger_Info import Trigger_Info
 from odin_pico.file_writer import FileWriter
 from odin_pico.analysis import PicoAnalysis
-import psutil
-
+from odin_pico.DataClasses.gpio_config import GPIOConfig
 
 class PicoDevice:
     """Class that communicates with the scope to collect data."""
 
     def __init__(
-        self, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
+        self, disk, dev_conf=DeviceConfig(), pico_status=DeviceStatus(),
         buffer_manager=BufferManager(), analysis=PicoAnalysis(),
-        file_writer=FileWriter()
+        file_writer=None, gpio_config=GPIOConfig()
     ):
         """Initialise the PicoDevice class."""
         self.util = PicoUtil()
         self.dev_conf = dev_conf
         self.pico_status = pico_status
         self.buffer_manager = buffer_manager
-        self.file_writer = file_writer
+        self.file_writer = file_writer or FileWriter(disk)
         self.analysis = analysis
+        self.gpio_config = gpio_config
         
         self.channels = [
             getattr(self.dev_conf, f"channel_{name}")
@@ -59,6 +60,8 @@ class PicoDevice:
             ps.ps5000aMaximumValue(
                 self.dev_conf.mode.handle, ctypes.byref(self.dev_conf.meta_data.max_adc)
             )
+        else:
+            self.pico_status.flags.system_state = "Failed to Connect"
 
         if self.dev_conf.pha.upper_range == 0:
             self.dev_conf.pha.upper_range = self.dev_conf.meta_data.max_adc.value
@@ -238,10 +241,14 @@ class PicoDevice:
         self.dev_conf.meta_data.max_samples = ctypes.c_int32(
             self.dev_conf.meta_data.total_cap_samples
         )
-        if not self.file_writer.file_error and not self.pico_status.flags.user_capture:
-            self.pico_status.flags.system_state = "Collecting LV Data"
-        else:
-            self.pico_status.flags.system_state = "N capture collection"
+        if not self.file_writer.file_error:
+            if not self.pico_status.flags.user_capture and not self.gpio_config.listening:
+                self.pico_status.flags.system_state = "Collecting LV Data"
+            elif self.pico_status.flags.user_capture:
+                self.pico_status.flags.system_state = "N capture collection"
+            elif self.gpio_config.capture:
+                self.pico_status.flags.system_state = f"Completing capture: {self.gpio_config.gpio_captures}"
+
         ps.ps5000aRunBlock(
             self.dev_conf.mode.handle,
             self.dev_conf.capture.pre_trig_samples,
@@ -332,8 +339,9 @@ class PicoDevice:
 
         while True:
             self.elapsed_time = time.time() - start_time
-            self.pico_status.flags.system_state = (
-                f"Time based collection")
+            if not self.gpio_config.listening:
+                self.pico_status.flags.system_state = (
+                    f"Time based collection")
             # User Aborted OR time limit reached
             if self.pico_status.flags.abort_cap or \
             (time.time() - start_time) >= total_time:

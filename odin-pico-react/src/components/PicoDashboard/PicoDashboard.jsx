@@ -2,6 +2,7 @@ import OptionsCard from '../PicoOptions/OptionsCard';
 import GraphCard from '../PicoGraph/GraphCard';
 
 const PicoDashboard = ({ pico_endpoint, activeTab }) => {
+
     return (
         <>
             <div className="d-flex flex-wrap border rounded-1 pt-2 mt-2 ms-3 me-4">

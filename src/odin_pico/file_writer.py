@@ -2,9 +2,12 @@
 time-based acquisitions.
 """
 
+import glob
 import logging
 import math
 import os
+from pathlib import Path
+import shutil
 
 import h5py
 import numpy as np
@@ -20,6 +23,7 @@ class FileWriter:
 
     def __init__(
         self,
+        disk,
         dev_conf: DeviceConfig = DeviceConfig(),
         buffer_manager: BufferManager = BufferManager(),
         pico_status: DeviceStatus = DeviceStatus(),
@@ -29,11 +33,15 @@ class FileWriter:
         self.pico_status = pico_status
         self.util = PicoUtil()
         self.file_error = False
+        self.disk_path = disk 
+        self.calc_disk_space()
+        self.file_times = []
 
     def check_file_name(self) -> bool:
         """Check file name settings are valid, return True when a new file can safely be created."""
 
         if self.dev_conf.file.file_name == "":
+            logging.debug("Empty file name")
             return False
 
         # ensure ".hdf5" extension
@@ -52,7 +60,10 @@ class FileWriter:
         )
 
         root, ext = os.path.splitext(full_path)
-        if os.path.isfile(full_path) or os.path.isfile(f"{root}_1{ext}"):
+        pattern = f"{root}_*{ext}"
+        # if os.path.isfile(full_path) or os.path.isfile(f"{root}_1{ext}"):
+        if os.path.isfile(full_path) or glob.glob(pattern):
+            logging.debug("False at pattern")
             return False
 
         # Create folder if missing
@@ -60,6 +71,7 @@ class FileWriter:
             self.dev_conf.file.file_path + self.dev_conf.file.folder_name,
             exist_ok=True,
         )
+        logging.debug("true")
         return True
     
     def _build_filename(self):
@@ -72,6 +84,8 @@ class FileWriter:
 
         if self.dev_conf.file.temp_suffix:
             base += self.dev_conf.file.temp_suffix
+        if self.dev_conf.file.trig_suffix:
+            base += self.dev_conf.file.trig_suffix
         if self.dev_conf.file.repeat_suffix:
             base += self.dev_conf.file.repeat_suffix
         return base + ".hdf5"
@@ -210,3 +224,13 @@ class FileWriter:
             return
 
         self.dev_conf.file.last_write_success = True
+
+    def calc_disk_space(self):
+        try:
+            path = Path(self.disk_path)
+
+            usage = shutil.disk_usage(path)
+            available = usage.free / (usage.used + usage.free) * 100
+            self.dev_conf.file.available_space = (f"{round(available, 1)}% {usage.free / (1024**3):.1f}GB")
+        except FileNotFoundError as e:
+            logging.error("File path does not exist")

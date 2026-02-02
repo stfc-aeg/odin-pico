@@ -41,6 +41,7 @@ const InfoBar = ({ pico_endpoint }) => {
     "Connected to PicoScope, Idle": "warning",
     "File Name Empty or Already Exists": "danger",
     "Delay Between Captures": "warning",
+    "Failed to Connect": "danger"
   };
 
   // Helper function to determine badge variant
@@ -61,6 +62,10 @@ const InfoBar = ({ pico_endpoint }) => {
     if (statusText.startsWith("Setting TEC")) {
       return "warning";
     }
+    if(statusText.startsWith("Listening") || statusText.startsWith("Completing")) {
+      return "success"
+    }
+    
     
     // Default to yellow for any other message
     return "warning";

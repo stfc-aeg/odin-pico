@@ -20,6 +20,7 @@ class PicoTreeBuilder:
         self.buffer_manager = controller.buffer_manager
         self.pico = controller.pico
         self.gpib_config = controller.gpib_config  # Keep this for live_view references
+        self.gpio_config = controller.gpio_config
         
     def create_adapter_status_tree(self):
         """Create the adapter status parameter tree."""
@@ -174,6 +175,7 @@ class PicoTreeBuilder:
     def create_file_tree(self):
         """Create file parameter tree."""
         return ParameterTree({
+            "available_space": (lambda: self.dev_conf.file.available_space, None),
             "folder_name": (
                 lambda: self.dev_conf.file.folder_name,
                 partial(set_dc_value, self.controller, self.dev_conf.file, "folder_name"),
@@ -185,6 +187,35 @@ class PicoTreeBuilder:
             "file_path": (lambda: self.dev_conf.file.file_path, None),
             "curr_file_name": (lambda: self.dev_conf.file.curr_file_name, None),
             "last_write_success": (lambda: self.dev_conf.file.last_write_success, None),
+            "max_acq_time": (
+                lambda: (
+                    round(max(self.controller.cap_times), 2)
+                    if self.controller.cap_times else None
+                ),
+                None,
+            ),
+            "max_file_time": (
+                lambda: (
+                    round(max(self.controller.file_writer.file_times), 2)
+                    if self.controller.file_writer.file_times else None
+                ),
+                None
+            ),
+            "mean_acq_time": (
+                lambda: (
+                    round(sum(self.controller.cap_times) / len(self.controller.cap_times), 2)
+                    if self.controller.cap_times else None
+                ),
+                None,
+            ),
+            "mean_file_time": (
+                lambda: (
+                    round(sum(self.controller.file_writer.file_times) / len(self.controller.file_writer.file_times), 2)
+                    if self.controller.file_writer.file_times else None
+                ),
+                None,
+            ),
+            "trigger_rate": (lambda: self.controller.trig_rate_hz, None)
         })
 
     def create_pha_tree(self):
@@ -252,6 +283,18 @@ class PicoTreeBuilder:
             "current_capture": (lambda: self.controller.dev_conf.capture_run.current_capture, None),
         })
 
+    def create_gpio_tree(self):
+        return ParameterTree({
+            "active": (lambda: self.gpio_config.active, self.gpio_config.set_active),
+            "capturing": (lambda: self.gpio_config.capture, None),
+            "capture_run": (lambda: self.gpio_config.capture_run, self.gpio_config.set_capture_run),
+            "enabled": (lambda: self.gpio_config.enabled, None),
+            "gpio_captures": (lambda: self.gpio_config.gpio_captures, None),
+            "listening": (lambda: self.gpio_config.listening, self.controller.set_listening),
+            "missed_triggers": (lambda: self.gpio_config.missed_triggers, None),
+            "unexpected_triggers": (lambda: self.gpio_config.unexpected_triggers, None)
+        })
+
     def build_device_tree(self):
         """Build the complete PicoScope device parameter tree structure."""
         # Create all component trees
@@ -259,6 +302,7 @@ class PicoTreeBuilder:
         pico_commands = self.create_commands_tree()
         pico_flags = self.create_flags_tree()
         live_view = self.create_live_view_tree()
+        gpio_tree = self.create_gpio_tree()
         
         # Create settings tree
         pico_settings = ParameterTree({
@@ -277,4 +321,5 @@ class PicoTreeBuilder:
             "settings": pico_settings,
             "flags": pico_flags,
             "live_view": live_view,
+            "gpio": gpio_tree 
         })

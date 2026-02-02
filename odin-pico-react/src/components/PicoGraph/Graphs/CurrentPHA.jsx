@@ -91,7 +91,6 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
         style={{ fontSize: '0.85rem', backgroundColor: '#f5f5f5' }}
       >
         <>
-          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
           <div className="d-flex align-items-center">
             <div className="d-flex align-items-center">
               <span>PHA</span>
@@ -125,9 +124,7 @@ const CurrentPHA = ({ pico_endpoint, EndpointCheckbox, canRun }) => {
               onClick={toggle_play}
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
-              <span className="material-icons">
-                {isPlaying ? 'pause_circle_outline' : 'play_circle_outline'}
-              </span>
+              <span className={`bi ${isPlaying ? 'bi-pause-circle' : 'bi-play-circle'} icons`} />
             </Button>
           </div>
         </>

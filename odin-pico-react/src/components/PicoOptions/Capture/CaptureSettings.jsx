@@ -1,8 +1,11 @@
 import { Card, Container, Row, Col, ButtonGroup, ToggleButton, InputGroup } from 'react-bootstrap';
 import CaptureButton from './CaptureButton';
+import { OdinTable, OdinTableRow } from 'odin-react';
+import { ScrollToEnd } from '../../utils/utils';
 
-const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
-  const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify;
+const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning, EndpointToggleSwitch }) => {
+  const fileValid = pico_endpoint?.data?.device?.status?.file_name_verify &&
+   (pico_endpoint?.data?.device?.status?.open_unit === 0);
   const fileClass = fileValid ? 'bg-green' : 'bg-red';
 
   const capturePath = pico_endpoint?.data?.device?.settings?.capture ?? {};
@@ -14,6 +17,9 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
     (fileSettingsPath?.file_path || '') +
     (fileSettingsPath?.folder_name || '') +
     (fileSettingsPath?.file_name || '');
+
+  const missedTriggers = pico_endpoint?.data?.device?.gpio?.missed_triggers
+  const unexpectedTriggers = pico_endpoint?.data?.device?.gpio?.unexpected_triggers
 
   const settingsLabel = captureMode ? 'Time (s)' : 'Captures';
   const settingsPath = captureMode ? 'capture_time' : 'n_captures';
@@ -32,8 +38,8 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
           <Row className="g-3 align-items-center">
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Mode</InputGroup.Text>
-                <ButtonGroup size="sm" className="flex-grow-1">
+                <InputGroup.Text className="input-label-fixed">Mode</InputGroup.Text>
+                <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                   {[
                     { name: 'Number', value: false },
                     { name: 'Time', value: true },
@@ -65,7 +71,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
             </Col>
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>{settingsLabel}</InputGroup.Text>
+                <InputGroup.Text className="fixed-input-label">{settingsLabel}</InputGroup.Text>
                 <EndpointInput
                   endpoint={pico_endpoint}
                   fullpath={`device/settings/capture/${settingsPath}`}
@@ -91,11 +97,67 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
               />
             </Col>
           </Row>
+          {pico_endpoint?.data?.device?.gpio?.enabled === true &&
+            <Row className="g-3 align-items-left mt-1">
+              <Col md={4}>
+                <InputGroup size="sm" className="mb-2">
+                  <InputGroup.Text className="input-label-fixed">Ext Trigger</InputGroup.Text>
+                  <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
+                    {[
+                      { name: 'Off', value: false },
+                      { name: 'On', value: true}
+                    ].map((radio, idx) => (
+                      <ToggleButton
+                        key={idx}
+                        type="radio"
+                        variant="outline-primary"
+                        name="gpioActive"
+                        value={radio.value.toString()}
+                        checked={pico_endpoint?.data?.device?.gpio?.active === radio.value}
+                        onClick={() =>
+                          pico_endpoint.put(radio.value, 'device/gpio/active')
+                        }
+                        disabled={captureRunning}
+                        className={
+                          pico_endpoint?.data?.device?.gpio?.active !== radio.value
+                            ? 'bg-white'
+                            : ''
+                        }
+                      >
+                        {radio.name}
+                      </ToggleButton>
+                    ))}
+                  </ButtonGroup>
+                </InputGroup>
+              </Col>
+              <Col md={4}>
+                <InputGroup size="sm" className="mb-2">
+                  <InputGroup.Text className="fixed-input-label">Triggers</InputGroup.Text>
+                  <EndpointInput
+                  id="gpio-capture-run"
+                  endpoint={pico_endpoint}
+                  fullpath="device/gpio/capture_run"
+                  type="number"
+                  disabled={captureRunning || !pico_endpoint?.data?.device?.gpio?.active}
+                  />
+                </InputGroup>
+              </Col>
+                <Col md={4}>
+                  <div className="fw-semibold mb-2 text-center" style={{ fontSize: '12px' }}>
+                    Tiggers Missed / Unexpected:
+                  </div>
+                  <Row style={{ fontSize: '12px' }}>
+                    <Col className="text-center" style={{ wordBreak: 'break-all' }}>{missedTriggers}</Col>
+                    <Col className="text-center" style={{ wordBreak: 'break-all' }}>{unexpectedTriggers}</Col>
+                  </Row>
+                </Col>
+            </Row>
+          }
           <Row className="g-3 align-items-center mt-1">
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Acquisition</InputGroup.Text>
-                <ButtonGroup size="sm" className="flex-grow-1">
+                <InputGroup.Text className="input-label-fixed">Acquisition</InputGroup.Text>
+                <ButtonGroup size="sm" className="flex-grow-1 equal-toggles">
                   {[
                     { name: 'Single', value: false },
                     { name: 'Repeat', value: true },
@@ -129,7 +191,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
             </Col>
             <Col md={4}>
               <InputGroup size="sm" className="mb-2">
-                <InputGroup.Text>Repeat #</InputGroup.Text>
+                <InputGroup.Text className="fixed-input-label">Repeat #</InputGroup.Text>
                 <EndpointInput
                   endpoint={pico_endpoint}
                   fullpath="device/settings/capture/repeat_amount"
@@ -151,7 +213,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
             </Col>
           </Row>
           <Row className={`g-3 align-items-center mt-2 ${fileClass}`}>
-            <Col md={4}>
+            <Col md={6}>
               <InputGroup size="sm" className="mb-2">
                 <InputGroup.Text>Folder</InputGroup.Text>
                 <EndpointInput
@@ -161,7 +223,7 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                 />
               </InputGroup>
             </Col>
-            <Col md={4}>
+            <Col md={6}>
               <InputGroup size="sm" className="mb-2">
                 <InputGroup.Text>File</InputGroup.Text>
                 <EndpointInput
@@ -171,14 +233,28 @@ const CaptureSettings = ({ pico_endpoint, EndpointInput, captureRunning }) => {
                 />
               </InputGroup>
             </Col>
-            <Col md={4}>
-              <div className="fw-semibold mb-1" style={{ fontSize: '12px' }}>
-                Filename Preview:
-              </div>
-              <div style={{ fontSize: '12px', wordBreak: 'break-all' }}>{filename}</div>
-            </Col>
           </Row>
-
+          <Row className={`g-3 align-items-center pt-2 ${fileClass}`}>
+            <OdinTable
+              className="capture-status-table"
+              bordered
+              size="sm"
+              striped={true}
+              columns={{
+                filename: "Filename",
+              }}
+            >
+              <OdinTableRow
+                row={{
+                  filename: (
+                    <ScrollToEnd watch={filename}>
+                      {filename}
+                    </ScrollToEnd>
+                  ),
+                }}
+              />
+            </OdinTable>
+          </Row>
         </Container>
       </Card.Body>
     </Card>
