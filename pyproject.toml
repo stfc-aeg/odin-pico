@@ -17,7 +17,7 @@ classifiers = [
 dynamic = ["version"]
 requires-python = ">=3.10.0"
 dependencies = [
-    "odin-control @ git+https://github.com/odin-detector/odin-control@1.5.0#egg=odin-control",
+    "odin-control @ git+https://github.com/odin-detector/odin-control@1.6.0#egg=odin-control",
     "picosdk",
     "h5py", 
     "numpy",
@@ -27,6 +27,9 @@ dependencies = [
 [project.optional-dependencies]
 gpib = [
     "odin-gpib @ git+https://github.com/stfc-aeg/odin-gpib@main"
+]
+gpio-server = [
+    "odin-gpio-server @ git+https://github.com/stfc-aeg/odin-gpio@1.0.0#subdirectory=server"
 ]
 
 [project.urls]

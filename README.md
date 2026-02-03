@@ -23,6 +23,6 @@
 - Install the GPIO client adapter from here: [odin-gpio/client](https://github.com/stfc-aeg/odin-gpio/tree/client-code)
 - Ensure the adapter is being used by the odin-pico instance:
     ```
-    [adapter.triggering]
-    module = trigger_adapter.adapter.TriggerAdapter
+    [adapter.gpio-server]
+    module = odin_gpio_server.adapter.GpioServerAdapter
     ```
