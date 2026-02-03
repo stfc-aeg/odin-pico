@@ -75,7 +75,7 @@ class PicoController:
             self.gpib = None
 
         try:
-            self.comms = adapters['triggering'] if adapters else None
+            self.comms = adapters['gpio-server'] if adapters else None
             self.trigger_controller = self.comms.get_controller()
             self.trigger_controller.register_event(self.trigger_received)
             self.gpio_config.reply_method = self.trigger_controller.get_reply_method()
